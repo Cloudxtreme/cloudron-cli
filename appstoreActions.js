@@ -310,16 +310,23 @@ function publish(options) {
 
     if (options.submit) return submitAppForReview(manifest, exit);
 
-    helper.selectBuild(manifest.id, true /* latest */, function (error, build) {
-        if (error || !build.dockerImage) exit('No build found, please run `cloudron build` first and test the new build on your Cloudron.');
+    // ensure the app is known on the appstore side
+    addApp(manifest, path.dirname(manifestFilePath), function () {
+        console.log();
+        console.log('Building %s@%s', manifest.id.bold, manifest.version.bold);
+        console.log();
 
-        console.log('Publishing %s@%s with build %s.', manifest.id, manifest.version, build.id);
+        helper.selectBuild(manifest.id, true /* latest */, function (error, build) {
+            if (error || !build.dockerImage) exit('No build found, please run `cloudron build` first and test the new build on your Cloudron.');
 
-        if (options.force) {
-            updateVersion(manifest, build.id, path.dirname(manifestFilePath));
-        } else {
-            addVersion(manifest, build.id, path.dirname(manifestFilePath));
-        }
+            console.log('Publishing %s@%s with build %s.', manifest.id, manifest.version, build.id);
+
+            if (options.force) {
+                updateVersion(manifest, build.id, path.dirname(manifestFilePath));
+            } else {
+                addVersion(manifest, build.id, path.dirname(manifestFilePath));
+            }
+        });
     });
 }
 
