@@ -248,7 +248,8 @@ function open() {
         if (error || !app) exit('No app found');
 
         // TODO handle custom domains
-        opn('https://' + app.location + '-' + config.cloudron());
+        var domain = app.location === '' ? config.cloudron() : (app.location + '-' + config.cloudron());
+        opn('https://' + domain);
     });
 }
 
