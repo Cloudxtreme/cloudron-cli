@@ -340,12 +340,12 @@ function installer(app, configure, manifest, waitForHealthcheck) {
     assert.strictEqual(typeof manifest, 'object');
     assert.strictEqual(typeof waitForHealthcheck, 'boolean');
 
-    var location = app ? app.location : '';
+    var location = app ? app.location : null;
     var accessRestriction = app ? app.accessRestriction : '';
     var portBindings = app ? app.portBindings : {};
 
     // location
-    if (configure || !location) {
+    if (configure || location === null) {
         location = readlineSync.question('Location: ', {});
     }
 
