@@ -197,6 +197,12 @@ function addVersion(manifest, buildId, baseDir) {
         if (!fs.existsSync(iconFilePath)) return exit('icon not found at ' + iconFilePath);
     }
 
+    if (manifest.description.slice(0, 7) === 'file://') {
+        var descriptionFilePath = manifest.description.slice(7);
+        manifest.description = safe.fs.readFileSync(descriptionFilePath, 'utf8');
+        if (!manifest.description) return exit('Could not read description ' + safe.error.message);
+    }
+
     superagentEnd(function () {
         var req = superagent.post(createUrl('/api/v1/developers/apps/' + manifest.id + '/versions'));
         req.query({ accessToken: config.appStoreToken() });
@@ -221,6 +227,12 @@ function updateVersion(manifest, buildId, baseDir) {
     if (manifest.icon) {
         iconFilePath = path.isAbsolute(manifest.icon) ? manifest.icon : path.join(baseDir, manifest.icon);
         if (!fs.existsSync(iconFilePath)) return exit('icon not found at ' + iconFilePath);
+    }
+
+    if (manifest.description.slice(0, 7) === 'file://') {
+        var descriptionFilePath = manifest.description.slice(7);
+        manifest.description = safe.fs.readFileSync(descriptionFilePath, 'utf8');
+        if (!manifest.description) return exit('Could not read description ' + safe.error.message);
     }
 
     superagentEnd(function () {
