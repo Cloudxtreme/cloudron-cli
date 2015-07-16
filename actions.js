@@ -591,6 +591,17 @@ function restart(options) {
    });
 }
 
+function trackProgress() {
+    superagent.get(createUrl('/api/v1/cloudron/progress')).end(function (error, result) {
+        if (error) exit(error);
+        if (result.statusCode !== 200) return exit(util.format('Failed to get progress.'.red, result.statusCode, result.text));
+
+        console.log('%s', result.body.backup);
+
+        setTimeout(trackProgress, 2000);
+    });
+}
+
 function backup(options) {
     helper.verifyArguments(arguments);
 
@@ -609,7 +620,14 @@ function backup(options) {
             if (error) exit(error);
             if (result.statusCode !== 202) return exit(util.format('Failed to backup app.'.red, result.statusCode, result.text));
 
-            console.log('Backup initiated'.green);
+            waitForFinishInstallation(app.id, true, function (error) {
+                if (error) {
+                    return exit('\n\nApp backup error: %s'.red, error.message);
+                }
+
+                console.log('\n\nApp is backed up'.green);
+                exit();
+            });
         });
     });
 }
