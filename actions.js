@@ -413,6 +413,7 @@ function installer(app, configure, manifest, waitForHealthcheck) {
         if (manifest.icon && fs.existsSync(manifest.icon)) { // may not exist for appstore-id case
             data.icon = fs.readFileSync(manifest.icon).toString('base64');
         }
+        data.force = true; // this allows installation over errored apps
     }
 
     superagentEnd(function () {
