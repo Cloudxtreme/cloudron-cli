@@ -397,12 +397,19 @@ function installer(app, configure, manifest, waitForHealthcheck) {
         accessRestriction: accessRestriction
     };
 
+    var iconFilename = manifest.icon;
+
+    // FIXME: icon file must be read wrt manifest file base dir
+    if (iconFilename && iconFilename.slice(0, 7) === 'file://') {
+        iconFilename = iconFilename.slice(7);
+    }
+
     var url, message;
     if (!app) {
         url = createUrl('/api/v1/apps/install');
         message = 'installed';
-        if (manifest.icon && fs.existsSync(manifest.icon)) { // may not exist for appstore-id case
-            data.icon = fs.readFileSync(manifest.icon).toString('base64');
+        if (iconFilename && fs.existsSync(iconFilename)) { // may not exist for appstore-id case
+            data.icon = fs.readFileSync(iconFilename).toString('base64');
         }
     } else if (configure) {
         url = createUrl('/api/v1/apps/' + app.id + '/configure');
@@ -410,8 +417,8 @@ function installer(app, configure, manifest, waitForHealthcheck) {
     } else {
         url = createUrl('/api/v1/apps/' + app.id + '/update');
         message = 'updated';
-        if (manifest.icon && fs.existsSync(manifest.icon)) { // may not exist for appstore-id case
-            data.icon = fs.readFileSync(manifest.icon).toString('base64');
+        if (iconFilename && fs.existsSync(iconFilename)) { // may not exist for appstore-id case
+            data.icon = fs.readFileSync(iconFilename).toString('base64');
         }
         data.force = true; // this allows installation over errored apps
     }
