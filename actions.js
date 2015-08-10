@@ -335,10 +335,11 @@ function waitForFinishInstallation(appId, waitForHealthcheck, callback) {
 
 // if app is falsy, we install a new app
 // if configure is truthy we will prompt for all settings
-function installer(app, configure, manifest, waitForHealthcheck) {
+function installer(app, configure, manifest, appStoreId, waitForHealthcheck) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof configure, 'boolean');
     assert.strictEqual(typeof manifest, 'object');
+    assert(!appStoreId || typeof appStoreId === 'string');
     assert.strictEqual(typeof waitForHealthcheck, 'boolean');
 
     var location = app ? app.location : null;
@@ -390,7 +391,7 @@ function installer(app, configure, manifest, waitForHealthcheck) {
 
     var data = {
         appId: app ? app.id : null, // temporary hack for configure route bug
-        appStoreId: '',
+        appStoreId: appStoreId || '',
         manifest: manifest,
         location: location,
         portBindings: portBindings,
@@ -455,7 +456,7 @@ function installFromStore(options) {
         if (error) return exit(util.format('Failed to get app info: %s', error.message));
         if (result.statusCode !== 200) return exit(util.format('Failed to get app info from store.'.red, result.statusCode, result.text));
 
-        installer(null /* app */, false /* configure */, result.body.manifest, !!options.wait);
+        installer(null /* app */, false /* configure */, result.body.manifest, parts[0] /* appStoreId */, !!options.wait);
     });
 }
 
@@ -486,7 +487,7 @@ function install(options) {
 
             manifest.dockerImage = image;
 
-            installer(app, !!options.configure, manifest, !!options.wait);
+            installer(app, !!options.configure, manifest, null /* appStoreId */, !!options.wait);
         });
     });
 }
