@@ -478,7 +478,7 @@ function verifyDockerfile(dockerFilePath) {
         return null;
     }
 
-    return new Error('Base image must be cloudron/base:0.3.0');
+    return new Error('Base image must be cloudron/base:0.3.1');
 }
 
 function build(options) {
