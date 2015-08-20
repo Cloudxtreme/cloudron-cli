@@ -464,7 +464,9 @@ function followBuildLog(buildId, raw, callback) {
             return printBuildLog(buildId, callback);
         }
 
-        // We also get { type: 'error' } messages here. Those indicate a build failure upstream
+        // We sometimes get { type: 'error' } from es module when the server closes the socket. not clear why
+        if (error && !error.status && error.type === 'error') error = null;
+
         callback(error && error.status ? error : null); // eventsource module really needs to give us better errors
     });
 }
