@@ -410,13 +410,16 @@ function printBuildLog(buildId, callback) {
     });
 }
 
-function followBuildLog(buildId, callback) {
+function followBuildLog(buildId, raw, callback) {
     assert(typeof buildId === 'string');
+    assert(typeof raw === 'boolean');
 
     var es = new EventSource(createUrl('/api/v1/developers/builds/' + buildId + '/logstream?accessToken=' + config.appStoreToken()));
     var prevId = null, prevWasStatus = false;
 
     es.on('message', function (e) {
+        if (raw) return console.dir(e);
+
         var data = safe.JSON.parse(e.data);
 
         if (data.status) { // push log
@@ -453,6 +456,8 @@ function followBuildLog(buildId, callback) {
         }
     });
     es.on('error', function (error) {
+        if (raw) console.dir(error);
+
         if (error && error.status === 204) { // build already finished
             console.log('Building already finished. Fetching full logs'.cyan);
 
@@ -530,7 +535,7 @@ function build(options) {
             console.log('Build scheduled with id %s', buildId.cyan);
             console.log('Waiting for build to begin, this may take a bit...');
 
-            followBuildLog(buildId, function (error) {
+            followBuildLog(buildId, !!options.raw, function (error) {
                 if (error) return exit(error);
 
                 getBuildInfo(buildId, function (error, build) {

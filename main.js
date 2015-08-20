@@ -31,6 +31,7 @@ program.command('createOAuthAppCredentials')
 program.command('build')
     .description('Build an app')
     .option('--no-cache', 'Do not use cache')
+    .option('--raw', 'Raw output build log')
     .action(appstoreActions.build);
 
 if (DEV) {
