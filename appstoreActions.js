@@ -194,7 +194,7 @@ function addVersion(manifest, buildId, baseDir) {
     var iconFilePath = null;
     if (manifest.icon) {
         var iconFile = manifest.icon; // backward compat
-        if (iconFile.slice(0, 7) === 'file://') icon = iconFile.slice(7);
+        if (iconFile.slice(0, 7) === 'file://') iconFile = iconFile.slice(7);
 
         iconFilePath = path.isAbsolute(iconFile) ? iconFile : path.join(baseDir, iconFile);
         if (!fs.existsSync(iconFilePath)) return exit('icon not found at ' + iconFilePath);
