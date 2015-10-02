@@ -85,7 +85,7 @@ function selectAvailableApp(appId, callback) {
 
         var index = -1;
         while (true) {
-            index = parseInt(readlineSync.question('Choose app [0-' + (availableApps.length-1) + ']: ', {}));
+            index = parseInt(readlineSync.question('Choose app [0-' + (availableApps.length-1) + ']: ', {}), 10);
             if (isNaN(index) || index < 0 || index > availableApps.length-1) console.log('Invalid selection'.red);
             else break;
         }
