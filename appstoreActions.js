@@ -308,7 +308,8 @@ function submitAppForReview(manifest, callback) {
         if (error) return exit(util.format('Failed to submit app for review: %s', error.message.red));
         if (result.statusCode !== 200) return exit(util.format('Failed to submit app (statusCode %s): \n%s', result.statusCode, result.body && result.body.message ? result.body.message.red : result.text));
 
-        console.log('App submitted for review'.green);
+        console.log('App submitted for review.'.green);
+        console.log('You will receive an email when approved.');
 
         callback();
     });
@@ -340,6 +341,8 @@ function publish(options) {
             } else {
                 addVersion(manifest, build.id, path.dirname(manifestFilePath));
             }
+
+            // TODO: https://my-girish.cloudron.us/#/appstore/net.kanboard.cloudronapp?version=0.0.1
         });
     });
 }
