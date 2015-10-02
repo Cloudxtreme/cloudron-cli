@@ -73,12 +73,12 @@ function login(options) {
     authenticate(options);
 }
 
-function logout(options) {
+function logout() {
     config.unset('appStoreToken');
     console.log('Done.'.green);
 }
 
-function listApps(options) {
+function listApps() {
     superagentEnd(function () {
         return superagent.get(createUrl('/api/v1/developers/apps')).query({ accessToken: config.appStoreToken() });
     }, function (error, result) {
