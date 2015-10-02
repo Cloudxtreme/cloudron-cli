@@ -764,7 +764,7 @@ function init() {
     var data = { };
 
     // TODO more input validation, eg. httpPort has to be an integer
-    [ 'id', 'author', 'title', 'description', 'tagline', 'website', 'contactEmail', 'httpPort' ].forEach(function (field) {
+    [ 'id', 'author', 'title', 'tagline', 'website', 'contactEmail', 'httpPort' ].forEach(function (field) {
         data[field] = readlineSync.question(field + ': ', { });
     });
 
@@ -772,11 +772,14 @@ function init() {
     fs.writeFileSync('CloudronManifest.json', manifest, 'utf8');
 
     if (fs.existsSync('Dockerfile')) {
-        console.log('A Dockerfile already exists. Skip creating one.');
-        return;
+        console.log('Dockerfile already exists, skipping');
+    } else {
+        var dockerfile = ejs.render(dockerfileTemplate, data);
+        fs.writeFileSync('Dockerfile', dockerfile, 'utf8');
     }
 
-    var dockerfile = ejs.render(dockerfileTemplate, data);
-    fs.writeFileSync('Dockerfile', dockerfile, 'utf8');
+    if (fs.existsSync('DESCRIPTION.md')) {
+        console.log('DESCRIPTION.md already exists, skipping');
+    }
 }
 
