@@ -123,7 +123,6 @@ function selectBuild(appId, latest, callback) {
     // builds are sorted by time already
     if (builds.length === 1 || latest) {
         var build = builds[builds.length - 1];
-        console.log('Using build %s from %s', build.id.cyan, prettyDate(build.ts).bold);
         return callback(null, build);
     }
 
