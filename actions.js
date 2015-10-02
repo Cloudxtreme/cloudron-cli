@@ -238,13 +238,13 @@ function login(cloudron, options) {
     authenticate(options);
 }
 
-function logout(cmd, options) {
+function logout() {
     config.clear();
     console.log('Done.');
 }
 
 function open() {
-    getApp(null, function (error, app, manifestFilePath) {
+    getApp(null, function (error, app) {
         if (error || !app) exit('No app found');
 
         // TODO handle custom domains
@@ -253,7 +253,7 @@ function open() {
     });
 }
 
-function list(options) {
+function list() {
     ensureLoggedIn();
 
     superagentEnd(function () { return superagent.get(createUrl('/api/v1/apps')).query({ access_token: config.token() }); }, function (error, result) {
