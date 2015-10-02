@@ -465,9 +465,7 @@ function install(options) {
 
     if (options.appstoreId) return installFromStore(options);
 
-    var func;
-    if (options.new) func = getAppNew;
-    else func = getApp;
+    var func = options.new ? getAppNew : getApp;
 
     func(function (error, app, manifestFilePath) {
         if (!options.new && error) exit(error);
