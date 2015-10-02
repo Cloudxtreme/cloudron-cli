@@ -186,7 +186,7 @@ function addApp(manifest, baseDir, callback) {
     });
 }
 
-function addVersion(manifest, buildId, baseDir) {
+function addVersion(manifest, buildId, baseDir, callback) {
     assert(typeof manifest === 'object');
     assert(typeof buildId === 'string');
     assert(typeof baseDir === 'string');
@@ -197,13 +197,13 @@ function addVersion(manifest, buildId, baseDir) {
         if (iconFile.slice(0, 7) === 'file://') iconFile = iconFile.slice(7);
 
         iconFilePath = path.isAbsolute(iconFile) ? iconFile : path.join(baseDir, iconFile);
-        if (!fs.existsSync(iconFilePath)) return exit('icon not found at ' + iconFilePath);
+        if (!fs.existsSync(iconFilePath)) return callback(new Error('icon not found at ' + iconFilePath));
     }
 
     if (manifest.description.slice(0, 7) === 'file://') {
         var descriptionFilePath = manifest.description.slice(7);
         manifest.description = safe.fs.readFileSync(descriptionFilePath, 'utf8');
-        if (!manifest.description) return exit('Could not read description ' + safe.error.message);
+        if (!manifest.description) return callback(new Error('Could not read description ' + safe.error.message));
     }
 
     superagentEnd(function () {
@@ -214,14 +214,15 @@ function addVersion(manifest, buildId, baseDir) {
         req.attach('manifest', new Buffer(JSON.stringify(manifest)), { filename: 'manifest' });
         return req;
     }, function (error, result) {
-        if (error) return exit(util.format('Failed to publish version: %s', error.message.red));
-        if (result.statusCode !== 204) exit(util.format('Failed to publish version (statusCode %s): \n%s', result.statusCode, result.body && result.body.message ? result.body.message.red : result.text));
+        if (error) return callback(new Error(util.format('Failed to publish version: %s', error.message)));
+        if (result.statusCode !== 204)
+            callback(new Error(util.format('Failed to publish version (statusCode %s): \n%s', result.statusCode, result.body && result.body.message ? result.body.message.red : result.text)));
 
-        console.log('New version published.'.green);
+        callback();
     });
 }
 
-function updateVersion(manifest, buildId, baseDir) {
+function updateVersion(manifest, buildId, baseDir, callback) {
     assert(typeof manifest === 'object');
     assert(typeof buildId === 'string');
     assert(typeof baseDir === 'string');
@@ -232,13 +233,13 @@ function updateVersion(manifest, buildId, baseDir) {
         if (iconFile.slice(0, 7) === 'file://') iconFile = iconFile.slice(7);
 
         iconFilePath = path.isAbsolute(iconFile) ? iconFile : path.join(baseDir, iconFile);
-        if (!fs.existsSync(iconFilePath)) return exit('icon not found at ' + iconFilePath);
+        if (!fs.existsSync(iconFilePath)) return callback(new Error('icon not found at ' + iconFilePath));
     }
 
     if (manifest.description.slice(0, 7) === 'file://') {
         var descriptionFilePath = manifest.description.slice(7);
         manifest.description = safe.fs.readFileSync(descriptionFilePath, 'utf8');
-        if (!manifest.description) return exit('Could not read description ' + safe.error.message);
+        if (!manifest.description) return callback(new Error('Could not read description ' + safe.error.message));
     }
 
     superagentEnd(function () {
@@ -249,10 +250,12 @@ function updateVersion(manifest, buildId, baseDir) {
         req.attach('manifest', new Buffer(JSON.stringify(manifest)), { filename: 'manifest' });
         return req;
     }, function (error, result) {
-        if (error) return exit(util.format('Failed to publish version: %s', error.message.red));
-        if (result.statusCode !== 204) exit(util.format('Failed to publish version (statusCode %s): \n%s', result.statusCode, result.body && result.body.message ? result.body.message.red : result.text));
+        if (error) return callback(new Error(util.format('Failed to publish version: %s', error.message)));
+        if (result.statusCode !== 204) {
+            return callback(new Error(util.format('Failed to publish version (statusCode %s): \n%s', result.statusCode, result.body && result.body.message ? result.body.message.red : result.text)));
+        }
 
-        console.log('Version updated.'.green);
+        callback();
     });
 }
 
@@ -336,12 +339,13 @@ function publish(options) {
 
             console.log('Publishing %s@%s for %s with build %s.', manifest.id, manifest.version, 'testing'.yellow, build.id);
 
-            if (options.force) {
-                updateVersion(manifest, build.id, path.dirname(manifestFilePath));
-            } else {
-                addVersion(manifest, build.id, path.dirname(manifestFilePath));
-            }
+            var func = options.force ? updateVersion : addVersion;
 
+            func(manifest, build.id, path.dirname(manifestFilePath), function (error) {
+                if (error) return exit(error);
+
+                if (options.force) console.log('Version updated.'.green); else console.log('New version published.'.green);
+            });
             // TODO: https://my-girish.cloudron.us/#/appstore/net.kanboard.cloudronapp?version=0.0.1
         });
     });
