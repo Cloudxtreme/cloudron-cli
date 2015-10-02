@@ -229,7 +229,7 @@ function updateVersion(manifest, buildId, baseDir) {
     var iconFilePath = null;
     if (manifest.icon) {
         var iconFile = manifest.icon; // backward compat
-        if (iconFile.slice(0, 7) === 'file://') icon = iconFile.slice(7);
+        if (iconFile.slice(0, 7) === 'file://') iconFile = iconFile.slice(7);
 
         iconFilePath = path.isAbsolute(iconFile) ? iconFile : path.join(baseDir, iconFile);
         if (!fs.existsSync(iconFilePath)) return exit('icon not found at ' + iconFilePath);
@@ -333,7 +333,7 @@ function publish(options) {
         helper.selectBuild(manifest.id, true /* latest */, function (error, build) {
             if (error || !build.dockerImage) exit('No build found, please run `cloudron build` first and test the new build on your Cloudron.');
 
-            console.log('Publishing %s@%s with build %s.', manifest.id, manifest.version, build.id);
+            console.log('Publishing %s@%s for %s with build %s.', manifest.id, manifest.version, 'testing'.yellow, build.id);
 
             if (options.force) {
                 updateVersion(manifest, build.id, path.dirname(manifestFilePath));
