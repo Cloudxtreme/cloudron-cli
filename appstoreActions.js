@@ -348,9 +348,12 @@ function publish(options) {
             func(manifest, build.id, path.dirname(manifestFilePath), function (error) {
                 if (error) return exit(error);
 
-                var url = cloudronActions.createUrl('/#/appstore/' + manifest.id + '?version=' + manifest.version);
+                console.log('\nThe App Store view\'s %s tab in your cloudron will show the app.', 'testing'.yellow);
 
-                console.log('\nApp is available on your cloudron at the following url:\n\t\t%s\n', url.white);
+                console.log('\nApp can be tested on other cloudrons using the cli tool:\n\t\t%s', ('cloudron install --appstore-id ' + manifest.id + '@' + manifest.version).white);
+
+                var url = cloudronActions.createUrl('/#/appstore/' + manifest.id + '?version=' + manifest.version);
+                console.log('\nDirect link to the app on your Cloudron:\n\t\t%s\n', url.white);
             });
         });
     });
