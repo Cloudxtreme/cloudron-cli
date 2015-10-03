@@ -37,7 +37,8 @@ exports = module.exports = {
     createOAuthAppCredentials: createOAuthAppCredentials,
     init: init,
     restore: restore,
-    backup: backup
+    backup: backup,
+    createUrl: createUrl
 };
 
 function showDeveloperModeNotice() {

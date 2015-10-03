@@ -17,6 +17,7 @@ var superagent = require('superagent'),
     EventSource = require('eventsource'),
     manifestFormat = require('cloudron-manifestformat'),
     semver = require('semver'),
+    cloudronActions = require('./actions.js'),
     split = require('split');
 
 require('colors');
@@ -345,8 +346,11 @@ function publish(options) {
                 if (error) return exit(error);
 
                 if (options.force) console.log('Version updated.'.green); else console.log('New version published.'.green);
+
+                var url = cloudronActions.createUrl('/#/appstore/' + manifest.id + '?version=' + manifest.version);
+
+                console.log('App is available on your cloudron at the following url:\n\t\t%s\n', url.white);
             });
-            // TODO: https://my-girish.cloudron.us/#/appstore/net.kanboard.cloudronapp?version=0.0.1
         });
     });
 }
