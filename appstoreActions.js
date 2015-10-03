@@ -345,11 +345,9 @@ function publish(options) {
             func(manifest, build.id, path.dirname(manifestFilePath), function (error) {
                 if (error) return exit(error);
 
-                if (options.force) console.log('Version updated.'.green); else console.log('New version published.'.green);
-
                 var url = cloudronActions.createUrl('/#/appstore/' + manifest.id + '?version=' + manifest.version);
 
-                console.log('App is available on your cloudron at the following url:\n\t\t%s\n', url.white);
+                console.log('\nApp is available on your cloudron at the following url:\n\t\t%s\n', url.white);
             });
         });
     });
