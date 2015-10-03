@@ -1,11 +1,11 @@
 {
   "name": "cloudron",
-  "version": "0.1.11",
+  "version": "0.2.0",
   "dependencies": {
     "cloudron-manifestformat": {
-      "version": "1.7.0",
-      "from": "cloudron-manifestformat@>=1.7.0 <2.0.0",
-      "resolved": "https://registry.npmjs.org/cloudron-manifestformat/-/cloudron-manifestformat-1.7.0.tgz",
+      "version": "1.8.0",
+      "from": "cloudron-manifestformat@1.8.0",
+      "resolved": "https://registry.npmjs.org/cloudron-manifestformat/-/cloudron-manifestformat-1.8.0.tgz",
       "dependencies": {
         "java-packagename-regex": {
           "version": "1.0.0",
@@ -13,9 +13,9 @@
           "resolved": "https://registry.npmjs.org/java-packagename-regex/-/java-packagename-regex-1.0.0.tgz"
         },
         "tv4": {
-          "version": "1.2.3",
+          "version": "1.2.7",
           "from": "tv4@>=1.1.9 <2.0.0",
-          "resolved": "https://registry.npmjs.org/tv4/-/tv4-1.2.3.tgz"
+          "resolved": "https://registry.npmjs.org/tv4/-/tv4-1.2.7.tgz"
         },
         "validator": {
           "version": "3.43.0",
