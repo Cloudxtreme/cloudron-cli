@@ -554,12 +554,15 @@ function build(options) {
                 getBuildInfo(buildId, function (error, build) {
                     if (error) return exit(error);
 
-                    if (build.status === 'error') console.log('App could not be built due to errors above'.red);
-                    if (build.status === 'success') console.log('Success'.green);
-
-                    helper.updateBuild(manifest.id, buildId, build.dockerImage);
-
-                    exit();
+                    if (build.status === 'success') {
+                        helper.updateBuild(manifest.id, buildId, build.dockerImage);
+                        console.log('Success'.green);
+                        exit();
+                    } else if (build.status === 'error') {
+                        exit('App could not be built due to errors above');
+                    } else {
+                        exit('Build has unknown status ' + build.status);
+                    }
                 });
             });
         });
