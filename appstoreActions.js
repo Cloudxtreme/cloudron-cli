@@ -352,8 +352,10 @@ function publish(options) {
 
                 console.log('\nApp can be tested on other cloudrons using the cli tool:\n\t\t%s', ('cloudron install --appstore-id ' + manifest.id + '@' + manifest.version).white);
 
-                var url = cloudronActions.createUrl('/#/appstore/' + manifest.id + '?version=' + manifest.version);
-                console.log('\nDirect link to the app on your Cloudron:\n\t\t%s\n', url.white);
+                if (config.cloudron()) {
+                    var url = cloudronActions.createUrl('/#/appstore/' + manifest.id + '?version=' + manifest.version);
+                    console.log('\nDirect link to the app on your Cloudron:\n\t\t%s\n', url.white);
+                }
             });
         });
     });
