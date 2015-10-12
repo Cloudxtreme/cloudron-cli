@@ -1,6 +1,6 @@
 {
   "name": "cloudron",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Cloudron CLI",
   "main": "main.js",
   "scripts": {
@@ -11,7 +11,7 @@
   },
   "author": "Cloudron Developers <support@cloudron.io>",
   "dependencies": {
-    "cloudron-manifestformat": "^1.9.1",
+    "cloudron-manifestformat": "^1.9.2",
     "colors": "^1.0.3",
     "commander": "^2.7.1",
     "easy-table": "^0.3.0",
