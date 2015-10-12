@@ -11,7 +11,7 @@
   },
   "author": "Cloudron Developers <support@cloudron.io>",
   "dependencies": {
-    "cloudron-manifestformat": "^1.9.0",
+    "cloudron-manifestformat": "^1.9.1",
     "colors": "^1.0.3",
     "commander": "^2.7.1",
     "easy-table": "^0.3.0",
