@@ -187,6 +187,23 @@ function addApp(manifest, baseDir, callback) {
     });
 }
 
+function parseChangelog(file, version) {
+    var changelog = '';
+    var lines = fs.readFileSync(file, 'utf8').split('\n');
+    for (var i = 0; i < lines.length; i++) {
+        if (lines[i] === '[' + version + ']') break;
+    }
+
+    for (i = i + 1; i < lines.length; i++) {
+        if (lines[i] === '') continue;
+        if (lines[i][0] === '[') break;
+
+        changelog += lines[i];
+    }
+
+    return changelog;
+}
+
 function addVersion(manifest, buildId, baseDir, callback) {
     assert(typeof manifest === 'object');
     assert(typeof buildId === 'string');
@@ -205,6 +222,12 @@ function addVersion(manifest, buildId, baseDir, callback) {
         var descriptionFilePath = manifest.description.slice(7);
         manifest.description = safe.fs.readFileSync(descriptionFilePath, 'utf8');
         if (!manifest.description) return callback(new Error('Could not read description ' + safe.error.message));
+    }
+
+    if (manifest.changelog.slice(0, 7) === 'file://') {
+        var changelogPath = manifest.changelog.slice(7);
+        manifest.changelog = parseChangelog(changelogPath, manifest.version);
+        if (!manifest.changelog) return callback(new Error('Could not read changelog ' + safe.error.message));
     }
 
     superagentEnd(function () {
@@ -241,6 +264,12 @@ function updateVersion(manifest, buildId, baseDir, callback) {
         var descriptionFilePath = manifest.description.slice(7);
         manifest.description = safe.fs.readFileSync(descriptionFilePath, 'utf8');
         if (!manifest.description) return callback(new Error('Could not read description ' + safe.error.message));
+    }
+
+    if (manifest.changelog.slice(0, 7) === 'file://') {
+        var changelogPath = manifest.changelog.slice(7);
+        manifest.changelog = parseChangelog(changelogPath, manifest.version);
+        if (!manifest.changelog) return callback(new Error('Could not read changelog ' + safe.error.message));
     }
 
     superagentEnd(function () {
