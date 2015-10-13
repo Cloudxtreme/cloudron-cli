@@ -72,7 +72,7 @@ function selectAvailableApp(appId, callback) {
         if (result.statusCode !== 200) return callback(util.format('Failed to list apps. %s - %s'.red, result.statusCode, result.text));
 
         var availableApps = result.body.apps.filter(function (app) {
-            return app.manifest.id === appId;
+            return !app.appStoreId && app.manifest.id === appId; // never select apps from the store
         });
 
         if (availableApps.length === 0) return callback(new Error('No apps installed.'));
