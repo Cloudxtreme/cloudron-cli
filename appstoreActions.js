@@ -221,13 +221,13 @@ function addVersion(manifest, buildId, baseDir, callback) {
     if (manifest.description.slice(0, 7) === 'file://') {
         var descriptionFilePath = manifest.description.slice(7);
         manifest.description = safe.fs.readFileSync(descriptionFilePath, 'utf8');
-        if (!manifest.description) return callback(new Error('Could not read description ' + safe.error.message));
+        if (!manifest.description) return callback(new Error('Could not read/parse description ' + safe.error.message));
     }
 
     if (manifest.changelog.slice(0, 7) === 'file://') {
         var changelogPath = manifest.changelog.slice(7);
         manifest.changelog = parseChangelog(changelogPath, manifest.version);
-        if (!manifest.changelog) return callback(new Error('Could not read changelog ' + safe.error.message));
+        if (!manifest.changelog) return callback(new Error('Could not read changelog'));
     }
 
     superagentEnd(function () {
