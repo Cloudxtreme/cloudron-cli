@@ -355,14 +355,8 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck) {
 
     // access restriction
     if (configure) {
-        var tmp = readlineSync.question('Restriction (NONE/admin/user)): ', {});
-
-        switch (tmp.toLowerCase()) {
-            case '': case 'none': accessRestriction = ''; break;
-            case 'admin': accessRestriction = 'roleAdmin'; break;
-            case 'user': accessRestriction = 'roleUser'; break;
-            default: exit('invalid access restriction');
-        }
+        var tmp = readlineSync.question(util.format('Use OAuth Proxy? [y/N]: '), {});
+        oauthProxy = tmp.toUpperCase() === 'Y';
     }
 
     // port bindings
