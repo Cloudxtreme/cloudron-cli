@@ -189,7 +189,10 @@ function addApp(manifest, baseDir, callback) {
 
 function parseChangelog(file, version) {
     var changelog = '';
-    var lines = fs.readFileSync(file, 'utf8').split('\n');
+    var data = safe.fs.readFileSync(file, 'utf8');
+    if (!data) return null;
+    var lines = data.split('\n');
+
     for (var i = 0; i < lines.length; i++) {
         if (lines[i] === '[' + version + ']') break;
     }
