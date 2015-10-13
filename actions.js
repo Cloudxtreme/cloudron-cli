@@ -345,6 +345,7 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck) {
 
     var location = app ? app.location : null;
     var accessRestriction = app ? app.accessRestriction : '';
+    var oauthProxy = app ? app.oauthProxy : false;
     var portBindings = app ? app.portBindings : {};
 
     // location
@@ -396,7 +397,8 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck) {
         manifest: manifest,
         location: location,
         portBindings: portBindings,
-        accessRestriction: accessRestriction
+        accessRestriction: accessRestriction,
+        oauthProxy: oauthProxy
     };
 
     var iconFilename = manifest.icon;
