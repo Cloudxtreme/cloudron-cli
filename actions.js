@@ -375,7 +375,7 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck) {
         }
 
         // singleUser
-        if (manifest.singleUser && (configure || accessRestriction === '')) {
+        if (manifest.singleUser && (configure || accessRestriction === null)) {
             accessRestriction = { users: [ helper.selectUserSync(result.users).id ] };
         }
 
