@@ -282,6 +282,18 @@ function list() {
     });
 }
 
+// Once we have group support also fetch groups here
+function getUsersAndGroups(callback) {
+    superagentEnd(function () {
+        return superagent.get(createUrl('/api/v1/users')).query({ access_token: config.token() });
+    }, function (error, result) {
+        if (error) exit(error);
+        if (result.statusCode !== 200) exit(util.format('Failed to get app.'.red, result.statusCode, result.text));
+
+        callback(null, { users: result.body.users, groups: [] });
+    });
+}
+
 function waitForFinishInstallation(appId, waitForHealthcheck, callback) {
     var currentProgress = '';
     var waitingForHealthcheck = false;
@@ -343,102 +355,111 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck) {
     assert(!appStoreId || typeof appStoreId === 'string');
     assert.strictEqual(typeof waitForHealthcheck, 'boolean');
 
-    var location = app ? app.location : null;
-    var accessRestriction = app ? app.accessRestriction : '';
-    var oauthProxy = app ? app.oauthProxy : false;
-    var portBindings = app ? app.portBindings : {};
-
-    // location
-    if (configure || location === null) {
-        location = readlineSync.question('Location: ', {});
-    }
-
-    // access restriction
-    if (configure) {
-        var tmp = readlineSync.question(util.format('Use OAuth Proxy? [y/N]: '), {});
-        oauthProxy = tmp.toUpperCase() === 'Y';
-    }
-
-    // port bindings
-    if (configure || (app && !_.isEqual(Object.keys(app.portBindings || { }).sort(), Object.keys(manifest.tcpPorts || { }).sort()))) {
-        // ask the user for port values if the ports are different in the app and the manifest
-        portBindings = {};
-        for (var env in (manifest.tcpPorts || {})) {
-            var defaultPort = (app && app.portBindings && app.portBindings[env]) ? app.portBindings[env] : (manifest.tcpPorts[env].defaultValue || '');
-            var port = readlineSync.question(manifest.tcpPorts[env].description + ' (default ' + env + '=' + defaultPort + '): ', {});
-            if (port === '') {
-                portBindings[env] = defaultPort;
-            } else if (isNaN(parseInt(port, 10))) {
-                console.log('Cleared port'.gray);
-            } else {
-                portBindings[env] = parseInt(port, 10);
-            }
-        }
-    } else if (!app) {
-        portBindings = {};
-        for (var env in (manifest.tcpPorts || {})) {
-            portBindings[env] = manifest.tcpPorts[env].defaultValue;
-        }
-    }
-
-    for (var binding in portBindings) {
-        console.log('%s: %s', binding, portBindings[binding]);
-    }
-
-    var data = {
-        appId: app ? app.id : null, // temporary hack for configure route bug
-        appStoreId: appStoreId || '',
-        manifest: manifest,
-        location: location,
-        portBindings: portBindings,
-        accessRestriction: accessRestriction,
-        oauthProxy: oauthProxy
-    };
-
-    var iconFilename = manifest.icon;
-
-    // FIXME: icon file must be read wrt manifest file base dir
-    if (iconFilename && iconFilename.slice(0, 7) === 'file://') {
-        iconFilename = iconFilename.slice(7);
-    }
-
-    var url, message;
-    if (!app) {
-        url = createUrl('/api/v1/apps/install');
-        message = 'installed';
-        if (iconFilename && fs.existsSync(iconFilename)) { // may not exist for appstore-id case
-            data.icon = fs.readFileSync(iconFilename).toString('base64');
-        }
-    } else if (configure) {
-        url = createUrl('/api/v1/apps/' + app.id + '/configure');
-        message = 'configured';
-    } else {
-        url = createUrl('/api/v1/apps/' + app.id + '/update');
-        message = 'updated';
-        if (iconFilename && fs.existsSync(iconFilename)) { // may not exist for appstore-id case
-            data.icon = fs.readFileSync(iconFilename).toString('base64');
-        }
-        data.force = true; // this allows installation over errored apps
-    }
-
-    superagentEnd(function () {
-        var req = superagent.post(url).query({ access_token: config.token() });
-        return req.send(data);
-    }, function (error, result) {
+    getUsersAndGroups(function (error, result) {
         if (error) exit(error);
-        if (result.statusCode !== 202) exit(util.format('Failed to install app.'.red, result.statusCode, result.text));
 
-        var appId = app ? app.id : result.body.id;
+        var location = app ? app.location : null;
+        var accessRestriction = app ? app.accessRestriction : '';
+        var oauthProxy = app ? app.oauthProxy : false;
+        var portBindings = app ? app.portBindings : {};
 
-        console.log('App is being %s with id:', message.bold, appId.bold);
+        // location
+        if (configure || location === null) {
+            location = readlineSync.question('Location: ', {});
+        }
 
-        waitForFinishInstallation(appId, waitForHealthcheck, function (error) {
-            if (error) {
-                return exit('\n\nApp installation error: %s'.red, error.message);
+        // access restriction
+        if (configure) {
+            var tmp = readlineSync.question(util.format('Use OAuth Proxy? [y/N]: '), {});
+            oauthProxy = tmp.toUpperCase() === 'Y';
+        }
+
+        // singleUser
+        if (manifest.singleUser && (configure || accessRestriction === '')) {
+            accessRestriction = 'user-' + helper.selectUserSync(result.users).id;
+        }
+
+        // port bindings
+        if (configure || (app && !_.isEqual(Object.keys(app.portBindings || { }).sort(), Object.keys(manifest.tcpPorts || { }).sort()))) {
+            // ask the user for port values if the ports are different in the app and the manifest
+            portBindings = {};
+            for (var env in (manifest.tcpPorts || {})) {
+                var defaultPort = (app && app.portBindings && app.portBindings[env]) ? app.portBindings[env] : (manifest.tcpPorts[env].defaultValue || '');
+                var port = readlineSync.question(manifest.tcpPorts[env].description + ' (default ' + env + '=' + defaultPort + '): ', {});
+                if (port === '') {
+                    portBindings[env] = defaultPort;
+                } else if (isNaN(parseInt(port, 10))) {
+                    console.log('Cleared port'.gray);
+                } else {
+                    portBindings[env] = parseInt(port, 10);
+                }
             }
+        } else if (!app) {
+            portBindings = {};
+            for (var env in (manifest.tcpPorts || {})) {
+                portBindings[env] = manifest.tcpPorts[env].defaultValue;
+            }
+        }
 
-            console.log('\n\nApp is %s.'.green, message);
-            exit();
+        for (var binding in portBindings) {
+            console.log('%s: %s', binding, portBindings[binding]);
+        }
+
+        var data = {
+            appId: app ? app.id : null, // temporary hack for configure route bug
+            appStoreId: appStoreId || '',
+            manifest: manifest,
+            location: location,
+            portBindings: portBindings,
+            accessRestriction: accessRestriction,
+            oauthProxy: oauthProxy
+        };
+
+        var iconFilename = manifest.icon;
+
+        // FIXME: icon file must be read wrt manifest file base dir
+        if (iconFilename && iconFilename.slice(0, 7) === 'file://') {
+            iconFilename = iconFilename.slice(7);
+        }
+
+        var url, message;
+        if (!app) {
+            url = createUrl('/api/v1/apps/install');
+            message = 'installed';
+            if (iconFilename && fs.existsSync(iconFilename)) { // may not exist for appstore-id case
+                data.icon = fs.readFileSync(iconFilename).toString('base64');
+            }
+        } else if (configure) {
+            url = createUrl('/api/v1/apps/' + app.id + '/configure');
+            message = 'configured';
+        } else {
+            url = createUrl('/api/v1/apps/' + app.id + '/update');
+            message = 'updated';
+            if (iconFilename && fs.existsSync(iconFilename)) { // may not exist for appstore-id case
+                data.icon = fs.readFileSync(iconFilename).toString('base64');
+            }
+            data.force = true; // this allows installation over errored apps
+        }
+
+        superagentEnd(function () {
+            var req = superagent.post(url).query({ access_token: config.token() });
+            return req.send(data);
+        }, function (error, result) {
+            if (error) exit(error);
+            if (result.statusCode !== 202) exit(util.format('Failed to install app.'.red, result.statusCode, result.text));
+
+            var appId = app ? app.id : result.body.id;
+
+            console.log('App is being %s with id:', message.bold, appId.bold);
+
+            waitForFinishInstallation(appId, waitForHealthcheck, function (error) {
+                if (error) {
+                    return exit('\n\nApp installation error: %s'.red, error.message);
+                }
+
+                console.log('\n\nApp is %s.'.green, message);
+                exit();
+            });
         });
     });
 }
