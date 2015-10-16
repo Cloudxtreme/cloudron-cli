@@ -19,7 +19,8 @@ exports = module.exports = {
     addBuild: addBuild,
     updateBuild: updateBuild,
     selectImage: selectImage,
-    selectBuild: selectBuild
+    selectBuild: selectBuild,
+    selectUserSync: selectUserSync
 };
 
 var wasRaw = process.isRaw;
@@ -142,4 +143,27 @@ function selectBuild(appId, latest, callback) {
     console.log();
 
     callback(null, builds[index]);
+}
+
+function selectUserSync(users) {
+    assert(typeof users === 'object');
+
+    if (users.length === 1) return users[0];
+
+    console.log();
+    console.log('Available users:');
+    users.forEach(function (user, index) {
+        console.log('[%s]\t%s - %s', index, user.id.cyan, user.email);
+    });
+
+    var index = -1;
+    while (true) {
+        index = parseInt(readlineSync.question('Choose user [0-' + (users.length-1) + ']: ', {}));
+        if (isNaN(index) || index < 0 || index > users.length-1) console.log('Invalid selection'.red);
+        else break;
+    }
+
+    console.log();
+
+    return users[index];
 }
