@@ -359,7 +359,7 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck) {
         if (error) exit(error);
 
         var location = app ? app.location : null;
-        var accessRestriction = app ? app.accessRestriction : '';
+        var accessRestriction = app ? app.accessRestriction : null;
         var oauthProxy = app ? app.oauthProxy : false;
         var portBindings = app ? app.portBindings : {};
 
@@ -376,7 +376,7 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck) {
 
         // singleUser
         if (manifest.singleUser && (configure || accessRestriction === '')) {
-            accessRestriction = 'user-' + helper.selectUserSync(result.users).id;
+            accessRestriction = { users: [ helper.selectUserSync(result.users).id ] };
         }
 
         // port bindings
