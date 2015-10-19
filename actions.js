@@ -776,6 +776,7 @@ function init() {
 
     var manifestTemplate = fs.readFileSync(__dirname + '/CloudronManifest.json.ejs', 'utf8');
     var dockerfileTemplate = fs.readFileSync(__dirname + '/Dockerfile.ejs', 'utf8');
+    var descriptionTemplate = fs.readFileSync(__dirname + '/DESCRIPTION.md.ejs', 'utf8');
 
     var data = { };
 
@@ -796,6 +797,9 @@ function init() {
 
     if (fs.existsSync('DESCRIPTION.md')) {
         console.log('DESCRIPTION.md already exists, skipping');
+    } else {
+        var description = ejs.render(descriptionTemplate, data);
+        fs.writeFileSync('DESCRIPTION.md', description, 'utf8');
     }
 }
 
