@@ -451,7 +451,10 @@ function printBuildLog(buildId, callback) {
             console.log(line); // intentionally raw without json decode
         });
 
-        stream.on('end', callback);
+        stream.on('end', function () {
+            console.log();
+            callback();
+        });
     });
 }
 
@@ -505,6 +508,7 @@ function followBuildLog(buildId, raw, callback) {
 
         if (error && error.status === 204) { // build already finished
             console.log('Building already finished. Fetching full logs'.cyan);
+            console.log();
 
             return printBuildLog(buildId, callback);
         }
