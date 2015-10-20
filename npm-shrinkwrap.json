@@ -3,9 +3,9 @@
   "version": "0.3.4",
   "dependencies": {
     "cloudron-manifestformat": {
-      "version": "2.0.0",
-      "from": "cloudron-manifestformat@>=2.0.0 <3.0.0",
-      "resolved": "https://registry.npmjs.org/cloudron-manifestformat/-/cloudron-manifestformat-2.0.0.tgz",
+      "version": "2.0.1",
+      "from": "cloudron-manifestformat@2.0.1",
+      "resolved": "https://registry.npmjs.org/cloudron-manifestformat/-/cloudron-manifestformat-2.0.1.tgz",
       "dependencies": {
         "cron": {
           "version": "1.0.9",
