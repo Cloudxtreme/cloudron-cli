@@ -545,23 +545,10 @@ function dockerignoreMatcher(dockerignorePath) {
         var lines = fs.readFileSync(dockerignorePath, 'utf8').split('\n');
 
         patterns = lines.filter(function (line) { return line.trim().length !== 0 && line[0] !== '#'; });
-
-        patterns = patterns.map(function (pattern) {
-            var n = pattern[0] === '!';
-            return { pattern: n ? pattern.slice(1) : pattern, negation: n } ;
-        });
     }
 
     return function ignore(path) {
-        var matchedIdx = -1;
-        for (var i = 0; i < patterns.length; i++) {
-            var matched = micromatch.isMatch(path, patterns[i].pattern, { dot: true });
-            if (matched) matchedIdx = i;
-        }
-
-        console.log(path, matchedIdx !== -1 && !patterns[matchedIdx].negation);
-
-        return matchedIdx !== -1 && !patterns[matchedIdx].negation;
+        return micromatch([ path ], patterns, { dot: true }).length == 1;
     };
 }
 
