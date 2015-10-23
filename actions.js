@@ -795,7 +795,7 @@ function init() {
     var manifestTemplate = fs.readFileSync(__dirname + '/CloudronManifest.json.ejs', 'utf8');
     var dockerfileTemplate = fs.readFileSync(__dirname + '/Dockerfile.ejs', 'utf8');
     var descriptionTemplate = fs.readFileSync(__dirname + '/DESCRIPTION.md.ejs', 'utf8');
-    var dockerignoreTemplate = fs.readFileSync(__dirname + '/.dockerignore', 'utf8');
+    var dockerignoreTemplate = fs.readFileSync(__dirname + '/dockerignore.ejs', 'utf8');
 
     var data = { };
 
