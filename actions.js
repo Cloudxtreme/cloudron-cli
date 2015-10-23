@@ -348,17 +348,18 @@ function waitForFinishInstallation(appId, waitForHealthcheck, callback) {
 
 // if app is falsy, we install a new app
 // if configure is truthy we will prompt for all settings
-function installer(app, configure, manifest, appStoreId, waitForHealthcheck) {
+function installer(app, configure, manifest, appStoreId, waitForHealthcheck, installLocation) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof configure, 'boolean');
     assert.strictEqual(typeof manifest, 'object');
     assert(!appStoreId || typeof appStoreId === 'string');
     assert.strictEqual(typeof waitForHealthcheck, 'boolean');
+    assert(!installLocation || typeof installLocation === 'string');
 
     getUsersAndGroups(function (error, result) {
         if (error) exit(error);
 
-        var location = app ? app.location : null;
+        var location = typeof installLocation === 'string' ? installLocation : (app ? app.location : null);
         var accessRestriction = app ? app.accessRestriction : null;
         var oauthProxy = app ? app.oauthProxy : false;
         var portBindings = app ? app.portBindings : {};
@@ -474,7 +475,7 @@ function installFromStore(options) {
         if (error) return exit(util.format('Failed to get app info: %s', error.message));
         if (result.statusCode !== 200) return exit(util.format('Failed to get app info from store.'.red, result.statusCode, result.text));
 
-        installer(null /* app */, false /* configure */, result.body.manifest, parts[0] /* appStoreId */, !!options.wait);
+        installer(null /* app */, false /* configure */, result.body.manifest, parts[0] /* appStoreId */, !!options.wait, options.location);
     });
 }
 
@@ -503,7 +504,7 @@ function install(options) {
 
             manifest.dockerImage = image;
 
-            installer(app, !!options.configure, manifest, null /* appStoreId */, !!options.wait);
+            installer(app, !!options.configure, manifest, null /* appStoreId */, !!options.wait, options.location);
         });
     });
 }

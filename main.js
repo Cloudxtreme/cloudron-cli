@@ -65,6 +65,7 @@ program.command('install')
     .option('--select', 'Select a build')
     .option('--wait', 'Wait for healthcheck to succeed')
     .option('-c, --configure', 'Configure installation')
+    .option('-l, --location <subdomain>', 'Subdomain location')
     .option('--appstore-id <appid@version>', 'Use app from the store')
     .action(actions.install);
 
