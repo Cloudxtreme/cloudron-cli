@@ -18,7 +18,8 @@ var superagent = require('superagent'),
     manifestFormat = require('cloudron-manifestformat'),
     semver = require('semver'),
     cloudronActions = require('./actions.js'),
-    split = require('split');
+    split = require('split'),
+    micromatch = require('micromatch');
 
 require('colors');
 
@@ -537,6 +538,14 @@ function verifyDockerfile(dockerFilePath) {
     return new Error('Base image must be cloudron/base:0.5.0');
 }
 
+function parseDockerignore(dockerignorePath) {
+    if (!fs.existsSync(dockerignorePath)) return [ ];
+
+    var lines = fs.readFileSync(dockerignorePath, 'utf8').split('\n');
+
+    return lines.filter(function (line) { return line.trim().length !== 0 && line[0] !== '#'; });
+}
+
 function build(options) {
     helper.verifyArguments(arguments);
 
@@ -556,11 +565,16 @@ function build(options) {
     console.log('Building %s@%s', manifest.id.bold, manifest.version.bold);
     console.log();
 
+    var sourceDir = path.dirname(manifestFilePath);
     var sourceArchiveFilePath = util.format('/tmp/%s.tar.gz', manifest.id);
+    var dockerignoreFilePath = path.join(sourceDir, '.dockerignore');
+    var ignorePatterns = parseDockerignore(dockerignoreFilePath);
 
     var stream = tar.pack(path.dirname(manifestFilePath), {
         ignore: function (name) {
-            return name === (path.dirname(manifestFilePath) + '/.git'); // TODO: use minimatch and .dockerignore
+            name = name.slice(sourceDir.length + 1); // make name as relative path
+            var match = micromatch([ name ], ignorePatterns); // micromatch is array mode matches exclusively
+            return match.length === 1;
         }
     }).pipe(fs.createWriteStream(sourceArchiveFilePath));
 
