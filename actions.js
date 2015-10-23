@@ -33,6 +33,7 @@ exports = module.exports = {
     logs: logs,
     exec: exec,
     info: info,
+    inspect: inspect,
     restart: restart,
     createOAuthAppCredentials: createOAuthAppCredentials,
     init: init,
@@ -594,6 +595,23 @@ function info(options) {
         console.log(util.inspect(app, { depth: null }));
         exit();
    });
+}
+
+function inspect(options) {
+    helper.verifyArguments(arguments);
+
+    if (options.format) {
+        var out = options.format;
+        out = out.replace(/%hostname/g, config.cloudron());
+        out = out.replace(/%appstore/g, config.appStoreOrigin());
+        out = out.replace(/%appstoreOrigin/g, config.appStoreOrigin().slice(8));
+        console.log(out);
+    } else {
+        console.log('Origin:   %s', config.cloudron().cyan);
+        console.log('Appstore: %s', config.appStoreOrigin().slice(8).cyan);
+    }
+
+    exit();
 }
 
 function restart(options) {

@@ -53,7 +53,13 @@ program.command('help')
 program.command('info')
     .description('Application info')
     .option('--app <id>', 'App id')
+    .option('-f --format <format>', 'Info format string: \n\t\t\t\t %hostname - hostname')
     .action(actions.info);
+
+program.command('inspect')
+    .description('Inspect a Cloudron')
+    .option('-f --format <format>', 'Info format string: \n\t\t\t\t %hostname - hostname \n\t\t\t\t %appstore - appstore url \n\t\t\t\t %appstoreOrigin - appstore origin')
+    .action(actions.inspect);
 
 program.command('init')
     .description('Creates a new CloudronManifest.json and Dockerfile')
