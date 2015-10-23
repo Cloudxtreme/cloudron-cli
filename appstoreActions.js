@@ -538,12 +538,31 @@ function verifyDockerfile(dockerFilePath) {
     return new Error('Base image must be cloudron/base:0.5.0');
 }
 
-function parseDockerignore(dockerignorePath) {
-    if (!fs.existsSync(dockerignorePath)) return [ ];
+function dockerignoreMatcher(dockerignorePath) {
+    var patterns = [ ];
 
-    var lines = fs.readFileSync(dockerignorePath, 'utf8').split('\n');
+    if (fs.existsSync(dockerignorePath)) {
+        var lines = fs.readFileSync(dockerignorePath, 'utf8').split('\n');
 
-    return lines.filter(function (line) { return line.trim().length !== 0 && line[0] !== '#'; });
+        patterns = lines.filter(function (line) { return line.trim().length !== 0 && line[0] !== '#'; });
+
+        patterns = patterns.map(function (pattern) {
+            var n = pattern[0] === '!';
+            return { pattern: n ? pattern.slice(1) : pattern, negation: n } ;
+        });
+    }
+
+    return function ignore(path) {
+        var matchedIdx = -1;
+        for (var i = 0; i < patterns.length; i++) {
+            var matched = micromatch.isMatch(path, patterns[i].pattern, { dot: true });
+            if (matched) matchedIdx = i;
+        }
+
+        console.log(path, matchedIdx !== -1 && !patterns[matchedIdx].negation);
+
+        return matchedIdx !== -1 && !patterns[matchedIdx].negation;
+    };
 }
 
 function build(options) {
@@ -568,13 +587,11 @@ function build(options) {
     var sourceDir = path.dirname(manifestFilePath);
     var sourceArchiveFilePath = util.format('/tmp/%s.tar.gz', manifest.id);
     var dockerignoreFilePath = path.join(sourceDir, '.dockerignore');
-    var ignorePatterns = parseDockerignore(dockerignoreFilePath);
+    var ignoreMatcher = dockerignoreMatcher(dockerignoreFilePath);
 
     var stream = tar.pack(path.dirname(manifestFilePath), {
         ignore: function (name) {
-            name = name.slice(sourceDir.length + 1); // make name as relative path
-            var match = micromatch([ name ], ignorePatterns); // micromatch is array mode matches exclusively
-            return match.length === 1;
+            return ignoreMatcher(name.slice(sourceDir.length + 1)); // make name as relative path
         }
     }).pipe(fs.createWriteStream(sourceArchiveFilePath));
 
