@@ -33,6 +33,7 @@ exports = module.exports = {
     logs: logs,
     exec: exec,
     info: info,
+    inspectFormatHelp: inspectFormatHelp,
     inspect: inspect,
     restart: restart,
     createOAuthAppCredentials: createOAuthAppCredentials,
@@ -597,6 +598,18 @@ function info(options) {
    });
 }
 
+var appFormatOptions = ['id', 'location', 'appStoreId', 'installationState', 'installationProgress', 'runState', 'health', 'location', 'accessRestriction', 'oauthProxy', 'lastBackupId' ];
+
+function inspectFormatHelp() {
+    var out = 'Info format string:\n';
+    out += '\t\t %hostname - hostname\n';
+    out += '\t\t %appstore - appstore url\n';
+    out += '\t\t %appstoreOrigin - appstore origin\n';
+    out += '\t\t %apps[<appformat>] - app listing, one app per line\n';
+    out += '\t\t   appformat: %' + appFormatOptions.join(' %') + '\n';
+    return out;
+}
+
 function inspect(options) {
     helper.verifyArguments(arguments);
 
@@ -605,7 +618,6 @@ function inspect(options) {
         if (result.statusCode === 401) return exit('Use ' + 'cloudron login'.yellow + ' first');
         if (result.statusCode !== 200) return exit(util.format('Failed to list apps. %s - %s'.red, result.statusCode, result.text));
 
-        var appFormatOptions = ['id', 'location', 'appStoreId', 'installationState', 'installationProgress', 'runState', 'health', 'location', 'accessRestriction', 'oauthProxy', 'lastBackupId' ];
         var appFormat = '%id:%location:%appStoreId';
         if (options.format && options.format.match(/%apps\[.*\]/) !== null) {
             appFormat = options.format.match(/%apps\[.*\]/)[0].slice(6, -1);
