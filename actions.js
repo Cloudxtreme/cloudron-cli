@@ -597,23 +597,20 @@ function info(options) {
    });
 }
 
-function inspect(options) {
+function inspect() {
     helper.verifyArguments(arguments);
 
-    if (options.apps) {
-        superagent.get(createUrl('/api/v1/apps')).query({ access_token: config.token() }).end(function (error, result) {
-            if (error) return exit(error);
-            if (result.statusCode === 401) return exit('Use ' + 'cloudron login'.yellow + ' first');
-            if (result.statusCode !== 200) return exit(util.format('Failed to list apps. %s - %s'.red, result.statusCode, result.text));
+    superagent.get(createUrl('/api/v1/apps')).query({ access_token: config.token() }).end(function (error, result) {
+        if (error) return exit(error);
+        if (result.statusCode === 401) return exit('Use ' + 'cloudron login'.yellow + ' first');
+        if (result.statusCode !== 200) return exit(util.format('Failed to list apps. %s - %s'.red, result.statusCode, result.text));
 
-            console.log(JSON.stringify(result.body.apps));
-        });
-    } else {
         console.log(JSON.stringify({
             cloudron: config.cloudron(),
-            appStoreOrigin: config.appStoreOrigin()
+            appStoreOrigin: config.appStoreOrigin(),
+            apps: result.body.apps
         }));
-    }
+    });
 }
 
 function restart(options) {

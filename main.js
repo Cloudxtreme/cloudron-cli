@@ -57,7 +57,6 @@ program.command('info')
 
 program.command('inspect')
     .description('Inspect a Cloudron returning raw JSON')
-    .option('--apps', 'Inspect apps')
     .action(actions.inspect);
 
 program.command('init')
