@@ -33,7 +33,6 @@ exports = module.exports = {
     logs: logs,
     exec: exec,
     info: info,
-    inspectFormatHelp: inspectFormatHelp,
     inspect: inspect,
     restart: restart,
     createOAuthAppCredentials: createOAuthAppCredentials,
@@ -598,49 +597,23 @@ function info(options) {
    });
 }
 
-var appFormatOptions = ['id', 'location', 'appStoreId', 'installationState', 'installationProgress', 'runState', 'health', 'location', 'accessRestriction', 'oauthProxy', 'lastBackupId' ];
-
-function inspectFormatHelp() {
-    var out = 'Info format string:\n';
-    out += '\t\t %hostname - hostname\n';
-    out += '\t\t %appstore - appstore url\n';
-    out += '\t\t %appstoreOrigin - appstore origin\n';
-    out += '\t\t %apps[<appformat>] - app listing, one app per line\n';
-    out += '\t\t   appformat: %' + appFormatOptions.join(' %') + '\n';
-    return out;
-}
-
 function inspect(options) {
     helper.verifyArguments(arguments);
 
-    superagent.get(createUrl('/api/v1/apps')).query({ access_token: config.token() }).end(function (error, result) {
-        if (error) return exit(error);
-        if (result.statusCode === 401) return exit('Use ' + 'cloudron login'.yellow + ' first');
-        if (result.statusCode !== 200) return exit(util.format('Failed to list apps. %s - %s'.red, result.statusCode, result.text));
+    if (options.apps) {
+        superagent.get(createUrl('/api/v1/apps')).query({ access_token: config.token() }).end(function (error, result) {
+            if (error) return exit(error);
+            if (result.statusCode === 401) return exit('Use ' + 'cloudron login'.yellow + ' first');
+            if (result.statusCode !== 200) return exit(util.format('Failed to list apps. %s - %s'.red, result.statusCode, result.text));
 
-        var appFormat = '%id:%location:%appStoreId';
-        if (options.format && options.format.match(/%apps\[.*\]/) !== null) {
-            appFormat = options.format.match(/%apps\[.*\]/)[0].slice(6, -1);
-        }
-
-        var appList = result.body.apps.map(function (app) {
-            var out = appFormat;
-            appFormatOptions.forEach(function (option) { out = out.replace(new RegExp('%' + option, 'g'), app[option]); });
-            return out;
-        }).join('\n');
-
-        if (options.format) {
-            var out = options.format;
-            out = out.replace(/%hostname/g, config.cloudron());
-            out = out.replace(/%appstore/g, config.appStoreOrigin());
-            out = out.replace(/%apps\[.*\]/g, appList);
-            out = out.replace(/%appstoreOrigin/g, config.appStoreOrigin().slice(8));
-            console.log(out);
-        } else {
-            console.log('Origin:   %s', config.cloudron().cyan);
-            console.log('Appstore: %s', config.appStoreOrigin().slice(8).cyan);
-        }
-    });
+            console.log(JSON.stringify(result.body.apps));
+        });
+    } else {
+        console.log(JSON.stringify({
+            cloudron: config.cloudron(),
+            appStoreOrigin: config.appStoreOrigin()
+        }));
+    }
 }
 
 function restart(options) {
