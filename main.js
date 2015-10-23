@@ -58,7 +58,7 @@ program.command('info')
 
 program.command('inspect')
     .description('Inspect a Cloudron')
-    .option('-f --format <format>', 'Info format string: \n\t\t\t\t %hostname - hostname \n\t\t\t\t %appstore - appstore url \n\t\t\t\t %appstoreOrigin - appstore origin')
+    .option('-f --format <format>', 'Info format string: \n\t\t\t\t %hostname - hostname \n\t\t\t\t %appstore - appstore url \n\t\t\t\t %appstoreOrigin - appstore origin \n\t\t\t\t %apps[appformat] - app listing')
     .action(actions.inspect);
 
 program.command('init')
