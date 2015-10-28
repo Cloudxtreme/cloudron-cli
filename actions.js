@@ -44,11 +44,11 @@ exports = module.exports = {
 
 function showDeveloperModeNotice() {
     console.log('Please enable the developer mode on your Cloudron first.'.red);
-    console.log('You have to login to %s and enable it in your account settings.', 'https://my-' + config.cloudron() + '/#/settings');
+    console.log('You have to login to %s and enable it in your account settings.', 'https://' + config.apiEndpoint() + '/#/settings');
 }
 
 function createUrl(api) {
-    return 'https://my-' + config.cloudron() + api;
+    return 'https://' + config.apiEndpoint() + api;
 }
 
 function ensureLoggedIn() {
@@ -228,16 +228,34 @@ function startApp(app, callback) {
     });
 }
 
+function detectCloudronApiEndpoint(cloudron, callback) {
+    if (cloudron.indexOf('https://') === 0) cloudron = cloudron.slice('https://'.length);
+    if (cloudron.indexOf('my-') === 0) cloudron = cloudron.slice('my-'.length);
+    if (cloudron.indexOf('my.') === 0) cloudron = cloudron.slice('my.'.length);
+    if (cloudron.indexOf('/') !== -1) cloudron = cloudron.slice(0, cloudron.indexOf('/'));
+
+    superagent.get('https://my-' + cloudron + '/api/v1/cloudron/status').end(function (error, result) {
+        if (!error && result.statusCode === 200 && result.body.version) return callback(null, { cloudron: cloudron, apiEndpoint: 'my-' + cloudron });
+
+        superagent.get('https://my.' + cloudron + '/api/v1/cloudron/status').end(function (error, result) {
+            if (!error && result.statusCode === 200 && result.body.version) return callback(null, { cloudron: cloudron, apiEndpoint: 'my.' + cloudron });
+
+            callback('Cloudron not found');
+        });
+    });
+}
+
 function login(cloudron, options) {
     cloudron = cloudron || readlineSync.question('Cloudron Hostname: ', {});
 
-    if (cloudron.indexOf('https://') === 0) cloudron = cloudron.slice('https://'.length);
-    if (cloudron.indexOf('my-') === 0) cloudron = cloudron.slice('my-'.length);
-    if (cloudron.indexOf('/') !== -1) cloudron = cloudron.slice(0, cloudron.indexOf('/'));
+    detectCloudronApiEndpoint(cloudron, function (error, result) {
+        if (error) exit(error);
 
-    config.set('cloudron', cloudron);
+        config.set('cloudron', result.cloudron);
+        config.set('apiEndpoint', result.apiEndpoint);
 
-    authenticate(options);
+        authenticate(options);
+    });
 }
 
 function logout() {
@@ -249,8 +267,7 @@ function open() {
     getApp(null, function (error, app) {
         if (error || !app) exit('No app found');
 
-        // TODO handle custom domains
-        var domain = app.location === '' ? config.cloudron() : (app.location + '-' + config.cloudron());
+        var domain = app.location === '' ? config.cloudron() : (app.location + (config.apiEndpoint().indexOf('my-') === 0 ? '-' : '.') + config.cloudron());
         opn('https://' + domain);
     });
 }
@@ -607,6 +624,7 @@ function inspect() {
 
         console.log(JSON.stringify({
             cloudron: config.cloudron(),
+            apiEndpoint: config.apiEndpoint(),
             appStoreOrigin: config.appStoreOrigin(),
             apps: result.body.apps
         }));
@@ -725,7 +743,7 @@ function exec(cmd, options) {
         };
 
         var req = https.request({
-            hostname: 'my-' + config.cloudron(),
+            hostname: config.apiEndpoint(),
             path: '/api/v1/apps/' + app.id + '/exec?' + querystring.stringify(query),
             method: 'GET',
             headers: {
@@ -783,8 +801,8 @@ function createOAuthAppCredentials(options) {
         console.log('ClientSecret: %s', result.body.clientSecret.cyan);
         console.log('RedirectURI:  %s', result.body.redirectURI.cyan);
         console.log();
-        console.log('authorizationURL: %s', 'https://my-' + config.cloudron() + '/api/v1/oauth/dialog/authorize');
-        console.log('tokenURL:         %s', 'https://my-' + config.cloudron() + '/api/v1/oauth/token');
+        console.log('authorizationURL: %s', 'https://' + config.apiEndpoint() + '/api/v1/oauth/dialog/authorize');
+        console.log('tokenURL:         %s', 'https://' + config.apiEndpoint() + '/api/v1/oauth/token');
     });
 }
 
