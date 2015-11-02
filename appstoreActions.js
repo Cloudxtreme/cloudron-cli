@@ -43,7 +43,7 @@ function superagentEnd(requestFactory, callback) {
     requestFactory().end(function (error, result) {
         if (error) return callback(error);
         if (result.statusCode === 401) return authenticate({ error: true }, superagentEnd.bind(null, requestFactory, callback));
-        if (result.statusCode === 403) return callback(result.body);
+        if (result.statusCode === 403) return callback(new Error(result.type === 'application/javascript' ? JSON.stringify(result.body) : result.text));
         callback(error, result);
     });
 }
