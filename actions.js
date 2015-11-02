@@ -567,6 +567,22 @@ function uninstall(options) {
     });
 }
 
+function logPrinter(data) {
+    var obj = JSON.parse(data);
+
+    var source = obj.source, message;
+
+    if (obj.message === null) {
+        message = '[large binary blob skipped]';
+    } else if (typeof obj.message === 'string') {
+        message = obj.message;
+    } else if (util.isArray(obj.message)) {
+        message = (new Buffer(obj.message)).toString('utf8');
+    }
+
+    console.log('[%s] %s', source.yellow, message);
+}
+
 function logs(options) {
     helper.verifyArguments(arguments);
 
@@ -579,17 +595,25 @@ function logs(options) {
         if (!options.tail) {
             superagent.get(createUrl('/api/v1/apps/' + app.id + '/logs'))
                 .query({ access_token: config.token() })
-                .on('error', exit)
-                .pipe(process.stdout);
+                .buffer(false)
+                .end(function (error, res) {
+                    if (error) return exit(error);
+
+                    res.setEncoding('utf8');
+                    res.on('data', logPrinter);
+                    res.on('error', process.exit);
+                    res.on('end', process.exit);
+                });
+
             return;
         }
 
-        var es = new EventSource(createUrl('/api/v1/apps/' + app.id + '/logstream') + '?fromLine=-10&access_token=' + config.token(),
+        var es = new EventSource(createUrl('/api/v1/apps/' + app.id + '/logstream') + '?lines=10&access_token=' + config.token(),
                                  { rejectUnauthorized: false }); // not sure why this is needed
 
-        es.on('message', function (e) { // e { type, data, lastEventId }. lastEventId is the line number
+        es.on('message', function (e) { // e { type, data, lastEventId }. lastEventId is the timestamp
             var l = safe.JSON.parse(e.data); // lineNumber, timestamp, log
-            console.log("%s %s", l.timestamp.gray, l.log);
+            logPrinter(l);
         });
 
         es.on('error', function (error) {
