@@ -580,7 +580,8 @@ function logPrinter(data) {
         message = (new Buffer(obj.message)).toString('utf8');
     }
 
-    console.log('[%s] %s', source.yellow, message);
+    var ts = new Date(obj.realtimeTimestamp/1000).toTimeString().split(' ')[0];
+    console.log('%s [%s] %s', ts, source.yellow, message);
 }
 
 function logs(options) {
@@ -612,8 +613,7 @@ function logs(options) {
                                  { rejectUnauthorized: false }); // not sure why this is needed
 
         es.on('message', function (e) { // e { type, data, lastEventId }. lastEventId is the timestamp
-            var l = safe.JSON.parse(e.data); // lineNumber, timestamp, log
-            logPrinter(l);
+            logPrinter(e.data);
         });
 
         es.on('error', function (error) {
