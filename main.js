@@ -131,6 +131,10 @@ program.command('unpublish')
     .option('-f, --force', 'Do not ask anything')
     .action(appstoreActions.unpublish);
 
+program.command('published')
+    .description('List published apps')
+    .action(appstoreActions.listPublishedApps);
+
 if (!process.argv.slice(2).length) {
     program.outputHelp();
 } else { // https://github.com/tj/commander.js/issues/338

@@ -31,7 +31,8 @@ exports = module.exports = {
     publish: publish,
     unpublish: unpublish,
     build: build,
-    buildLogs: buildLogs
+    buildLogs: buildLogs,
+    listPublishedApps: listPublishedApps
 };
 
 function createUrl(api) {
@@ -645,5 +646,34 @@ function buildLogs(options) {
         if (options.tail) return followBuildLog(build.id, exit);
 
         printBuildLog(build.id, exit);
+    });
+}
+
+// TODO currently no pagination, only needed once we have users with more than 100 apps
+function listPublishedApps(options) {
+    helper.verifyArguments(arguments);
+
+    superagentEnd(function () {
+        return superagent.get(createUrl('/api/v1/developers/apps?per_page=100'))
+        .query({ accessToken: config.appStoreToken() })
+        .send({ });
+    }, function (error, result) {
+        if (error) return exit(util.format('Failed to get list of published apps: %s', error.message.red));
+        if (result.statusCode !== 200) return exit(util.format('Failed to get list of published apps (statusCode %s): \n%s', result.statusCode, result.body && result.body.message ? result.body.message.red : result.text));
+
+        if (result.body.apps.length === 0) return console.log('No apps published.');
+
+        var t = new Table();
+
+        result.body.apps.forEach(function (app) {
+            t.cell('Id', app.id);
+            t.cell('Latest Version', app.manifest.version);
+            t.cell('Publish State', app.publishState);
+            t.cell('Creation Date', new Date(app.creationDate));
+            t.newRow();
+        });
+
+        console.log();
+        console.log(t.toString());
     });
 }
