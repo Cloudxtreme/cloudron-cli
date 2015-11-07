@@ -29,6 +29,7 @@ exports = module.exports = {
     info: info,
     listVersions: listVersions,
     publish: publish,
+    upload: upload,
     unpublish: unpublish,
     build: build,
     buildLogs: buildLogs,
@@ -326,7 +327,7 @@ function submitAppForReview(manifest, callback) {
     });
 }
 
-function publish(options) {
+function upload(options) {
     helper.verifyArguments(arguments);
 
     // try to find the manifest of this project
@@ -340,8 +341,6 @@ function publish(options) {
     if (error) return exit(error.message);
 
     var manifest = result.manifest;
-
-    if (options.submit) return submitAppForReview(manifest, exit);
 
     // ensure the app is known on the appstore side
     addApp(manifest, path.dirname(manifestFilePath), function () {
@@ -366,6 +365,24 @@ function publish(options) {
             });
         });
     });
+}
+
+function publish() {
+    helper.verifyArguments(arguments);
+
+    // try to find the manifest of this project
+    var manifestFilePath = helper.locateManifest();
+    if (!manifestFilePath) return exit('No CloudronManifest.json found');
+
+    var result = manifestFormat.parseFile(manifestFilePath);
+    if (result.error) return exit(result.error.message);
+
+    var error = manifestFormat.checkAppstoreRequirements(result.manifest);
+    if (error) return exit(error.message);
+
+    var manifest = result.manifest;
+
+    submitAppForReview(manifest, exit);
 }
 
 function unpublish(options) {

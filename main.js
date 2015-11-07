@@ -108,10 +108,13 @@ program.command('restart')
     .action(actions.restart);
 
 program.command('publish')
-    .description('Publish app to the store')
-    .option('-f, --force', 'Update existing version')
-    .option('-s, --submit', 'Submit app for review')
+    .description('Publish app to the store (for review)')
     .action(appstoreActions.publish);
+
+program.command('upload')
+    .description('Upload app to the store for testing')
+    .option('-f, --force', 'Update existing version')
+    .action(appstoreActions.upload);
 
 program.command('versions')
     .description('List published versions')
