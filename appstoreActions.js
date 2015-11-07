@@ -81,31 +81,6 @@ function logout() {
     console.log('Done.'.green);
 }
 
-function listApps() {
-    superagentEnd(function () {
-        return superagent.get(createUrl('/api/v1/developers/apps')).query({ accessToken: config.appStoreToken() });
-    }, function (error, result) {
-        if (error) exit(util.format('Failed to list apps: %s', error.message.red));
-        if (result.statusCode !== 200) exit(util.format('Failed to list apps: %s message: %s', result.statusCode, result.text));
-
-        if (result.body.apps.length === 0) return console.log('No apps installed.');
-
-        var t = new Table();
-
-        result.body.apps.forEach(function (app) {
-            t.cell('Id', app.id);
-            t.cell('Title', app.manifest.title);
-            t.cell('Latest Version', app.manifest.version);
-            t.cell('Publish State', app.publishState);
-            t.cell('Creation Date', app.creationDate);
-            t.newRow();
-        });
-
-        console.log();
-        console.log(t.toString());
-    });
-}
-
 function info(app) {
     helper.getAppStoreId(app, function (error, appStoreId) {
         if (error) exit(error);
