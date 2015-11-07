@@ -125,8 +125,6 @@ function info(app) {
 function listVersions(options) {
     helper.verifyArguments(arguments);
 
-    if (options.apps) return listApps(options);
-
     helper.getAppStoreId(options.app, function (error, appStoreId) {
         if (error) exit(error);
         if (!appStoreId) exit('This project is not linked to any application in the store. Use the ' + 'link'.yellow.bold + ' command first.');

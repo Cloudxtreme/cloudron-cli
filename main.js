@@ -116,7 +116,6 @@ program.command('publish')
 program.command('versions')
     .description('List published versions')
     .option('--app <id>', 'App id')
-    .option('--apps', 'List all published apps')
     .option('--raw', 'Dump versions as json')
     .action(appstoreActions.listVersions);
 
