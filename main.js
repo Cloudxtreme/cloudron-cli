@@ -143,7 +143,7 @@ if (!process.argv.slice(2).length) {
     // deal first with global flags!
     program.parse(process.argv);
 
-    var knownCommand = program.commands.some(function (command) { return command._name === process.argv[2]; });
+    var knownCommand = program.commands.some(function (command) { return command._name === process.argv[2] || command._alias === process.argv[2]; });
     if (!knownCommand) {
         console.error('Unknown command: ' + process.argv[2]);
         process.exit(1);
