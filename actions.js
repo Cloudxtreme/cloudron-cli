@@ -616,7 +616,7 @@ function logs(options) {
                                  { rejectUnauthorized: false }); // not sure why this is needed
 
         es.on('message', function (e) { // e { type, data, lastEventId }. lastEventId is the timestamp
-            logPrinter(e.data);
+            logPrinter(JSON.parse(e.data));
         });
 
         es.on('error', function (error) {
