@@ -42,6 +42,8 @@ exports = module.exports = {
     createUrl: createUrl
 };
 
+var NO_APP_FOUND_ERROR_STRING = '\nCannot find a matching app.\n' + 'Apps installed from the store are not picked automatically.\n'.gray;
+
 function showDeveloperModeNotice() {
     console.log('Please enable the developer mode on your Cloudron first.'.red);
     console.log('You have to login to %s and enable it in your account settings.', 'https://' + config.apiEndpoint() + '/#/settings');
@@ -265,7 +267,7 @@ function logout() {
 
 function open() {
     getApp(null, function (error, app) {
-        if (error || !app) exit('No app found');
+        if (error || !app) exit(NO_APP_FOUND_ERROR_STRING);
 
         var domain = app.location === '' ? config.cloudron() : (app.location + (config.apiEndpoint().indexOf('my-') === 0 ? '-' : '.') + config.cloudron());
         opn('https://' + domain);
@@ -534,7 +536,7 @@ function uninstall(options) {
     getApp(appId, function (error, app) {
         if (error) exit(error);
 
-        if (!app) exit('No installed app here');
+        if (!app) exit(NO_APP_FOUND_ERROR_STRING);
 
         console.log('Will uninstall app at location %s', app.location.yellow.bold);
 
@@ -591,7 +593,7 @@ function logs(options) {
     getApp(appId, function (error, app) {
         if (error) exit(error);
 
-        if (!app) exit('Cannot find any installed app');
+        if (!app) exit(NO_APP_FOUND_ERROR_STRING);
 
         if (!options.tail) {
             superagent.get(createUrl('/api/v1/apps/' + app.id + '/logs'))
@@ -631,7 +633,7 @@ function info(options) {
     getApp(appId, function (error, app) {
         if (error) exit(error);
 
-        if (!app) exit('No installed app here');
+        if (!app) exit(NO_APP_FOUND_ERROR_STRING);
 
         console.log(util.inspect(app, { depth: null }));
         exit();
@@ -662,7 +664,7 @@ function restart(options) {
     getApp(appId, function (error, app) {
         if (error) exit(error);
 
-        if (!app) exit('No installed app here');
+        if (!app) exit(NO_APP_FOUND_ERROR_STRING);
 
         stopApp(app, function (error) {
             if (error) exit(error);
@@ -683,7 +685,7 @@ function backup(options) {
     getApp(appId, function (error, app) {
         if (error) return exit(error);
 
-        if (!app) return exit('No installed app here');
+        if (!app) exit(NO_APP_FOUND_ERROR_STRING);
 
         superagentEnd(function () {
             return superagent
@@ -713,7 +715,7 @@ function restore(options) {
     getApp(appId, function (error, app) {
         if (error) exit(error);
 
-        if (!app) exit('No installed app here');
+        if (!app) exit(NO_APP_FOUND_ERROR_STRING);
 
         superagentEnd(function () {
             return superagent
@@ -744,7 +746,7 @@ function exec(cmd, options) {
     getApp(appId, function (error, app) {
         if (error) exit(error);
 
-        if (!app) exit('No installed app here');
+        if (!app) exit(NO_APP_FOUND_ERROR_STRING);
 
         if (cmd.length === 0) cmd = [ '/bin/bash' ];
 
