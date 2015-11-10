@@ -2,24 +2,24 @@
 
 'use strict';
 
-var superagent = require('superagent'),
-    util = require('util'),
-    path = require('path'),
-    assert = require('assert'),
-    opn = require('opn'),
-    fs = require('fs'),
-    safe = require('safetydance'),
-    Table = require('easy-table'),
-    readlineSync = require('readline-sync'),
+var assert = require('assert'),
     config = require('./config.js'),
-    helper = require('./helper.js'),
-    exit = helper.exit,
-    https = require('https'),
-    querystring = require('querystring'),
-    manifestFormat = require('cloudron-manifestformat'),
     ejs = require('ejs'),
     EventSource = require('eventsource'),
+    exit = helper.exit,
+    fs = require('fs'),
+    helper = require('./helper.js'),
+    https = require('https'),
+    manifestFormat = require('cloudron-manifestformat'),
+    opn = require('opn'),
+    path = require('path'),
+    querystring = require('querystring'),
+    readlineSync = require('readline-sync'),
+    safe = require('safetydance'),
     split = require('split'),
+    superagent = require('superagent'),
+    Table = require('easy-table'),
+    util = require('util'),
     _ = require('underscore');
 
 require('colors');
