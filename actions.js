@@ -6,7 +6,6 @@ var assert = require('assert'),
     config = require('./config.js'),
     ejs = require('ejs'),
     EventSource = require('eventsource'),
-    exit = helper.exit,
     fs = require('fs'),
     helper = require('./helper.js'),
     https = require('https'),
@@ -23,6 +22,8 @@ var assert = require('assert'),
     _ = require('underscore');
 
 require('colors');
+
+var exit = helper.exit;
 
 exports = module.exports = {
     list: list,
