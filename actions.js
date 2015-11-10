@@ -19,6 +19,7 @@ var superagent = require('superagent'),
     manifestFormat = require('cloudron-manifestformat'),
     ejs = require('ejs'),
     EventSource = require('eventsource'),
+    split = require('split'),
     _ = require('underscore');
 
 require('colors');
@@ -569,9 +570,7 @@ function uninstall(options) {
     });
 }
 
-function logPrinter(data) {
-    var obj = JSON.parse(data);
-
+function logPrinter(obj) {
     var source = obj.source, message;
 
     if (obj.message === null) {
@@ -603,9 +602,10 @@ function logs(options) {
                     if (error) return exit(error);
 
                     res.setEncoding('utf8');
-                    res.on('data', logPrinter);
-                    res.on('error', process.exit);
-                    res.on('end', process.exit);
+                    res.pipe(split(JSON.parse))
+                        .on('data', logPrinter)
+                        .on('error', process.exit)
+                        .on('end', process.exit);
                 });
 
             return;
