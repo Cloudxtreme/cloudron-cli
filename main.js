@@ -65,6 +65,7 @@ program.command('init')
 
 program.command('install')
     .description('Install or update app into cloudron')
+    .option('--app <id>', 'App id')
     .option('-n, --new', 'New installation')
     .option('--select', 'Select a build')
     .option('--wait', 'Wait for healthcheck to succeed')

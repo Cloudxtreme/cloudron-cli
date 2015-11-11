@@ -506,7 +506,7 @@ function install(options) {
 
     if (options.appstoreId) return installFromStore(options);
 
-    var func = options.new ? getAppNew : getApp;
+    var func = options.new ? getAppNew : getApp.bind(null, options.app);
 
     func(function (error, app, manifestFilePath) {
         if (!options.new && error) exit(error);
