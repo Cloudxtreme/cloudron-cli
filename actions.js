@@ -490,10 +490,10 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck, ins
 function installFromStore(options) {
     var appstoreId = options.appstoreId;
     var parts = appstoreId.split('@');
-    if (parts.length !== 2) exit('--appstore-id must be of the form id@version');
+    if (parts.length !== 2) exit('--appstore-id must be of the form id@version. Use id@latest to install the latest approved version.');
 
-    superagent.get(config.appStoreOrigin() + '/api/v1/apps/' + parts[0] + '/versions/' + parts[1])
-        .end(function (error, result) {
+    var url = config.appStoreOrigin() + '/api/v1/apps/' + parts[0] + (parts[1] !== 'latest' ? '/versions/' + parts[1] : '');
+    superagent.get(url).end(function (error, result) {
         if (error) return exit(util.format('Failed to get app info: %s', error.message));
         if (result.statusCode !== 200) return exit(util.format('Failed to get app info from store.'.red, result.statusCode, result.text));
 
