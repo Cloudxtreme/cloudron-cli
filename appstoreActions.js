@@ -530,12 +530,21 @@ function verifyDockerfile(dockerFilePath) {
 }
 
 function dockerignoreMatcher(dockerignorePath) {
-    var patterns = [ ];
+    var patterns = [];
 
     if (fs.existsSync(dockerignorePath)) {
-        var lines = fs.readFileSync(dockerignorePath, 'utf8').split('\n');
+        patterns = fs.readFileSync(dockerignorePath, 'utf8').split('\n');
 
-        patterns = lines.filter(function (line) { return line.trim().length !== 0 && line[0] !== '#'; });
+        patterns = patterns.filter(function (line) { return line[0] !== '#'; });
+        patterns = patterns.map(function (line) {
+            var l = line.trim();
+
+            while (l[0] === '/') l = l.slice(1);
+            while (l[l.length-1] === '/') l = l.slice(0, -1);
+
+            return l;
+        });
+        patterns = patterns.filter(function (line) { return line.length !== 0; });
     }
 
     return function ignore(path) {
