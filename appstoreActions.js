@@ -587,6 +587,8 @@ function build(options) {
     });
 
     stream.on('finish', function () {
+        console.log(sourceArchiveFilePath)
+        return
         superagentEnd(function () {
             return superagent.post(createUrl('/api/v1/developers/builds'))
                 .query({ accessToken: config.appStoreToken(), noCache: !options.cache })
