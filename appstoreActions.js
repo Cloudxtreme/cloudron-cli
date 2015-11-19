@@ -206,7 +206,7 @@ function addVersion(manifest, buildId, baseDir, callback) {
     if (manifest.changelog.slice(0, 7) === 'file://') {
         var changelogPath = manifest.changelog.slice(7);
         manifest.changelog = parseChangelog(changelogPath, manifest.version);
-        if (!manifest.changelog) return callback(new Error('Could not read changelog'));
+        if (!manifest.changelog) return callback(new Error('Bad changelog format or missing changelog for this version'));
     }
 
     superagentEnd(function () {
