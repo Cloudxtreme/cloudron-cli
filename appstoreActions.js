@@ -199,12 +199,14 @@ function addVersion(manifest, buildId, baseDir, callback) {
 
     if (manifest.description.slice(0, 7) === 'file://') {
         var descriptionFilePath = manifest.description.slice(7);
+        descriptionFilePath = path.isAbsolute(descriptionFilePath) ? descriptionFilePath : path.join(baseDir, descriptionFilePath);
         manifest.description = safe.fs.readFileSync(descriptionFilePath, 'utf8');
         if (!manifest.description) return callback(new Error('Could not read/parse description ' + safe.error.message));
     }
 
     if (manifest.changelog.slice(0, 7) === 'file://') {
         var changelogPath = manifest.changelog.slice(7);
+        changelogPath = path.isAbsolute(changelogPath) ? changelogPath : path.join(baseDir, changelogPath);
         manifest.changelog = parseChangelog(changelogPath, manifest.version);
         if (!manifest.changelog) return callback(new Error('Bad changelog format or missing changelog for this version'));
     }
@@ -241,12 +243,14 @@ function updateVersion(manifest, buildId, baseDir, callback) {
 
     if (manifest.description.slice(0, 7) === 'file://') {
         var descriptionFilePath = manifest.description.slice(7);
+        descriptionFilePath = path.isAbsolute(descriptionFilePath) ? descriptionFilePath : path.join(baseDir, descriptionFilePath);
         manifest.description = safe.fs.readFileSync(descriptionFilePath, 'utf8');
         if (!manifest.description) return callback(new Error('Could not read description ' + safe.error.message));
     }
 
     if (manifest.changelog.slice(0, 7) === 'file://') {
         var changelogPath = manifest.changelog.slice(7);
+        changelogPath = path.isAbsolute(changelogPath) ? changelogPath : path.join(baseDir, changelogPath);
         manifest.changelog = parseChangelog(changelogPath, manifest.version);
         if (!manifest.changelog) return callback(new Error('Could not read changelog ' + safe.error.message));
     }
