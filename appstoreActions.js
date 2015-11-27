@@ -466,6 +466,8 @@ function followBuildLog(buildId, raw, callback) {
 
         var data = safe.JSON.parse(e.data);
 
+        if (!data) return; // this is a bug in docker or our build server
+
         if (data.status) { // push log
             if (data.id && data.id === prevId) {
                 // the code below does not work os x if the line wraps, maybe we should clip the text to window size?
