@@ -252,7 +252,7 @@ function updateVersion(manifest, buildId, baseDir, callback) {
         var changelogPath = manifest.changelog.slice(7);
         changelogPath = path.isAbsolute(changelogPath) ? changelogPath : path.join(baseDir, changelogPath);
         manifest.changelog = parseChangelog(changelogPath, manifest.version);
-        if (!manifest.changelog) return callback(new Error('Could not read changelog ' + safe.error.message));
+        if (!manifest.changelog) return callback(new Error('Could not read changelog or missing version changes'));
     }
 
     superagentEnd(function () {
