@@ -342,7 +342,14 @@ function upload(options) {
     if (result.error) return exit(result.error.message);
 
     var error = manifestFormat.checkAppstoreRequirements(result.manifest);
-    if (error) return exit(error.message);
+    if (error) {
+        if (!options.force) return exit(error.message);
+
+        console.log(error.message.red);
+
+        var reallyUpload = readlineSync.question(util.format('Appstore requirements are not met. Really upload? [y/N]: '), {});
+        if (reallyUpload.toUpperCase() !== 'Y') exit();
+    }
 
     var manifest = result.manifest;
 
