@@ -388,9 +388,6 @@ function publish() {
     var result = manifestFormat.parseFile(manifestFilePath);
     if (result.error) return exit(result.error.message);
 
-    var error = manifestFormat.checkAppstoreRequirements(result.manifest);
-    if (error) return exit(error.message);
-
     var manifest = result.manifest;
 
     submitAppForReview(manifest, exit);
