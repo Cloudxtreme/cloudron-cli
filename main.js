@@ -115,6 +115,7 @@ program.command('publish')
 program.command('upload')
     .description('Upload app to the store for testing')
     .option('-f, --force', 'Update existing version')
+    .option('--skip-validation', 'Skip Appstore requirements validation', false)
     .action(appstoreActions.upload);
 
 program.command('versions')

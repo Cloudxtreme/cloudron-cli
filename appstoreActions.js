@@ -343,7 +343,7 @@ function upload(options) {
 
     var error = manifestFormat.checkAppstoreRequirements(result.manifest);
     if (error) {
-        if (!options.force) return exit(error.message);
+        if (!options.skipValidation) return exit(error.message);
 
         console.log(error.message.red);
 
