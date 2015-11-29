@@ -391,7 +391,7 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck, ins
             location = readlineSync.question('Location: ', {});
         }
 
-        // access restriction
+        // oauth proxy
         if (configure) {
             var tmp = readlineSync.question(util.format('Use OAuth Proxy? [y/N]: '), {});
             oauthProxy = tmp.toUpperCase() === 'Y';
