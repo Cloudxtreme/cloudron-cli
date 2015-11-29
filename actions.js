@@ -452,7 +452,7 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck, ins
             if (iconFilename && fs.existsSync(iconFilename)) { // may not exist for appstore-id case
                 data.icon = fs.readFileSync(iconFilename).toString('base64');
             }
-        } else if (configure) {
+        } else if (configure || (location !== app.location)) { // cloudron install --location <newloc>
             url = createUrl('/api/v1/apps/' + app.id + '/configure');
             message = 'configured';
         } else {
