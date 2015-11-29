@@ -387,7 +387,7 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck, ins
         var portBindings = app ? app.portBindings : {};
 
         // location
-        if (configure || location === null) {
+        if (location === null) {
             location = readlineSync.question('Location: ', {});
         }
 
