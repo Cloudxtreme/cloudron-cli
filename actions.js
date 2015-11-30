@@ -326,9 +326,7 @@ function waitForHealthy(appId, callback) {
             if (error) return callback(error);
             if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get app.'.red, result.statusCode, result.text)));
 
-            // track healthy state after installation
-            if (result.body.installationState !== 'installed') return callback(new Error('App is not in installed state'));
-
+            // do not check installation state here. it can be pending_backup etc (this is a bug in box code)
             if (result.body.health === 'healthy') return callback();
 
             process.stdout.write('.');
