@@ -687,8 +687,6 @@ function restart(options) {
             startApp(app, function (error) {
                 if (error) exit(error);
 
-                console.log('\n');
-
                 waitForHealthy(app.id, function (error) {
                     if (error) {
                         return exit('\n\nApp restart error: %s'.red, error.message);
