@@ -717,7 +717,8 @@ function backup(options) {
             if (error) exit(error);
             if (result.statusCode !== 202) return exit(util.format('Failed to backup app.'.red, result.statusCode, result.text));
 
-            waitForHealthy(app.id, function (error) {
+            // FIXME: this should be waitForHealthCheck but the box code incorrectly modifies the installationState
+            waitForFinishInstallation(app.id, true, function (error) {
                 if (error) {
                     return exit('\n\nApp backup error: %s'.red, error.message);
                 }
@@ -747,7 +748,8 @@ function restore(options) {
             if (error) exit(error);
             if (result.statusCode !== 202) return exit(util.format('Failed to restore app.'.red, result.statusCode, result.text));
 
-            waitForHealthy(app.id, function (error) {
+            // FIXME: this should be waitForHealthCheck but the box code incorrectly modifies the installationState
+            waitForFinishInstallation(app.id, true, function (error) {
                 if (error) {
                     return exit('\n\nApp restore error: %s'.red, error.message);
                 }
