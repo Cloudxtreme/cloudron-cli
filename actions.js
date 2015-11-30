@@ -317,26 +317,21 @@ function getUsersAndGroups(callback) {
 }
 
 function waitForHealthy(appId, callback) {
-    var waitingForHealthcheck = false;
+    process.stdout.write('\n => ' + 'Wait for health check'.cyan);
 
     function checkStatus() {
         superagentEnd(function () {
             return superagent.get(createUrl('/api/v1/apps/' + appId)).query({ access_token: config.token() });
         }, function (error, result) {
-            if (error) exit(error);
-            if (result.statusCode !== 200) exit(util.format('Failed to get app.'.red, result.statusCode, result.text));
+            if (error) return callback(error);
+            if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get app.'.red, result.statusCode, result.text)));
 
             // track healthy state after installation
             if (result.body.installationState !== 'installed') return callback(new Error('App is not in installed state'));
 
             if (result.body.health === 'healthy') return callback();
 
-            if (waitingForHealthcheck) {
-                process.stdout.write('.');
-            } else {
-                waitingForHealthcheck = true;
-                process.stdout.write('\n => ' + 'Wait for health check'.cyan);
-            }
+            process.stdout.write('.');
 
             return setTimeout(checkStatus, 100);
         });
@@ -352,8 +347,8 @@ function waitForFinishInstallation(appId, waitForHealthcheck, callback) {
         superagentEnd(function () {
             return superagent.get(createUrl('/api/v1/apps/' + appId)).query({ access_token: config.token() });
         }, function (error, result) {
-            if (error) exit(error);
-            if (result.statusCode !== 200) exit(util.format('Failed to get app.'.red, result.statusCode, result.text));
+            if (error) return callback(error);
+            if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get app.'.red, result.statusCode, result.text)));
 
             // track healthy state after installation
             if (result.body.installationState === 'installed') {
