@@ -316,8 +316,7 @@ function getUsersAndGroups(callback) {
     });
 }
 
-function waitForFinishInstallation(appId, waitForHealthcheck, callback) {
-    var currentProgress = '';
+function waitForHealthy(appId, callback) {
     var waitingForHealthcheck = false;
 
     function checkStatus() {
@@ -328,19 +327,39 @@ function waitForFinishInstallation(appId, waitForHealthcheck, callback) {
             if (result.statusCode !== 200) exit(util.format('Failed to get app.'.red, result.statusCode, result.text));
 
             // track healthy state after installation
-            if (result.body.installationState === 'installed') {
-                if (!waitForHealthcheck || result.body.health === 'healthy') {
-                    return callback(null);
-                } else {
-                    if (waitingForHealthcheck) {
-                        process.stdout.write('.');
-                    } else {
-                        waitingForHealthcheck = true;
-                        process.stdout.write('\n => ' + 'Wait for health check'.cyan);
-                    }
+            if (result.body.installationState !== 'installed') return callback(new Error('App is not in installed state'));
 
-                    return setTimeout(checkStatus, 100);
-                }
+            if (result.body.health === 'healthy') return callback();
+
+            if (waitingForHealthcheck) {
+                process.stdout.write('.');
+            } else {
+                waitingForHealthcheck = true;
+                process.stdout.write('\n => ' + 'Wait for health check'.cyan);
+            }
+
+            return setTimeout(checkStatus, 100);
+        });
+    }
+
+    setTimeout(checkStatus, 100);
+}
+
+function waitForFinishInstallation(appId, waitForHealthcheck, callback) {
+    var currentProgress = '';
+
+    function checkStatus() {
+        superagentEnd(function () {
+            return superagent.get(createUrl('/api/v1/apps/' + appId)).query({ access_token: config.token() });
+        }, function (error, result) {
+            if (error) exit(error);
+            if (result.statusCode !== 200) exit(util.format('Failed to get app.'.red, result.statusCode, result.text));
+
+            // track healthy state after installation
+            if (result.body.installationState === 'installed') {
+                if (waitForHealthcheck) return waitForHealthy(appId, callback);
+
+                return callback();
             }
 
             // bail out if there was an error
@@ -697,7 +716,7 @@ function backup(options) {
             if (error) exit(error);
             if (result.statusCode !== 202) return exit(util.format('Failed to backup app.'.red, result.statusCode, result.text));
 
-            waitForFinishInstallation(app.id, true, function (error) {
+            waitForHealthy(app.id, function (error) {
                 if (error) {
                     return exit('\n\nApp backup error: %s'.red, error.message);
                 }
@@ -727,7 +746,7 @@ function restore(options) {
             if (error) exit(error);
             if (result.statusCode !== 202) return exit(util.format('Failed to restore app.'.red, result.statusCode, result.text));
 
-            waitForFinishInstallation(app.id, true, function (error) {
+            waitForHealthy(app.id, function (error) {
                 if (error) {
                     return exit('\n\nApp restore error: %s'.red, error.message);
                 }
