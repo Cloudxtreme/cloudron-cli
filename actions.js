@@ -653,7 +653,7 @@ function info(options) {
    });
 }
 
-function inspect() {
+function inspect(options) {
     helper.verifyArguments(arguments);
 
     superagent.get(createUrl('/api/v1/apps')).query({ access_token: config.token() }).end(function (error, result) {
@@ -666,7 +666,7 @@ function inspect() {
             apiEndpoint: config.apiEndpoint(),
             appStoreOrigin: config.appStoreOrigin(),
             apps: result.body.apps
-        }));
+        }, null, options.pretty ? 4 : null));
     });
 }
 

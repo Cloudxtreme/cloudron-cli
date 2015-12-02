@@ -57,6 +57,7 @@ program.command('info')
 
 program.command('inspect')
     .description('Inspect a Cloudron returning raw JSON')
+    .option('--pretty', 'Pretty print', false)
     .action(actions.inspect);
 
 program.command('init')
