@@ -1,6 +1,6 @@
 {
   "name": "cloudron",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "description": "Cloudron CLI",
   "main": "main.js",
   "scripts": {
