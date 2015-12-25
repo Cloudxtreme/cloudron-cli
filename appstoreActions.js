@@ -28,7 +28,7 @@ exports = module.exports = {
     logout: logout,
     info: info,
     listVersions: listVersions,
-    publish: publish,
+    submit: submit,
     upload: upload,
     unpublish: unpublish,
     build: build,
@@ -378,7 +378,7 @@ function upload(options) {
     });
 }
 
-function publish() {
+function submit() {
     helper.verifyArguments(arguments);
 
     // try to find the manifest of this project

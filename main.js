@@ -109,9 +109,9 @@ program.command('restart')
     .option('--app <id>', 'App id')
     .action(actions.restart);
 
-program.command('publish')
-    .description('Publish app to the store (for review)')
-    .action(appstoreActions.publish);
+program.command('submit')
+    .description('Submit app to the store (for review)')
+    .action(appstoreActions.submit);
 
 program.command('upload')
     .description('Upload app to the store for testing')
