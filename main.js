@@ -92,6 +92,7 @@ program.command('logout')
 program.command('logs')
     .description('Application logs')
     .option('-f, --tail', 'Follow')
+    .option('-l, --lines <lines>', 'Number of lines to show (default 100)')
     .option('--app <id>', 'App id')
     .action(actions.logs);
 

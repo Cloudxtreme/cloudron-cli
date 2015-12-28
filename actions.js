@@ -609,7 +609,7 @@ function logs(options) {
 
         if (!options.tail) {
             superagent.get(createUrl('/api/v1/apps/' + app.id + '/logs'))
-                .query({ access_token: config.token() })
+                .query({ access_token: config.token(), lines: options.lines || 500 })
                 .buffer(false)
                 .end(function (error, res) {
                     if (error) return exit(error);
