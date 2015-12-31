@@ -194,7 +194,7 @@ function stopApp(app, callback) {
 
                 process.stdout.write('.');
 
-                setTimeout(waitForFinish.bind(null, appId), 250);
+                setTimeout(waitForFinish.bind(null, appId), 1000);
             });
         }
 
@@ -223,7 +223,7 @@ function startApp(app, callback) {
 
                 process.stdout.write('.');
 
-                setTimeout(waitForFinish.bind(null, appId), 250);
+                setTimeout(waitForFinish.bind(null, appId), 1000);
             });
         }
 
@@ -331,11 +331,11 @@ function waitForHealthy(appId, callback) {
 
             process.stdout.write('.');
 
-            return setTimeout(checkStatus, 100);
+            return setTimeout(checkStatus, 1000);
         });
     }
 
-    setTimeout(checkStatus, 100);
+    setTimeout(checkStatus, 1000);
 }
 
 function waitForFinishInstallation(appId, waitForHealthcheck, callback) {
@@ -373,7 +373,7 @@ function waitForFinishInstallation(appId, waitForHealthcheck, callback) {
 
             currentProgress = result.body.installationProgress;
 
-            setTimeout(checkStatus, 100);
+            setTimeout(checkStatus, 1000);
         });
     }
 
@@ -573,7 +573,7 @@ function uninstall(options) {
 
                     process.stdout.write('.');
 
-                    setTimeout(waitForFinish.bind(null, appId), 250);
+                    setTimeout(waitForFinish.bind(null, appId), 1000);
                 });
             }
 
