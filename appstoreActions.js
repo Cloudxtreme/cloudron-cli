@@ -220,8 +220,8 @@ function addVersion(manifest, buildId, baseDir, callback) {
         return req;
     }, function (error, result) {
         if (error) return callback(new Error(util.format('Failed to publish version: %s', error.message)));
-        if (result.statusCode !== 204)
-            callback(new Error(util.format('Failed to publish version (statusCode %s): \n%s', result.statusCode, result.body && result.body.message ? result.body.message.red : result.text)));
+        if (result.statusCode === 409) return callback('This version already exists. Use --force to overwrite.');
+        if (result.statusCode !== 204) return callback(new Error(util.format('Failed to publish version (statusCode %s): \n%s', result.statusCode, result.body && result.body.message ? result.body.message.red : result.text)));
 
         callback();
     });
