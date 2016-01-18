@@ -47,8 +47,8 @@ exports = module.exports = {
 var NO_APP_FOUND_ERROR_STRING = '\nCannot find a matching app.\n' + 'Apps installed from the store are not picked automatically.\n'.gray;
 
 function showDeveloperModeNotice() {
-    console.log('Please enable the developer mode on your Cloudron first.'.red);
-    console.log('You have to login to %s and enable it in your account settings.', 'https://' + config.apiEndpoint() + '/#/settings');
+    console.error('Please enable the developer mode on your Cloudron first.'.red);
+    console.error('You have to login to %s and enable it in your account settings.', 'https://' + config.apiEndpoint() + '/#/settings');
 }
 
 function createUrl(api) {
@@ -57,7 +57,7 @@ function createUrl(api) {
 
 function ensureLoggedIn() {
     if (!config.has('cloudron', 'token')) exit(util.format('Not setup yet. Please use the ' + 'login'.yellow.bold + ' command first.'));
-    else console.log('Using cloudron', config.cloudron().yellow.bold);
+    else console.error('Using cloudron', config.cloudron().yellow.bold);
 }
 
 // takes a function returning a superagent request instance and will reauthenticate in case the token is invalid
@@ -283,7 +283,7 @@ function list() {
         if (error) exit(error);
         if (result.statusCode !== 200) return exit(util.format('Failed to list apps. %s - %s'.red, result.statusCode, result.text));
 
-        if (result.body.apps.length === 0) return console.log('No apps installed.');
+        if (result.body.apps.length === 0) return exit('No apps installed.');
 
         var t = new Table();
 
