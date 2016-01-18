@@ -763,16 +763,19 @@ function restore(options) {
 }
 
 function exec(cmd, options) {
-    var appId = options.app;
-
-    if (!process.stdin.isTTY) exit('stdin is not tty');
+    var appId = options.app, interactive = false;
 
     getApp(appId, function (error, app) {
         if (error) exit(error);
 
         if (!app) exit(NO_APP_FOUND_ERROR_STRING);
 
-        if (cmd.length === 0) cmd = [ '/bin/bash' ];
+        if (cmd.length === 0) {
+            if (!process.stdin.isTTY) exit('cannot start shell when stdin is not tty');
+
+            interactive = true;
+            cmd = [ '/bin/bash' ];
+        }
 
         var query = {
             rows: process.stdout.rows,
@@ -810,8 +813,7 @@ function exec(cmd, options) {
             socket.pipe(process.stdout);
 
             process.stdin.resume();
-            process.stdin.setEncoding('utf8');
-            process.stdin.setRawMode(true);
+            if (interactive) process.stdin.setRawMode(true);
             process.stdin.pipe(socket);
         });
 
