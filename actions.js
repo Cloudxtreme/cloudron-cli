@@ -785,10 +785,13 @@ function demuxStream(stream, stdout, stderr) {
 // cloudron exec - must work interactively. needs tty.
 // cloudron exec -- ls asdf  - must show error. needs tty.
 // cloudron exec -- cat /home/cloudron/start.sh > /tmp/start.sh - must work (test with binary files). should disable tty
+// echo "sauce" | cloudron exec -- bash -c "cat - > /app/data/sauce" - test with binary files. should disable tty
 function exec(cmd, options) {
     var appId = options.app, tty;
     if ('tty' in options) {
         tty = options.tty;
+    } else if (!process.stdin.isTTY) {
+        tty = false;
     } else { // autodetect
         tty = process.stdout.isTTY;
     }
