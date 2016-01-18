@@ -762,6 +762,26 @@ function restore(options) {
     });
 }
 
+// taken from docker-modem
+function demuxStream(stream, stdout, stderr) {
+    var header = null;
+
+    stream.on('readable', function() {
+        header = header || stream.read(8);
+        while (header !== null) {
+            var type = header.readUInt8(0);
+            var payload = stream.read(header.readUInt32BE(4));
+            if (payload === null) break;
+            if (type == 2) {
+                stderr.write(payload);
+            } else {
+                stdout.write(payload);
+            }
+            header = stream.read(8);
+        }
+    });
+};
+
 function exec(cmd, options) {
     var appId = options.app, interactive = process.stdin.isTTY;
 
