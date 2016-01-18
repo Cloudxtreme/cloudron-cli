@@ -763,7 +763,7 @@ function restore(options) {
 }
 
 function exec(cmd, options) {
-    var appId = options.app, interactive = false;
+    var appId = options.app, interactive = process.stdin.isTTY;
 
     getApp(appId, function (error, app) {
         if (error) exit(error);
@@ -773,7 +773,6 @@ function exec(cmd, options) {
         if (cmd.length === 0) {
             if (!process.stdin.isTTY) exit('cannot start shell when stdin is not tty');
 
-            interactive = true;
             cmd = [ '/bin/bash' ];
         }
 
@@ -781,7 +780,8 @@ function exec(cmd, options) {
             rows: process.stdout.rows,
             columns: process.stdout.columns,
             access_token: config.token(),
-            cmd: JSON.stringify(cmd)
+            cmd: JSON.stringify(cmd),
+            tty: interactive
         };
 
         var req = https.request({
