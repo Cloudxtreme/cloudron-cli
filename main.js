@@ -43,6 +43,7 @@ if (DEV) {
 
 program.command('exec [cmd...]')
     .description('Exec a command in application')
+    .option('-t,--tty', 'Allocate tty')
     .option('--app <id>', 'App id')
     .action(actions.exec);
 

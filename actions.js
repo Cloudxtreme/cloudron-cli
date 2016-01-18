@@ -782,8 +782,16 @@ function demuxStream(stream, stdout, stderr) {
     });
 };
 
+// cloudron exec - must work interactively. needs tty.
+// cloudron exec -- ls asdf  - must show error. needs tty.
+// cloudron exec -- cat /home/cloudron/start.sh > /tmp/start.sh - must work (test with binary files). should disable tty
 function exec(cmd, options) {
-    var appId = options.app, interactive = process.stdin.isTTY;
+    var appId = options.app, tty;
+    if ('tty' in options) {
+        tty = options.tty;
+    } else { // autodetect
+        tty = process.stdout.isTTY;
+    }
 
     getApp(appId, function (error, app) {
         if (error) exit(error);
@@ -791,18 +799,22 @@ function exec(cmd, options) {
         if (!app) exit(NO_APP_FOUND_ERROR_STRING);
 
         if (cmd.length === 0) {
-            if (!process.stdin.isTTY) exit('cannot start shell when stdin is not tty');
+            tty = true; // override
 
             cmd = [ '/bin/bash' ];
         }
+
+        if (tty && !process.stdin.isTTY) exit('stdin is not tty');
 
         var query = {
             rows: process.stdout.rows,
             columns: process.stdout.columns,
             access_token: config.token(),
             cmd: JSON.stringify(cmd),
-            tty: interactive
+            tty: tty
         };
+
+        if (tty && !process.stdin.isTTY) exit('stdin is not tty');
 
         var req = https.request({
             hostname: config.apiEndpoint(),
@@ -830,11 +842,15 @@ function exec(cmd, options) {
             socket.setNoDelay(true);
             socket.setKeepAlive(true);
 
-            socket.pipe(process.stdout);
-
             process.stdin.resume();
-            if (interactive) process.stdin.setRawMode(true);
+            if (tty) process.stdin.setRawMode(true);
             process.stdin.pipe(socket);
+
+            if (!tty) { // when tty is disabled, we need to demux
+                demuxStream(socket, process.stdout, process.stderr);
+            } else { // when tty is enabled, we get data from pty directly
+               socket.pipe(process.stdout);
+            }
         });
 
         req.on('error', exit); // could not make a request
