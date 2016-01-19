@@ -817,8 +817,6 @@ function exec(cmd, options) {
             tty: tty
         };
 
-        if (tty && !process.stdin.isTTY) exit('stdin is not tty');
-
         var req = https.request({
             hostname: config.apiEndpoint(),
             path: '/api/v1/apps/' + app.id + '/exec?' + querystring.stringify(query),
@@ -845,14 +843,23 @@ function exec(cmd, options) {
             socket.setNoDelay(true);
             socket.setKeepAlive(true);
 
-            process.stdin.resume();
-            if (tty) process.stdin.setRawMode(true);
-            process.stdin.pipe(socket);
+            if (tty) {
+                process.stdin.setRawMode(true);
+                process.stdin.pipe(socket);
+                socket.pipe(process.stdout);
+            } else {
+                // nginx has some issue with streaming tcp sockets. if you write buffer > 16k too fast, it will drop them
+                // http://stackoverflow.com/questions/16543787/nginx-as-a-proxy-for-nodejssocket-io-everything-is-ok-except-for-big-messages
+                // http://stackoverflow.com/questions/12282342/nginx-files-upload-streaming-with-proxy-pass (maybe?)
+                process.stdin.on('readable', function writeToSocket() {
+                    var buf = process.stdin.read(16000);
+                    if (!buf) return;
+                    socket.write(buf);
+                    if (buf.length !== 16000) return socket.end(); // stream ended
+                    setTimeout(writeToSocket, 200);
+                });
 
-            if (!tty) { // when tty is disabled, we need to demux
                 demuxStream(socket, process.stdout, process.stderr);
-            } else { // when tty is enabled, we get data from pty directly
-               socket.pipe(process.stdout);
             }
         });
 
