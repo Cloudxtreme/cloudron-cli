@@ -786,6 +786,8 @@ function demuxStream(stream, stdout, stderr) {
 // cloudron exec -- ls asdf  - must show error. needs tty.
 // cloudron exec -- cat /home/cloudron/start.sh > /tmp/start.sh - must work (test with binary files). should disable tty
 // echo "sauce" | cloudron exec -- bash -c "cat - > /app/data/sauce" - test with binary files. should disable tty
+// cat ~/tmp/fantome.tar.gz | cloudron exec -- bash -c "tar vf - -C /tmp" - must show an error
+// cat ~/tmp/fantome.tar.gz | cloudron exec -- bash -c "tar zxf - -C /tmp" - must extrack ok
 function exec(cmd, options) {
     var appId = options.app, tty;
     if ('tty' in options) {
