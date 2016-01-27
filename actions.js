@@ -918,8 +918,11 @@ function init() {
     var dockerfileTemplate = fs.readFileSync(__dirname + '/Dockerfile.ejs', 'utf8');
     var descriptionTemplate = fs.readFileSync(__dirname + '/DESCRIPTION.md.ejs', 'utf8');
     var dockerignoreTemplate = fs.readFileSync(__dirname + '/dockerignore.ejs', 'utf8');
+    var changelogTemplate = fs.readFileSync(__dirname + '/CHANGELOG.ejs', 'utf8');
 
-    var data = { };
+    var data = {
+        version: '0.0.1'
+    };
 
     // TODO more input validation, eg. httpPort has to be an integer
     [ 'id', 'author', 'title', 'tagline', 'website', 'contactEmail', 'httpPort' ].forEach(function (field) {
@@ -948,6 +951,13 @@ function init() {
     } else {
         var dockerignore = ejs.render(dockerignoreTemplate, data);
         fs.writeFileSync('.dockerignore', dockerignore, 'utf8');
+    }
+
+    if (fs.existsSync('CHANGELOG')) {
+        console.log('CHANGELOG already exists, skipping');
+    } else {
+        var changelog = ejs.render(changelogTemplate, data);
+        fs.writeFileSync('CHANGELOG', changelog, 'utf8');
     }
 }
 
