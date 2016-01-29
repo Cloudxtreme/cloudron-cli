@@ -899,14 +899,20 @@ function createOAuthAppCredentials(options) {
         if (error) exit(error);
         if (result.statusCode !== 201) return exit(util.format('Failed to create oauth app credentials.'.red, result.statusCode, result.text));
 
-        console.log();
-        console.log('New oauth app credentials');
-        console.log('ClientId:     %s', result.body.id.cyan);
-        console.log('ClientSecret: %s', result.body.clientSecret.cyan);
-        console.log('RedirectURI:  %s', result.body.redirectURI.cyan);
-        console.log();
-        console.log('authorizationURL: %s', 'https://' + config.apiEndpoint() + '/api/v1/oauth/dialog/authorize');
-        console.log('tokenURL:         %s', 'https://' + config.apiEndpoint() + '/api/v1/oauth/token');
+        if (options.shell) {
+            console.log('CLOUDRON_CLIENT_ID="%s"', result.body.id);
+            console.log('CLOUDRON_CLIENT_SECRET="%s"', result.body.clientSecret);
+            console.log('CLOUDRON_REDIRECT_URI="%s"', result.body.redirectURI);
+        } else {
+            console.log();
+            console.log('New oauth app credentials');
+            console.log('ClientId:     %s', result.body.id.cyan);
+            console.log('ClientSecret: %s', result.body.clientSecret.cyan);
+            console.log('RedirectURI:  %s', result.body.redirectURI.cyan);
+            console.log();
+            console.log('authorizationURL: %s', 'https://' + config.apiEndpoint() + '/api/v1/oauth/dialog/authorize');
+            console.log('tokenURL:         %s', 'https://' + config.apiEndpoint() + '/api/v1/oauth/token');
+        }
     });
 }
 
