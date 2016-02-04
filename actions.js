@@ -476,7 +476,7 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck, ins
         if (!app) {
             url = createUrl('/api/v1/apps/install');
             message = 'installed';
-            if (iconFilename && fs.existsSync(iconFilename)) { // may not exist for appstore-id case
+            if (!appStoreId && iconFilename && fs.existsSync(iconFilename)) {
                 data.icon = fs.readFileSync(iconFilename).toString('base64');
             }
         } else if (configure || (location !== app.location)) { // cloudron install --location <newloc>
@@ -485,7 +485,7 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck, ins
         } else {
             url = createUrl('/api/v1/apps/' + app.id + '/update');
             message = 'updated';
-            if (iconFilename && fs.existsSync(iconFilename)) { // may not exist for appstore-id case
+            if (!appStoreId && iconFilename && fs.existsSync(iconFilename)) {
                 data.icon = fs.readFileSync(iconFilename).toString('base64');
             }
             data.force = true; // this allows installation over errored apps
