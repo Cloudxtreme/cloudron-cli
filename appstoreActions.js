@@ -177,7 +177,7 @@ function parseChangelog(file, version) {
         if (lines[i] === '') continue;
         if (lines[i][0] === '[') break;
 
-        changelog += lines[i];
+        changelog += lines[i] + '\n';
     }
 
     return changelog;
