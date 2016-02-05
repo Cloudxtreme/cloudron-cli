@@ -47,8 +47,7 @@ exports = module.exports = {
 var NO_APP_FOUND_ERROR_STRING = '\nCannot find a matching app.\n' + 'Apps installed from the store are not picked automatically.\n'.gray;
 
 function showDeveloperModeNotice() {
-    console.error('Please enable the developer mode on your Cloudron first.'.red);
-    console.error('You have to login to %s and enable it in your account settings.', 'https://' + config.apiEndpoint() + '/#/settings');
+    console.error('CLI mode is disabled. Enable it at %s.'.red, 'https://' + config.apiEndpoint() + '/#/settings');
 }
 
 function createUrl(api) {
