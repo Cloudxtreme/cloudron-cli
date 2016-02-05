@@ -546,6 +546,12 @@ function install(options) {
         if (result.error) return exit('Invalid CloudronManifest.json: '.red + result.error.message);
 
         var manifest = result.manifest;
+        if (manifest.developmentMode && (!app || !app.manifest.developmentMode)) { // developmentMode changed
+            console.log('Installing in development mode gives your app unlimited CPU and Memory.'.yellow);
+            console.log('This might affect your other apps on this Cloudron.'.yellow);
+            var reallyInstall = readlineSync.question(util.format('Install anyway? [y/N]: '), {});
+            if (reallyInstall.toUpperCase() !== 'Y') return exit();
+        }
 
         helper.selectImage(manifest, !options.select, function (error, image) {
             if (error) exit('No image found, please run `cloudron build` first or specify a `dockerImage` in the CloudronManifest');
