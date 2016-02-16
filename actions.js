@@ -514,29 +514,33 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck, ins
     });
 }
 
-function installFromStore(options) {
+function installFromStore(app, options) {
     var appstoreId = options.appstoreId;
     var parts = appstoreId.split('@');
     if (parts.length !== 2) console.log('No version specified, using latest published version.');
+
+    console.log('You are installing a version published to the appstore over an existing app.'.yellow);
+    var reallyInstall = readlineSync.question(util.format('Install anyway? [y/N]: '), {});
+    if (reallyInstall.toUpperCase() !== 'Y') return exit();
 
     var url = config.appStoreOrigin() + '/api/v1/apps/' + parts[0] + (parts[1] ? '/versions/' + parts[1] : '');
     superagent.get(url).end(function (error, result) {
         if (error) return exit(util.format('Failed to get app info: %s', error.message));
         if (result.statusCode !== 200) return exit(util.format('Failed to get app info from store.'.red, result.statusCode, result.text));
 
-        installer(null /* app */, false /* configure */, result.body.manifest, parts[0] /* appStoreId */, !!options.wait, options.location);
+        installer(app || null, false /* configure */, result.body.manifest, parts[0] /* appStoreId */, !!options.wait, options.location);
     });
 }
 
 function install(options) {
     helper.verifyArguments(arguments);
 
-    if (options.appstoreId) return installFromStore(options);
-
     var func = options.new ? getAppNew : getApp.bind(null, options.app);
 
     func(function (error, app, manifestFilePath) {
         if (!options.new && error) exit(error);
+
+        if (options.appstoreId) return installFromStore(app, options);
 
         if (!app) options.new = true; // create new install if we couldn't find an app
         if (!options.new && app) console.log('Reusing app %s installed at %s', app.id.bold, app.location.cyan);
