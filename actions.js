@@ -519,9 +519,11 @@ function installFromStore(app, options) {
     var parts = appstoreId.split('@');
     if (parts.length !== 2) console.log('No version specified, using latest published version.');
 
-    console.log('You are installing a version published to the appstore over an existing app.'.yellow);
-    var reallyInstall = readlineSync.question(util.format('Install anyway? [y/N]: '), {});
-    if (reallyInstall.toUpperCase() !== 'Y') return exit();
+    if (app) {
+        console.log('You are installing a published version from the appstore over an existing app at %s.'.yellow, app.location.bold);
+        var reallyInstall = readlineSync.question(util.format('Install anyway? [y/N]: '), {});
+        if (reallyInstall.toUpperCase() !== 'Y') return exit();
+    }
 
     var url = config.appStoreOrigin() + '/api/v1/apps/' + parts[0] + (parts[1] ? '/versions/' + parts[1] : '');
     superagent.get(url).end(function (error, result) {
