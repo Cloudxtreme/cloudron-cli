@@ -495,6 +495,7 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck, ins
             return req.send(data);
         }, function (error, result) {
             if (error) exit(error);
+            if (result.statusCode === 404) exit(util.format('Failed to install app. No such app in the appstore.'.red));
             if (result.statusCode === 409) exit(util.format('Failed to install app. The location %s is already used.'.red, location.bold));
             if (result.statusCode !== 202) exit(util.format('Failed to install app.'.red, result.statusCode, result.text));
 
