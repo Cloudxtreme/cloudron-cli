@@ -321,7 +321,11 @@ function submitAppForReview(manifest, callback) {
         .query({ accessToken: config.appStoreToken() })
         .send({ });
     }, function (error, result) {
-        if (error) return exit(util.format('Failed to submit app for review: %s', error.message.red));
+        if (error) exit(util.format('Failed to submit app for review: %s', error.message.red));
+        if (result.statusCode === 404) {
+            console.log('No version %s found. Please use %s first.', manifest.version.bold, 'cloudron upload'.cyan);
+            exit('Failed to submit app for review.'.red);
+        }
         if (result.statusCode !== 200) return exit(util.format('Failed to submit app (statusCode %s): \n%s', result.statusCode, result.body && result.body.message ? result.body.message.red : result.text));
 
         console.log('App submitted for review.'.green);
