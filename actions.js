@@ -860,6 +860,7 @@ function exec(cmd, options) {
                 showDeveloperModeNotice();
                 exit();
             }
+            if (res.statusCode === 403) exit('Only admins can use this feature.'.red);
 
             exit('Could not upgrade connection to tcp. http status:', res.statusCode);
         });
