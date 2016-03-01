@@ -102,6 +102,16 @@ program.command('open')
     .description('Open the app in the Browser')
     .action(actions.open);
 
+program.command('pull <remote> <local>')
+    .description('pull remote files/dirs')
+    .option('--app <id>', 'App id')
+    .action(actions.pull);
+
+program.command('push <local> <remote>')
+    .description('push local file/dir')
+    .option('--app <id>', 'App id')
+    .action(actions.push);
+
 program.command('restore')
     .description('Restore app from last known backup')
     .option('--app <id>', 'App id')

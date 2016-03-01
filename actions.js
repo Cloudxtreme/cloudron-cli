@@ -15,6 +15,7 @@ var assert = require('assert'),
     querystring = require('querystring'),
     readlineSync = require('readline-sync'),
     safe = require('safetydance'),
+    spawn = require('child_process').spawn,
     split = require('split'),
     superagent = require('superagent'),
     Table = require('easy-table'),
@@ -36,6 +37,8 @@ exports = module.exports = {
     exec: exec,
     info: info,
     inspect: inspect,
+    pull: pull,
+    push: push,
     restart: restart,
     createOAuthAppCredentials: createOAuthAppCredentials,
     init: init,
@@ -818,12 +821,15 @@ function demuxStream(stream, stdout, stderr) {
 // cat ~/tmp/fantome.tar.gz | cloudron exec -- bash -c "tar zxf - -C /tmp" - must extrack ok
 function exec(cmd, options) {
     var appId = options.app, tty;
+    var stdin = options._stdin || process.stdin; // hack for 'push', 'pull' to reuse this function
+    var stdout = options._stdout || process.stdout;
+
     if ('tty' in options) {
         tty = options.tty;
-    } else if (!process.stdin.isTTY) {
+    } else if (!stdin.isTTY) {
         tty = false;
     } else { // autodetect
-        tty = process.stdout.isTTY;
+        tty = stdout.isTTY;
     }
 
     getApp(appId, function (error, app) {
@@ -837,11 +843,11 @@ function exec(cmd, options) {
             cmd = [ '/bin/bash' ];
         }
 
-        if (tty && !process.stdin.isTTY) exit('stdin is not tty');
+        if (tty && !stdin.isTTY) exit('stdin is not tty');
 
         var query = {
-            rows: process.stdout.rows,
-            columns: process.stdout.columns,
+            rows: stdout.rows,
+            columns: stdout.columns,
             access_token: config.token(),
             cmd: JSON.stringify(cmd),
             tty: tty
@@ -875,28 +881,44 @@ function exec(cmd, options) {
             socket.setKeepAlive(true);
 
             if (tty) {
-                process.stdin.setRawMode(true);
-                process.stdin.pipe(socket);
-                socket.pipe(process.stdout);
+                stdin.setRawMode(true);
+                stdin.pipe(socket);
+                socket.pipe(stdout);
             } else {
                 // nginx has some issue with streaming tcp sockets. if you write buffer > 16k too fast, it will drop them
                 // http://stackoverflow.com/questions/16543787/nginx-as-a-proxy-for-nodejssocket-io-everything-is-ok-except-for-big-messages
                 // http://stackoverflow.com/questions/12282342/nginx-files-upload-streaming-with-proxy-pass (maybe?)
-                process.stdin.on('readable', function writeToSocket() {
-                    var buf = process.stdin.read(16000);
+                stdin.on('readable', function writeToSocket() {
+                    var buf = stdin.read(16000);
                     if (!buf) return;
                     socket.write(buf);
                     if (buf.length !== 16000) return socket.end(); // stream ended
                     setTimeout(writeToSocket, 200);
                 });
 
-                demuxStream(socket, process.stdout, process.stderr);
+                demuxStream(socket, stdout, process.stderr);
             }
         });
 
         req.on('error', exit); // could not make a request
         req.end(); // this makes the request
     });
+}
+
+function push(local, remote, options) {
+    var tarStream = spawn('tar', [ 'cvf', '-', local ]);
+    options._stdin = tarStream.stdout;
+    tarStream.on('close', function (code) { if (code !== 0) exit('Error pushing. tar returned ', code); });
+
+    exec(['bash', '-c', 'tar xvf - -C ' + remote], options);
+}
+
+function pull(remote, local, options) {
+    var tarStream = spawn('tar', [ 'xvf', '-', local ]);
+    options._stdout = tarStream.stdin;
+    tarStream.on('close', function (code) { if (code !== 0) exit('Error pushing. tar returned ', code); });
+
+    exec(['bash', '-c', 'tar cvf - -C ' + local], options);
 }
 
 function createOAuthAppCredentials(options) {
