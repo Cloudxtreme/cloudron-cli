@@ -26,7 +26,7 @@ exports = module.exports = {
 var wasRaw = process.isRaw;
 
 function exit(error) {
-    if (error) console.error(util.format.apply(null, Array.prototype.slice.call(arguments)));
+    if (error) console.error(util.format.apply(null, Array.prototype.slice.call(arguments)).red);
 
     if (process.stdin.isTTY) process.stdin.setRawMode(wasRaw);
     process.exit(error ? 1 : 0);
