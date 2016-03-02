@@ -821,8 +821,15 @@ function demuxStream(stream, stdout, stderr) {
 // cat ~/tmp/fantome.tar.gz | cloudron exec -- bash -c "tar zxf - -C /tmp" - must extrack ok
 function exec(cmd, options) {
     var appId = options.app, tty;
-    var stdin = options._stdin || process.stdin; // hack for 'push', 'pull' to reuse this function
+    var stdin = process.stdin; // hack for 'push', 'pull' to reuse this function
     var stdout = options._stdout || process.stdout;
+
+    if (options._stdin) {
+        // child_process stream loses data since we connect to 'readable' later
+        var bufferStream = new require('stream').PassThrough();
+        options._stdin.pipe(bufferStream);
+        stdin = bufferStream;
+    }
 
     if ('tty' in options) {
         tty = options.tty;
@@ -916,11 +923,11 @@ function push(local, remote, options) {
     if (!fs.existsSync(local)) return exit('local file ' + local + ' does not exist');
 
     if (fs.lstatSync(local).isDirectory())  {
-        var tarStream = spawn('tar', ['cvf', '-', '-C', local, '.']);
+        var tarStream = spawn('tar', ['zcvf', '-', '-C', path.dirname(local), path.basename(local)]);
         options._stdin = tarStream.stdout;
-        tarStream.on('close', function (code) { exit('Error pushing', code); });
+        tarStream.on('close', function (code) { if (code) exit('Error pushing', code); });
 
-        exec(['tar', 'zxcf', '-', '-C', remote], options);
+        exec(['tar', 'zxvf', '-', '-C', remote], options);
     } else {
         options._stdin = fs.createReadStream(local);
         options._stdin.on('error', function (error) { exit('Error pushing', error); });
