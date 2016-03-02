@@ -906,10 +906,20 @@ function exec(cmd, options) {
 }
 
 function push(local, remote, options) {
-    options._stdin = fs.createReadStream(local);
-    options._stdin.on('error', function (error) { exit('Error pushing', error); });
+    if (!fs.existsSync(local)) return exit('local file ' + local + ' does not exist');
 
-    exec(['bash', '-c', 'cat - > ' + remote], options);
+    if (fs.lstatSync(local).isDirectory())  {
+        var tarStream = spawn('tar', ['cvf', '-', '-C', local, '.']);
+        options._stdin = tarStream.stdout;
+        tarStream.on('close', function (code) { exit('Error pulling', code); });
+
+        exec(['tar', 'zxcf', '-', '-C', remote], options);
+    } else {
+        options._stdin = fs.createReadStream(local);
+        options._stdin.on('error', function (error) { exit('Error pushing', error); });
+
+        exec(['bash', '-c', 'cat - > ' + remote], options);
+    }
 }
 
 function pull(remote, local, options) {
