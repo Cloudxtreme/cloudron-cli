@@ -920,6 +920,10 @@ function pull(remote, local, options) {
 
         exec(['tar', 'zcf', '-', '-C', remote, '.'], options);
     } else {
+        if (fs.existsSync(local) && fs.lstatSync(local).isDirectory()) {
+            local = path.join(local, path.basename(remote));
+        }
+
         options._stdout = fs.createWriteStream(local);
         options._stdout.on('error', function (error) { exit('Error pulling', error); });
 
