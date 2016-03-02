@@ -103,7 +103,7 @@ program.command('open')
     .action(actions.open);
 
 program.command('pull <remote> <local>')
-    .description('pull remote file')
+    .description('pull remote file/dir. Use trailing slash to indicate remote directory.')
     .option('--app <id>', 'App id')
     .action(actions.pull);
 

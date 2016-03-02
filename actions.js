@@ -913,10 +913,18 @@ function push(local, remote, options) {
 }
 
 function pull(remote, local, options) {
-    options._stdout = fs.createWriteStream(local);
-    options._stdout.on('error', function (error) { exit('Error pulling', error); });
+    if (remote.endsWith('/')) { // dir
+        var tarStream = spawn('tar', ['zxvf', '-', '-C', local]);
+        options._stdout = tarStream.stdin;
+        tarStream.on('close', function (code) { exit('Error pulling', code); });
 
-    exec(['cat', remote], options);
+        exec(['tar', 'zcf', '-', '-C', remote, '.'], options);
+    } else {
+        options._stdout = fs.createWriteStream(local);
+        options._stdout.on('error', function (error) { exit('Error pulling', error); });
+
+        exec(['cat', remote], options);
+    }
 }
 
 function createOAuthAppCredentials(options) {
