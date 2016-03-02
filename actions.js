@@ -918,6 +918,10 @@ function push(local, remote, options) {
         options._stdin = fs.createReadStream(local);
         options._stdin.on('error', function (error) { exit('Error pushing', error); });
 
+        if (remote.endsWith('/')) { // dir
+            remote = path.join(remote, path.basename(local));
+        }
+
         exec(['bash', '-c', 'cat - > ' + remote], options);
     }
 }
