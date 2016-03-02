@@ -918,7 +918,7 @@ function push(local, remote, options) {
     if (fs.lstatSync(local).isDirectory())  {
         var tarStream = spawn('tar', ['cvf', '-', '-C', local, '.']);
         options._stdin = tarStream.stdout;
-        tarStream.on('close', function (code) { exit('Error pulling', code); });
+        tarStream.on('close', function (code) { exit('Error pushing', code); });
 
         exec(['tar', 'zxcf', '-', '-C', remote], options);
     } else {
