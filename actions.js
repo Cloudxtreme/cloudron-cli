@@ -906,19 +906,17 @@ function exec(cmd, options) {
 }
 
 function push(local, remote, options) {
-    var tarStream = spawn('tar', [ 'cvf', '-', local ]);
-    options._stdin = tarStream.stdout;
-    tarStream.on('close', function (code) { if (code !== 0) exit('Error pushing. tar returned ', code); });
+    options._stdin = fs.createReadStream(local);
+    options._stdin.on('error', function (error) { exit('Error pushing', error); });
 
-    exec(['bash', '-c', 'tar xvf - -C ' + remote], options);
+    exec(['bash', '-c', 'cat - > ' + remote], options);
 }
 
 function pull(remote, local, options) {
-    var tarStream = spawn('tar', [ 'xvf', '-', local ]);
-    options._stdout = tarStream.stdin;
-    tarStream.on('close', function (code) { if (code !== 0) exit('Error pushing. tar returned ', code); });
+    options._stdout = fs.createWriteStream(local);
+    options._stdout.on('error', function (error) { exit('Error pulling', error); });
 
-    exec(['bash', '-c', 'tar cvf - -C ' + local], options);
+    exec(['cat', remote], options);
 }
 
 function createOAuthAppCredentials(options) {

@@ -103,12 +103,12 @@ program.command('open')
     .action(actions.open);
 
 program.command('pull <remote> <local>')
-    .description('pull remote files/dirs')
+    .description('pull remote file')
     .option('--app <id>', 'App id')
     .action(actions.pull);
 
 program.command('push <local> <remote>')
-    .description('push local file/dir')
+    .description('push local file')
     .option('--app <id>', 'App id')
     .action(actions.push);
 
