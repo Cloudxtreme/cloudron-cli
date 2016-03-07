@@ -81,6 +81,11 @@ program.command('list')
     .description('List installed applications')
     .action(actions.list);
 
+program.command('list-backups')
+    .description('List backups')
+    .option('--app <id>', 'App id')
+    .action(actions.listBackups);
+
 program.command('login [cloudron]')
     .description('Login to cloudron')
     .option('-u, --username <username>', 'Username')

@@ -44,6 +44,7 @@ exports = module.exports = {
     init: init,
     restore: restore,
     backup: backup,
+    listBackups: listBackups,
     createUrl: createUrl
 };
 
@@ -758,6 +759,39 @@ function backup(options) {
                 console.log('\n\nApp is backed up'.green);
                 exit();
             });
+        });
+    });
+}
+
+function listBackups(options) {
+    helper.verifyArguments(arguments);
+
+    var appId = options.app;
+    getApp(appId, function (error, app) {
+        if (error) exit(error);
+
+        if (!app) exit(NO_APP_FOUND_ERROR_STRING);
+
+        superagentEnd(function () {
+            return superagent
+            .get(createUrl('/api/v1/apps/' + app.id + '/backups'))
+            .query({ access_token: config.token() })
+        }, function (error, result) {
+            if (error) exit(error);
+            if (result.statusCode !== 200) return exit(util.format('Failed to list backups.'.red, result.statusCode, result.text));
+
+            var t = new Table();
+
+            result.body.backups.forEach(function (backup) {
+                t.cell('Creation Time', backup.creationTime);
+                t.cell('Filename', backup.filename);
+                t.cell('Version', backup.version);
+ 
+                t.newRow();
+            });
+
+            console.log();
+            console.log(t.toString());
         });
     });
 }
