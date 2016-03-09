@@ -45,6 +45,7 @@ exports = module.exports = {
     restore: restore,
     backup: backup,
     listBackups: listBackups,
+    downloadBackup: downloadBackup,
     createUrl: createUrl
 };
 
@@ -735,7 +736,10 @@ function restart(options) {
 function backup(options) {
     helper.verifyArguments(arguments);
 
+    if (options.download) return downloadBackup(options.download);
+
     var appId = options.app;
+
     getApp(appId, function (error, app) {
         if (error) return exit(error);
 
@@ -823,6 +827,25 @@ function listBackups(options) {
     });
 }
 
+function downloadBackup(id) {
+    superagentEnd(function () {
+        return superagent
+        .get(createUrl('/api/v1/backups/' + id))
+        .query({ access_token: config.token() })
+    }, function (error, result) {
+        if (error) exit(error);
+        if (result.statusCode !== 200) return exit(util.format('Failed to download backup.'.red, result.statusCode, result.text));
+
+        var cmd = 'curl -L -H "x-amz-security-token: ' + result.body.securityToken + '" "' + result.body.url + '" | openssl aes-256-cbc -d -pass pass:' + result.body.backupKey;
+        var curl = spawn('sh', [ '-c', cmd ]);
+
+        curl.stdout.pipe(process.stdout);
+        // curl.stderr.pipe(process.stderr);
+
+        curl.on('close', exit);
+    });
+}
+ 
 function restore(options) {
     helper.verifyArguments(arguments);
 

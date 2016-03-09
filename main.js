@@ -20,6 +20,7 @@ program.command('completion')
 program.command('backup')
     .description('Backup app')
     .option('--app <id>', 'App id')
+    .option('--download <id>', 'Download specific backup')
     .action(actions.backup);
 
 program.command('createOAuthAppCredentials')
