@@ -779,10 +779,10 @@ function listBoxBackups() {
         var t = new Table();
 
         result.body.backups.forEach(function (backup) {
+            t.cell('Id', backup.filename);
             t.cell('Creation Time', backup.creationTime);
-            t.cell('Filename', backup.filename);
             t.cell('Version', backup.version);
-            t.cell('Apps', backup.dependsOn.join(' '));
+            // t.cell('Apps', backup.dependsOn.join(' '));
 
             t.newRow();
         });
@@ -814,8 +814,8 @@ function listBackups(options) {
             var t = new Table();
 
             result.body.backups.forEach(function (backup) {
+                t.cell('Id', backup.filename);
                 t.cell('Creation Time', backup.creationTime);
-                t.cell('Filename', backup.filename);
                 t.cell('Version', backup.version);
  
                 t.newRow();
