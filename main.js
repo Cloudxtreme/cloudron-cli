@@ -21,6 +21,8 @@ program.command('backup')
     .description('Backup app')
     .option('--app <id>', 'App id')
     .option('--download <id>', 'Download specific backup')
+    .option('--list', 'List backups')
+    .option('--create', 'Create a backup') // TODO: remove this as default when app tests are fixed
     .action(actions.backup);
 
 program.command('createOAuthAppCredentials')
@@ -81,12 +83,6 @@ program.command('install')
 program.command('list')
     .description('List installed applications')
     .action(actions.list);
-
-program.command('list-backups')
-    .description('List backups')
-    .option('--app <id>', 'App id')
-    .option('--box', 'Box')
-    .action(actions.listBackups);
 
 program.command('login [cloudron]')
     .description('Login to cloudron')

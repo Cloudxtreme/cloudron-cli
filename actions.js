@@ -44,8 +44,6 @@ exports = module.exports = {
     init: init,
     restore: restore,
     backup: backup,
-    listBackups: listBackups,
-    downloadBackup: downloadBackup,
     createUrl: createUrl
 };
 
@@ -737,6 +735,8 @@ function backup(options) {
     helper.verifyArguments(arguments);
 
     if (options.download) return downloadBackup(options.download);
+
+    if (options.list) return listBackups(options);
 
     var appId = options.app;
 
