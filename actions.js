@@ -817,7 +817,7 @@ function listBackups(options) {
                 t.cell('Id', backup.filename);
                 t.cell('Creation Time', backup.creationTime);
                 t.cell('Version', backup.version);
- 
+
                 t.newRow();
             });
 
@@ -845,7 +845,7 @@ function downloadBackup(id) {
         curl.on('close', exit);
     });
 }
- 
+
 function restore(options) {
     helper.verifyArguments(arguments);
 
@@ -989,9 +989,11 @@ function exec(cmd, options) {
                 }
 
                 stdin.on('readable', writeToSocket);
+
                 stdin.on('end', function() {
                     clearTimeout(writeToSocketTimer);
-                    socket.end();
+
+                    if (!options.interactive) socket.end();
                 });
 
                 demuxStream(socket, stdout, process.stderr);
