@@ -18,7 +18,7 @@ program.command('completion')
     .action(completion);
 
 program.command('backup')
-    .description('Backup app')
+    .description('Create, List and Download Backups')
     .option('--app <id>', 'App id')
     .option('--download <id>', 'Download specific backup')
     .option('--list', 'List backups')
