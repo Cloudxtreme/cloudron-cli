@@ -508,9 +508,11 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck, ins
             console.log('App is being %s with id:', message.bold, appId.bold);
 
             waitForFinishInstallation(appId, waitForHealthcheck, function (error) {
-                if (error) {
-                    return exit('\n\nApp installation error: %s'.red, error.message);
+                if (error && error.message.indexOf('Container command could not be invoked.') > 0) {
+                    console.log('\n\nApp installation error: %s'.red, error.message);
+                    exit('Is your CMD from the Dockerfile executable?');
                 }
+                if (error) exit('\n\nApp installation error: %s'.red, error.message);
 
                 console.log('\n\nApp is %s.'.green, message);
                 exit();
