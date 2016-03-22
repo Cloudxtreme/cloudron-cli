@@ -52,7 +52,7 @@ function superagentEnd(requestFactory, callback) {
 
 function authenticate(options, callback) {
     console.log();
-    console.log('Appstore login:'.bold);
+    console.log('Appstore login'.bold + '(If you do not have one, sign up at https://cloudron.io');
     var username = options.username || readlineSync.question('Email: ', {});
     var password = readlineSync.question('Password: ', { noEchoBack: true });
 
