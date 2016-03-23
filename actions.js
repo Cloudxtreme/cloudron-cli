@@ -1008,16 +1008,21 @@ function exec(cmd, options) {
 }
 
 function push(local, remote, options) {
-    if (!fs.existsSync(local)) return exit('local file ' + local + ' does not exist');
-
-    if (fs.lstatSync(local).isDirectory())  {
+    if (fs.existsSync(local) &&fs.lstatSync(local).isDirectory())  {
         var tarStream = spawn('tar', ['zcvf', '-', '-C', path.dirname(local), path.basename(local)]);
         options._stdin = tarStream.stdout;
         tarStream.on('close', function (code) { if (code) exit('Error pushing', code); });
 
         exec(['tar', 'zxvf', '-', '-C', remote], options);
     } else {
-        options._stdin = fs.createReadStream(local);
+        if (local === '-') {
+            options._stdin = process.stdin;
+        } else if (fs.existsSync(local)) {
+            options._stdin = fs.createReadStream(local);
+        } else {
+            exit('local file ' + local + ' does not exist');
+        }
+
         options._stdin.on('error', function (error) { exit('Error pushing', error); });
 
         if (remote.endsWith('/')) { // dir
@@ -1038,9 +1043,12 @@ function pull(remote, local, options) {
     } else {
         if (fs.existsSync(local) && fs.lstatSync(local).isDirectory()) {
             local = path.join(local, path.basename(remote));
+        } else if (local === '-') {
+            options._stdout = process.stdout;
+        } else {
+            options._stdout = fs.createWriteStream(local);
         }
 
-        options._stdout = fs.createWriteStream(local);
         options._stdout.on('error', function (error) { exit('Error pulling', error); });
 
         exec(['cat', remote], options);
