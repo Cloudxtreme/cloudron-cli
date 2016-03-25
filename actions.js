@@ -399,13 +399,14 @@ function waitForFinishInstallation(appId, waitForHealthcheck, callback) {
 
 // if app is falsy, we install a new app
 // if configure is truthy we will prompt for all settings
-function installer(app, configure, manifest, appStoreId, waitForHealthcheck, installLocation) {
+function installer(app, configure, manifest, appStoreId, waitForHealthcheck, installLocation, force) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof configure, 'boolean');
     assert.strictEqual(typeof manifest, 'object');
     assert(!appStoreId || typeof appStoreId === 'string');
     assert.strictEqual(typeof waitForHealthcheck, 'boolean');
     assert(!installLocation || typeof installLocation === 'string');
+    assert.strictEqual(typeof force, 'boolean');
 
     getUsersAndGroups(function (error, result) {
         if (error) exit(error);
@@ -464,7 +465,8 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck, ins
             location: location,
             portBindings: portBindings,
             accessRestriction: accessRestriction,
-            oauthProxy: oauthProxy
+            oauthProxy: oauthProxy,
+            force: force
         };
 
         var iconFilename = manifest.icon;
@@ -537,7 +539,7 @@ function installFromStore(app, options) {
         if (error) return exit(util.format('Failed to get app info: %s', error.message));
         if (result.statusCode !== 200) return exit(util.format('Failed to get app info from store.'.red, result.statusCode, result.text));
 
-        installer(app || null, false /* configure */, result.body.manifest, parts[0] /* appStoreId */, !!options.wait, options.location);
+        installer(app || null, false /* configure */, result.body.manifest, parts[0] /* appStoreId */, !!options.wait, options.location, false /* force */);
     });
 }
 
@@ -572,7 +574,7 @@ function install(options) {
 
             manifest.dockerImage = image;
 
-            installer(app, !!options.configure, manifest, null /* appStoreId */, !!options.wait, options.location);
+            installer(app, !!options.configure, manifest, null /* appStoreId */, !!options.wait, options.location, !!options.force);
         });
     });
 }

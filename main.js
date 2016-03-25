@@ -79,6 +79,7 @@ program.command('install')
     .option('-c, --configure', 'Configure installation')
     .option('-l, --location <subdomain>', 'Subdomain location')
     .option('--appstore-id <appid@version>', 'Use app from the store')
+    .option('-f, --force', 'Force an update')
     .action(actions.install);
 
 program.command('list')
