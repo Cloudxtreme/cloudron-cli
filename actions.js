@@ -490,7 +490,7 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck, ins
             if (!appStoreId && iconFilename && fs.existsSync(iconFilename)) {
                 data.icon = fs.readFileSync(iconFilename).toString('base64');
             }
-            data.force = true; // this allows installation over errored apps
+            if (!app.appStoreId) data.force = true; // this allows installation over errored apps (for cli apps)
         }
 
         superagentEnd(function () {
