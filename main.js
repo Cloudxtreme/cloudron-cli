@@ -122,6 +122,11 @@ program.command('restart')
     .option('--app <id>', 'App id')
     .action(actions.restart);
 
+program.command('status')
+    .description('Application info')
+    .option('--app <id>', 'App id')
+    .action(actions.status);
+
 program.command('submit')
     .description('Submit app to the store (for review)')
     .action(appstoreActions.submit);

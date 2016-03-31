@@ -35,6 +35,7 @@ exports = module.exports = {
     uninstall: uninstall,
     logs: logs,
     exec: exec,
+    status: status,
     inspect: inspect,
     pull: pull,
     push: push,
@@ -671,6 +672,26 @@ function logs(options) {
             exit(error);
         });
     });
+}
+
+function status(options) {
+    helper.verifyArguments(arguments);
+
+    var appId = options.app;
+    getApp(appId, function (error, app) {
+        if (error) exit(error);
+
+        if (!app) exit(NO_APP_FOUND_ERROR_STRING);
+
+        console.log('Id: ', app.id);
+        console.log('Location: ', app.location);
+        console.log('Version: ', app.manifest.version);
+        console.log('Manifest Id: ', app.appStoreId ? app.manifest.id : app.manifest.id + ' (local)');
+        console.log('Install state: ', app.installationState);
+        console.log('Run state: ', app.runState);
+
+        exit();
+   });
 }
 
 function inspect(options) {
