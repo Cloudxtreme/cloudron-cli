@@ -619,10 +619,10 @@ function build(options) {
             console.log('Waiting for build to begin, this may take a bit...');
 
             followBuildLog(buildId, !!options.raw, function (error) {
-                if (error) return exit(error);
+                if (error) return exit('Error reading build log:', error);
 
                 getBuildInfo(buildId, function (error, build) {
-                    if (error) return exit(error);
+                    if (error) return exit('Error getting build info:', error);
 
                     if (build.status === 'success') {
                         helper.updateBuild(manifest.id, buildId, build.dockerImage);
