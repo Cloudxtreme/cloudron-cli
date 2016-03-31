@@ -35,7 +35,6 @@ exports = module.exports = {
     uninstall: uninstall,
     logs: logs,
     exec: exec,
-    info: info,
     inspect: inspect,
     pull: pull,
     push: push,
@@ -673,20 +672,6 @@ function logs(options) {
             exit(error);
         });
     });
-}
-
-function info(options) {
-    helper.verifyArguments(arguments);
-
-    var appId = options.app;
-    getApp(appId, function (error, app) {
-        if (error) exit(error);
-
-        if (!app) exit(NO_APP_FOUND_ERROR_STRING);
-
-        console.log(util.inspect(app, { depth: null }));
-        exit();
-   });
 }
 
 function inspect(options) {

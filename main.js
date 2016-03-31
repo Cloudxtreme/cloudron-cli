@@ -56,11 +56,6 @@ program.command('help')
     .description('Show this help')
     .action(function () { program.outputHelp(); });
 
-program.command('info')
-    .description('Application info')
-    .option('--app <id>', 'App id')
-    .action(actions.info);
-
 program.command('inspect')
     .description('Inspect a Cloudron returning raw JSON')
     .option('--pretty', 'Pretty print', false)
