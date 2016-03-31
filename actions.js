@@ -304,12 +304,11 @@ function list() {
         var t = new Table();
 
         result.body.apps.forEach(function (app) {
-            t.cell('Store', app.appStoreId ? 'Yes' : 'No');
-            t.cell('Title', app.manifest.title);
-            t.cell('Version', app.manifest.version);
-            t.cell('Location', app.location);
             t.cell('Id', app.id);
-            t.cell('Manifest Id', app.manifest.id);
+            t.cell('Title', app.manifest.title);
+            t.cell('Location', app.location);
+            t.cell('Version', app.manifest.version);
+            t.cell('Manifest Id', app.appStoreId ? app.manifest.id : app.manifest.id + ' (local)');
             t.cell('Install state', app.installationState);
             t.cell('Run state', app.runState);
             t.newRow();
