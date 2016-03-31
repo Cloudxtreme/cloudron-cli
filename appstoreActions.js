@@ -608,7 +608,7 @@ function build(options) {
                 .attach('sourceArchive', sourceArchiveFilePath);
         }, function (error, result) {
             if (error) return exit(util.format('Failed to build app: %s', error.message.red));
-            if (result.statusCode === 413) exit('Failed to build app. The app source is too large.\n'.red);
+            if (result.statusCode === 413) exit('Failed to build app. The app source is too large.\nPlease adjust your .dockerignore file to only include neccessary files.'.red);
             if (result.statusCode !== 201) exit(util.format('Failed to build app (statusCode %s): \n%s', result.statusCode, result.body && result.body.message ? result.body.message.red : result.text));
 
             var buildId = result.body.id;
