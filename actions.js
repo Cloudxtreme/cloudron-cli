@@ -845,7 +845,7 @@ function downloadBackup(id) {
         if (error) exit(error);
         if (result.statusCode !== 200) return exit(util.format('Failed to download backup.'.red, result.statusCode, result.text));
 
-        var cmd = 'curl -s -L -H "x-amz-security-token: ' + result.body.securityToken + '" "' + result.body.url + '" | openssl aes-256-cbc -d -pass pass:' + result.body.backupKey;
+        var cmd = 'curl -s -L -H "x-amz-security-token: ' + result.body.sessionToken + '" "' + result.body.url + '" | openssl aes-256-cbc -d -pass pass:' + result.body.backupKey;
         var curl = spawn('sh', [ '-c', cmd ]);
 
         curl.stdout.pipe(process.stdout);
