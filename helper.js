@@ -153,7 +153,7 @@ function selectUserSync(users) {
     console.log();
     console.log('Available users:');
     users.forEach(function (user, index) {
-        console.log('[%s]\t%s - %s', index, user.id.cyan, user.email);
+        console.log('[%s]\t%s - %s', index, (user.username || '(unset)').cyan, user.email);
     });
 
     var index = -1;
