@@ -102,6 +102,10 @@ program.command('open')
     .description('Open the app in the Browser')
     .action(actions.open);
 
+program.command('published')
+    .description('List published apps')
+    .action(appstoreActions.listPublishedApps);
+
 program.command('pull <remote> <local>')
     .description('pull remote file/dir. Use trailing slash to indicate remote directory.')
     .option('--app <id>', 'App id')
@@ -153,10 +157,6 @@ program.command('unpublish')
     .option('-a, --app <id>', 'Unpublish app')
     .option('-f, --force', 'Do not ask anything')
     .action(appstoreActions.unpublish);
-
-program.command('published')
-    .description('List published apps')
-    .action(appstoreActions.listPublishedApps);
 
 if (!process.argv.slice(2).length) {
     program.outputHelp();
