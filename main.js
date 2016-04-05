@@ -104,6 +104,7 @@ program.command('open')
 
 program.command('published')
     .description('List published apps')
+    .option('-i --image', 'Display docker image')
     .action(appstoreActions.listPublishedApps);
 
 program.command('pull <remote> <local>')

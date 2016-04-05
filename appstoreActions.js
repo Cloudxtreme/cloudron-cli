@@ -663,7 +663,7 @@ function buildLogs(options) {
 }
 
 // TODO currently no pagination, only needed once we have users with more than 100 apps
-function listPublishedApps() {
+function listPublishedApps(options) {
     helper.verifyArguments(arguments);
 
     superagentEnd(function () {
@@ -684,6 +684,7 @@ function listPublishedApps() {
             t.cell('Latest Version', app.manifest.version);
             t.cell('Publish State', app.publishState);
             t.cell('Creation Date', new Date(app.creationDate));
+            if (options.image) t.cell('Image', app.manifest.dockerImage);
             t.newRow();
         });
 
