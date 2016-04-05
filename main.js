@@ -132,7 +132,7 @@ program.command('status')
     .action(actions.status);
 
 program.command('submit')
-    .description('Submit app to the store (for review)')
+    .description('Submit app to the store for review')
     .action(appstoreActions.submit);
 
 program.command('upload')
