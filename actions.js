@@ -788,7 +788,7 @@ function listBoxBackups() {
         var t = new Table();
 
         result.body.backups.forEach(function (backup) {
-            t.cell('Id', backup.filename);
+            t.cell('Id', backup.id);
             t.cell('Creation Time', backup.creationTime);
             t.cell('Version', backup.version);
             // t.cell('Apps', backup.dependsOn.join(' '));
@@ -823,7 +823,7 @@ function listBackups(options) {
             var t = new Table();
 
             result.body.backups.forEach(function (backup) {
-                t.cell('Id', backup.filename);
+                t.cell('Id', backup.id);
                 t.cell('Creation Time', backup.creationTime);
                 t.cell('Version', backup.version);
 
