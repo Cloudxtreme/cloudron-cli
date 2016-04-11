@@ -437,7 +437,7 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck, ins
             portBindings = {};
             for (var env in (manifest.tcpPorts || {})) {
                 var defaultPort = (app && app.portBindings && app.portBindings[env]) ? app.portBindings[env] : (manifest.tcpPorts[env].defaultValue || '');
-                var port = readlineSync.question(manifest.tcpPorts[env].description + ' (default ' + env + '=' + defaultPort + '): ', {});
+                var port = readlineSync.question(manifest.tcpPorts[env].description + ' (default ' + env + '=' + defaultPort + '. "x" to disable): ', {});
                 if (port === '') {
                     portBindings[env] = defaultPort;
                 } else if (isNaN(parseInt(port, 10))) {
