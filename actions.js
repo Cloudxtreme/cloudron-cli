@@ -441,7 +441,7 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck, ins
                 if (port === '') {
                     portBindings[env] = defaultPort;
                 } else if (isNaN(parseInt(port, 10))) {
-                    console.log('Cleared port'.gray);
+                    console.log(('Cleared ' + env).gray);
                 } else {
                     portBindings[env] = parseInt(port, 10);
                 }
