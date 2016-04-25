@@ -1089,6 +1089,7 @@ function createOAuthAppCredentials(options) {
             console.log('ClientSecret: %s', result.body.clientSecret.cyan);
             console.log('RedirectURI:  %s', result.body.redirectURI.cyan);
             console.log();
+            console.log('apiOrigin: %s', 'https://' + config.apiEndpoint());
             console.log('authorizationURL: %s', 'https://' + config.apiEndpoint() + '/api/v1/oauth/dialog/authorize');
             console.log('tokenURL:         %s', 'https://' + config.apiEndpoint() + '/api/v1/oauth/token');
         }
