@@ -502,7 +502,7 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck, ins
             if (result.statusCode === 404) exit(util.format('Failed to install app. No such app in the appstore.'.red));
             if (result.statusCode === 409) exit(util.format('Failed to install app. The location %s is already used.'.red, location.bold));
             if (result.statusCode === 403) exit(util.format('Failed to install app. Admin privileges are required.'.red));
-            if (result.statusCode !== 202) exit(util.format('Failed to install app.'.red, result.statusCode, result.text));
+            if (result.statusCode !== 202) exit(util.format('Failed to install app. %s (%s)'.red, result.body.message, result.statusCode));
 
             var appId = app ? app.id : result.body.id;
 
