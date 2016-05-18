@@ -19,6 +19,8 @@
     "eventsource": "^0.1.6",
     "micromatch": "^2.2.0",
     "opn": "^1.0.1",
+    "progress": "^1.1.8",
+    "progress-stream": "^1.2.0",
     "readline-sync": "^0.7.6",
     "safetydance": "0.0.15",
     "semver": "^4.3.6",

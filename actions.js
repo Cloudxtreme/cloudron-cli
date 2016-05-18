@@ -12,6 +12,8 @@ var assert = require('assert'),
     manifestFormat = require('cloudron-manifestformat'),
     opn = require('opn'),
     path = require('path'),
+    ProgressBar = require('progress'),
+    ProgressStream = require('progress-stream'),
     querystring = require('querystring'),
     readlineSync = require('readline-sync'),
     safe = require('safetydance'),
@@ -1017,7 +1019,9 @@ function exec(cmd, options) {
 }
 
 function push(local, remote, options) {
-    if (fs.existsSync(local) &&fs.lstatSync(local).isDirectory())  {
+    var stat = fs.existsSync(local) ? fs.lstatSync(local) : null;
+
+    if (stat && stat.isDirectory())  {
         var tarStream = spawn('tar', ['zcvf', '-', '-C', path.dirname(local), path.basename(local)]);
         options._stdin = tarStream.stdout;
         tarStream.on('close', function (code) { if (code) exit('Error pushing', code); });
@@ -1026,8 +1030,20 @@ function push(local, remote, options) {
     } else {
         if (local === '-') {
             options._stdin = process.stdin;
-        } else if (fs.existsSync(local)) {
-            options._stdin = fs.createReadStream(local);
+        } else if (stat) {
+            var progress = new ProgressStream({ length: stat.size, time: 1000 });
+
+            options._stdin = progress;
+            fs.createReadStream(local).pipe(progress);
+
+            var bar = new ProgressBar('Uploading [:bar] :percent: :etas', {
+                complete: '=',
+                incomplete: ' ',
+                width: 100,
+                total: stat.size
+            });
+
+            progress.on('progress', function (p) { bar.update(p.percentage / 100); /* bar.tick(p.transferred - bar.curr); */ });
         } else {
             exit('local file ' + local + ' does not exist');
         }
