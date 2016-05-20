@@ -989,26 +989,7 @@ function exec(cmd, options) {
                 stdin.pipe(socket);
                 socket.pipe(stdout);
             } else {
-                // nginx has some issue with streaming tcp sockets. if you write buffer > 16k too fast, it will drop them
-                // http://stackoverflow.com/questions/16543787/nginx-as-a-proxy-for-nodejssocket-io-everything-is-ok-except-for-big-messages
-                // http://stackoverflow.com/questions/12282342/nginx-files-upload-streaming-with-proxy-pass (maybe?)
-                var writeToSocketTimer;
-
-                function writeToSocket() {
-                    var buf = stdin.read(16000);
-                    if (!buf) return;
-                    socket.write(buf);
-                    if (buf.length === 16000) writeToSocketTimer = setTimeout(writeToSocket, 200); // send next batch in 200ms
-                }
-
-                stdin.on('readable', writeToSocket);
-
-                stdin.on('end', function() {
-                    clearTimeout(writeToSocketTimer);
-
-                    if (!options.interactive) socket.end();
-                });
-
+                stdin.pipe(socket, { end: !options.interactive });
                 demuxStream(socket, stdout, process.stderr);
             }
         });
