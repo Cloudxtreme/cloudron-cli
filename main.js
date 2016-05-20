@@ -47,8 +47,8 @@ if (DEV) {
 
 program.command('exec [cmd...]')
     .description('Exec a command in application')
-    .option('-t,--tty', 'Allocate tty')
-    .option('-i,--interactive', 'Keep STDIN open')
+    .option('-t,--tty', 'Allocate tty (default: autodetect)')
+    .option('-i,--track-stdin', 'Track STDIN and close connection (default: autodetect)')
     .option('--app <id>', 'App id')
     .action(actions.exec);
 

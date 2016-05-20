@@ -57,3 +57,8 @@ Just run the following in your shell
 . <(cloudron completion)
 ```
 This command loads the completions into your current shell. Adding it to your ~/.bashrc or ~/.zshrc will make the completions available everywhere.
+
+## Tests
+
+CLOUDRON=my.cloudron.name USERNAME=username PASSWORD=password mocha tests/
+

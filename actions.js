@@ -283,7 +283,7 @@ function login(cloudron, options) {
 
 function logout() {
     config.clear();
-    console.log('Done.');
+    console.log('Logged out.');
 }
 
 function open() {
@@ -917,7 +917,7 @@ function demuxStream(stream, stdout, stderr) {
 // cat ~/tmp/fantome.tar.gz | cloudron exec -- bash -c "tar vf - -C /tmp" - must show an error
 // cat ~/tmp/fantome.tar.gz | cloudron exec -- bash -c "tar zxf - -C /tmp" - must extrack ok
 function exec(cmd, options) {
-    var appId = options.app, tty;
+    var appId = options.app;
     var stdin = process.stdin; // hack for 'push', 'pull' to reuse this function
     var stdout = options._stdout || process.stdout;
 
@@ -928,12 +928,30 @@ function exec(cmd, options) {
         stdin = bufferStream;
     }
 
+    var trackStdin, tty;
+
     if ('tty' in options) {
         tty = options.tty;
+    } else if (!stdin.isTTY && !stdout.isTTY) { // this is the case when called from scripts
+        tty = false;
+    } else if (stdin.isTTY && stdout.isTTY) { // called from terminal
+        tty = true;
     } else if (!stdin.isTTY) {
         tty = false;
-    } else { // autodetect
+    } else {
         tty = stdout.isTTY;
+    }
+
+    if ('trackStdin' in options) {
+        trackStdin = options.trackStdin;
+    } else if (!stdin.isTTY && !stdout.isTTY) { // called from script
+        trackStdin = false; // no way for us to know unless scripts tells us
+    } else if (stdin.isTTY && stdout.isTTY) { // called from terminal, always terminate based on remote end
+        trackStdin = false; 
+    } else if (!stdin.isTTY) { // user is piping a file
+        trackStdin = true; // close connection when we are done piping the file
+    } else {
+        trackStdin = false; // user redirected to file. base it on remote end
     }
 
     getApp(appId, function (error, app) {
@@ -985,11 +1003,11 @@ function exec(cmd, options) {
             socket.setKeepAlive(true);
 
             if (tty) {
-                stdin.setRawMode(true);
-                stdin.pipe(socket);
+                if (stdin.setRawMode) stdin.setRawMode(true); // required because --tty can be passed in options
+                stdin.pipe(socket, { end: trackStdin });
                 socket.pipe(stdout);
             } else {
-                stdin.pipe(socket, { end: !options.interactive });
+                stdin.pipe(socket, { end: trackStdin });
                 demuxStream(socket, stdout, process.stderr);
             }
         });
@@ -1002,8 +1020,10 @@ function exec(cmd, options) {
 function push(local, remote, options) {
     var stat = fs.existsSync(local) ? fs.lstatSync(local) : null;
 
+    options.trackStdin = true; // close socket when stdin is done
+
     if (stat && stat.isDirectory())  {
-        var tarStream = spawn('tar', ['zcvf', '-', '-C', path.dirname(local), path.basename(local)]);
+        var tarStream = spawn('tar', ['zcvf', '-', '-C', path.dirname(local), path.basename(local)], { stdio: [ 'pipe', 'pipe', 'inherit' ] });
         options._stdin = tarStream.stdout;
         tarStream.on('close', function (code) { if (code) exit('Error pushing', code); });
 
@@ -1143,4 +1163,3 @@ function init() {
         fs.writeFileSync('CHANGELOG', changelog, 'utf8');
     }
 }
-
