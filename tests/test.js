@@ -34,7 +34,8 @@ function md5(file) {
 function cli(args, options) {
     // https://github.com/nodejs/node-v0.x-archive/issues/9265
     options = options || { };
-    args = util.isArray(args) ? args : args.match(/[^\s]+|"[^"]+"/g); // http://stackoverflow.com/questions/2817646/javascript-split-string-on-space-or-on-quotes-to-array
+    args = util.isArray(args) ? args : args.match(/[^\s"]+|"([^"]+)"/g);
+    args = args.map(function (e) { return e[0] === '"' ? e.slice(1, -1) : e; }); // remove the quotes
 
     // we cannot capture stdout and also use 'inherit' flags. because of this we force tty mode to fake tty code path in cli tool
     if (args[0] === 'exec' && options.stdin) {
@@ -111,7 +112,7 @@ describe('Exec', function () {
         });
     });
 
-    xit('can pipe stdin to exec command', function () {
+    it('can pipe stdin to exec command', function () {
         var randomBytes = require('crypto').randomBytes(256);
         fs.writeFileSync('/tmp/randombytes', randomBytes);
         var randomBytesMd5 = crypto.createHash('md5').update(randomBytes).digest('hex');
