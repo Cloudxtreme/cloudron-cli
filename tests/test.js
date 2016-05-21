@@ -112,13 +112,18 @@ describe('Exec', function () {
         });
     });
 
-    it('can pipe stdin to exec command', function () {
+    it('can pipe stdin to exec command', function (done) {
         var randomBytes = require('crypto').randomBytes(256);
         fs.writeFileSync('/tmp/randombytes', randomBytes);
         var randomBytesMd5 = crypto.createHash('md5').update(randomBytes).digest('hex');
 
-        cli(util.format('exec --app %s -- bash -c "cat - > /app/data/sauce"', app.id), { stdin: randomBytes });
-        cli(util.format('exec --app %s md5sum /app/data/sauce', app.id)).stdout.to.contain(randomBytesMd5);
+        var instream = fs.createReadStream('/tmp/randombytes');
+        instream.on('open', function () {
+            cli(util.format('exec --app %s -- bash -c "cat - > /app/data/sauce"', app.id), { stdin: instream });
+            var out = cli(util.format('exec --app %s md5sum /app/data/sauce', app.id));
+            expect(out.stdout).to.contain(randomBytesMd5);
+            done();
+        });
     });
 });
 
