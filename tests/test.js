@@ -122,11 +122,21 @@ describe('Exec', function () {
 });
 
 describe('Push', function () {
+    var RANDOM_FILE = '/tmp/randombytes';
+
+    before(function () {
+        var randomBytes = crypto.randomBytes(500);
+        fs.writeFileSync(RANDOM_FILE, randomBytes);
+    });
+
+    after(function () {
+        fs.unlinkSync(RANDOM_FILE);
+    }
+
     it('can push a file', function () {
-        var testFile = __dirname + '/test.js';
-        cli(util.format('push --app %s %s /tmp/test2.js', app.id, testFile));
-        var out = cli(util.format('exec --app %s md5sum /tmp/test2.js', app.id));
-        expect(out.stdout).to.contain(md5(testFile));
+        cli(util.format('push --app %s %s /tmp/push1', app.id, RANDOM_FILE));
+        var out = cli(util.format('exec --app %s md5sum /tmp/push1', app.id));
+        expect(out.stdout).to.contain(md5(RANDOM_FILE));
     });
 
     it('can push to directory', function () {
@@ -137,12 +147,11 @@ describe('Push', function () {
     });
 
     it('can push stdin', function () {
-        var testFile = __dirname + '/test.js';
-        var istream = fs.createReadStream(testFile);
+        var istream = fs.createReadStream(RANDOM_FILE);
         istream.on('open', function () { // exec requires underlying fd
             cli(util.format('push --app %s - /run/testcopy.js', app.id), { stdin: istream });
             var out = cli(util.format('exec --app %s md5sum /run/testcopy.js', app.id));
-            expect(out.stdout).to.contain(md5(testFile));
+            expect(out.stdout).to.contain(md5(RANDOM_FILE));
         });
     });
 
