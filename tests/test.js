@@ -72,7 +72,7 @@ describe('Login', function () {
     });
 });
 
-describe('App install', function () {
+xdescribe('App install', function () {
     this.timeout(0);
 
     it('can install app', function () {
@@ -124,19 +124,14 @@ describe('Exec', function () {
 describe('Push', function () {
     var RANDOM_FILE = '/tmp/randombytes';
 
-    before(function () {
+    it('can push a binary file', function () {
         var randomBytes = crypto.randomBytes(500);
         fs.writeFileSync(RANDOM_FILE, randomBytes);
-    });
 
-    after(function () {
-        fs.unlinkSync(RANDOM_FILE);
-    }
-
-    it('can push a file', function () {
         cli(util.format('push --app %s %s /tmp/push1', app.id, RANDOM_FILE));
         var out = cli(util.format('exec --app %s md5sum /tmp/push1', app.id));
         expect(out.stdout).to.contain(md5(RANDOM_FILE));
+        fs.unlinkSync(RANDOM_FILE);
     });
 
     it('can push to directory', function () {
@@ -146,12 +141,17 @@ describe('Push', function () {
         expect(out.stdout).to.contain(md5(testFile));
     });
 
-    it('can push stdin', function () {
+    it('can push stdin', function (done) {
+        var randomBytes = crypto.randomBytes(500);
+        fs.writeFileSync(RANDOM_FILE, randomBytes);
+
         var istream = fs.createReadStream(RANDOM_FILE);
         istream.on('open', function () { // exec requires underlying fd
             cli(util.format('push --app %s - /run/testcopy.js', app.id), { stdin: istream });
             var out = cli(util.format('exec --app %s md5sum /run/testcopy.js', app.id));
             expect(out.stdout).to.contain(md5(RANDOM_FILE));
+            fs.unlinkSync(RANDOM_FILE);
+            done();
         });
     });
 
@@ -162,12 +162,19 @@ describe('Push', function () {
         expect(out.stdout).to.contain(md5(testFile));
     });
 
-    xit('can push a large file', function () {
+    it('can push a large file', function () {
+        this.timeout(120000);
+
+        child_process.execSync('dd if=/dev/urandom of=' + RANDOM_FILE + ' bs=10M count=1');
+        cli(util.format('push --app %s %s /tmp/push1', app.id, RANDOM_FILE));
+        var out = cli(util.format('exec --app %s md5sum /tmp/push1', app.id));
+        expect(out.stdout).to.contain(md5(RANDOM_FILE));
+        fs.unlinkSync(RANDOM_FILE);
     });
 });
 
 describe('Pull', function () {
-    it('can pull a file', function () {
+    it('can pull a binary file', function () {
         safe.fs.unlinkSync('/tmp/ls');
         cli(util.format('pull --app %s /bin/ls /tmp/ls', app.id));
         expect(md5('/tmp/ls')).to.be('7a92ef62f96553224faece68289b4fc3');
@@ -197,7 +204,7 @@ describe('Status', function () {
     });
 });
 
-describe('Uninstall', function () {
+xdescribe('Uninstall', function () {
     this.timeout(0);
 
     it('can uninstall', function () {
