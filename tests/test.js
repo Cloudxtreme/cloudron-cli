@@ -74,8 +74,6 @@ describe('Login', function () {
 });
 
 xdescribe('App install', function () {
-    this.timeout(0);
-
     it('can install app', function () {
         console.log('Installing app, this can take a while');
         var out = cli('install --appstore-id com.hastebin.cloudronapp --new --wait --location ' + applocation);
@@ -92,6 +90,8 @@ describe('Inspect', function () {
 });
 
 describe('Exec', function () {
+    this.timeout(5000);
+
     it('can execute a command and see stdout', function () {
         var out = cli(util.format('exec --app %s -- ls -l /app/code', app.id));
         expect(out.stdout).to.contain('total');
@@ -128,6 +128,8 @@ describe('Exec', function () {
 });
 
 describe('Push', function () {
+    this.timeout(5000);
+
     var RANDOM_FILE = '/tmp/randombytes';
 
     it('can push a binary file', function () {
@@ -180,6 +182,8 @@ describe('Push', function () {
 });
 
 describe('Pull', function () {
+    this.timeout(5000);
+
     it('can pull a binary file', function () {
         safe.fs.unlinkSync('/tmp/ls');
         cli(util.format('pull --app %s /bin/ls /tmp/ls', app.id));
