@@ -90,8 +90,6 @@ describe('Inspect', function () {
 });
 
 describe('Exec', function () {
-    this.timeout(5000);
-
     it('can execute a command and see stdout', function () {
         var out = cli(util.format('exec --app %s -- ls -l /app/code', app.id));
         expect(out.stdout).to.contain('total');
@@ -128,8 +126,6 @@ describe('Exec', function () {
 });
 
 describe('Push', function () {
-    this.timeout(5000);
-
     var RANDOM_FILE = '/tmp/randombytes';
 
     it('can push a binary file', function () {
@@ -171,8 +167,6 @@ describe('Push', function () {
     });
 
     it('can push a large file', function () {
-        this.timeout(120000);
-
         child_process.execSync('dd if=/dev/urandom of=' + RANDOM_FILE + ' bs=10M count=1');
         cli(util.format('push --app %s %s /tmp/push1', app.id, RANDOM_FILE));
         var out = cli(util.format('exec --app %s md5sum /tmp/push1', app.id));
@@ -182,8 +176,6 @@ describe('Push', function () {
 });
 
 describe('Pull', function () {
-    this.timeout(5000);
-
     it('can pull a binary file', function () {
         safe.fs.unlinkSync('/tmp/ls');
         cli(util.format('pull --app %s /bin/ls /tmp/ls', app.id));
@@ -215,8 +207,6 @@ describe('Status', function () {
 });
 
 xdescribe('Uninstall', function () {
-    this.timeout(0);
-
     it('can uninstall', function () {
         var out = cli('uninstall --app ' + app.id);
         expect(out.stdout).to.contain('successfully uninstalled');
