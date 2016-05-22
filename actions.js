@@ -928,31 +928,7 @@ function exec(cmd, options) {
         stdin = bufferStream;
     }
 
-    var trackStdin, tty;
-
-    if ('tty' in options) {
-        tty = options.tty;
-    } else if (!stdin.isTTY && !stdout.isTTY) { // this is the case when called from scripts
-        tty = false;
-    } else if (stdin.isTTY && stdout.isTTY) { // called from terminal
-        tty = true;
-    } else if (!stdin.isTTY) {
-        tty = false;
-    } else {
-        tty = stdout.isTTY;
-    }
-
-    if ('trackStdin' in options) {
-        trackStdin = options.trackStdin;
-    } else if (!stdin.isTTY && !stdout.isTTY) { // called from script
-        trackStdin = false; // no way for us to know unless scripts tells us
-    } else if (stdin.isTTY && stdout.isTTY) { // called from terminal, always terminate based on remote end
-        trackStdin = false; 
-    } else if (!stdin.isTTY) { // user is piping a file
-        trackStdin = true; // close connection when we are done piping the file
-    } else {
-        trackStdin = false; // user redirected to file. base it on remote end
-    }
+    var tty = !!options.tty;
 
     getApp(appId, function (error, app) {
         if (error) exit(error);
@@ -960,9 +936,8 @@ function exec(cmd, options) {
         if (!app) exit(NO_APP_FOUND_ERROR_STRING);
 
         if (cmd.length === 0) {
-            tty = true; // override
-
             cmd = [ '/bin/bash' ];
+            tty = true; // override
         }
 
         if (tty && !stdin.isTTY) exit('stdin is not tty');
@@ -1003,12 +978,12 @@ function exec(cmd, options) {
             socket.setKeepAlive(true);
 
             if (tty) {
-                if (stdin.setRawMode) stdin.setRawMode(true); // required because --tty can be passed in options
-                stdin.pipe(socket, { end: trackStdin });
-                socket.pipe(stdout);
+                stdin.setRawMode(true);
+                stdin.pipe(socket, { end: false }); // the remote will close the connection
+                socket.pipe(stdout); // in tty mode, stdout/stderr is merged
             } else {
-                stdin.pipe(socket, { end: trackStdin });
-                demuxStream(socket, stdout, process.stderr);
+                stdin.pipe(socket, { end: true }); // closing socket will still get us the result thanks to hijacked mode
+                demuxStream(socket, stdout, process.stderr); // can get separate streams in non-tty mode
             }
         });
 
@@ -1020,7 +995,7 @@ function exec(cmd, options) {
 function push(local, remote, options) {
     var stat = fs.existsSync(local) ? fs.lstatSync(local) : null;
 
-    options.trackStdin = true; // close socket when stdin is done
+    options.tty = false;
 
     if (stat && stat.isDirectory())  {
         var tarStream = spawn('tar', ['zcvf', '-', '-C', path.dirname(local), path.basename(local)], { stdio: [ 'pipe', 'pipe', 'inherit' ] });
