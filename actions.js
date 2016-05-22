@@ -918,15 +918,8 @@ function demuxStream(stream, stdout, stderr) {
 // cat ~/tmp/fantome.tar.gz | cloudron exec -- bash -c "tar zxf - -C /tmp" - must extrack ok
 function exec(cmd, options) {
     var appId = options.app;
-    var stdin = process.stdin; // hack for 'push', 'pull' to reuse this function
+    var stdin = options._stdin || process.stdin; // hack for 'push', 'pull' to reuse this function
     var stdout = options._stdout || process.stdout;
-
-    if (options._stdin) {
-        // child_process stream loses data since we connect to 'readable' later
-        var bufferStream = new require('stream').PassThrough();
-        options._stdin.pipe(bufferStream);
-        stdin = bufferStream;
-    }
 
     var tty = !!options.tty;
 
