@@ -154,10 +154,10 @@ describe('Push', function () {
         });
     });
 
-    xit('can push a directory', function () {
+    it('can push a directory', function () {
         var testDir = __dirname, testFile = __dirname + '/test.js';
         cli(util.format('push --app %s %s /run', app.id, testDir));
-        var out = cli(util.format('exec --app %s md5sum /run/test.js', app.id));
+        var out = cli(util.format('exec --app %s md5sum /run/' + path.basename(__dirname) + '/test.js', app.id));
         expect(out.stdout).to.contain(md5(testFile));
     });
 

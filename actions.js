@@ -974,7 +974,9 @@ function exec(cmd, options) {
                 stdin.setRawMode(true);
                 stdin.pipe(socket, { end: false }); // the remote will close the connection
                 socket.pipe(stdout); // in tty mode, stdout/stderr is merged
-            } else {
+            } else {// create stdin process on demand
+                if (typeof stdin === 'function') stdin = stdin();
+
                 stdin.on('data', function (d) {
                     var buf = new Buffer(4);
                     buf.writeUInt32BE(d.length, 0 /* offset */);
@@ -998,12 +1000,13 @@ function exec(cmd, options) {
 function push(local, remote, options) {
     var stat = fs.existsSync(local) ? fs.lstatSync(local) : null;
 
-    options.tty = false;
-
     if (stat && stat.isDirectory())  {
-        var tarStream = spawn('tar', ['zcvf', '-', '-C', path.dirname(local), path.basename(local)], { stdio: [ 'pipe', 'pipe', 'inherit' ] });
-        options._stdin = tarStream.stdout;
-        tarStream.on('close', function (code) { if (code) exit('Error pushing', code); });
+        // Create a functor for stdin. If no data event handlers are attached, and there are no stream.pipe() destinations, and the stream is
+        // switched into flowing mode, then data will be lost. So, we have to start the tarzip only when exec is ready to attach event handlers.
+        options._stdin = function () {
+            var tarzip = spawn('tar', ['zcvf', '-', '-C', path.dirname(local), path.basename(local)], { stdio: 'pipe' });
+            return tarzip.stdout;
+        };
 
         exec(['tar', 'zxvf', '-', '-C', remote], options);
     } else {
