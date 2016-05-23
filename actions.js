@@ -21,7 +21,9 @@ var assert = require('assert'),
     split = require('split'),
     superagent = require('superagent'),
     Table = require('easy-table'),
+    tar = require('tar-fs'),
     util = require('util'),
+    zlib = require('zlib'),
     _ = require('underscore');
 
 require('colors');
@@ -992,6 +994,7 @@ function exec(cmd, options) {
                 demuxStream(socket, stdout, process.stderr); // can get separate streams in non-tty mode
                 socket.on('end', function () {  // server closed the socket
                     stdin.end(); // required for this process to 'exit' cleanly. do not call exit() because writes may not have finished
+                    if (!stdout.isTTY) stdout.end();
                 });
             }
         });
@@ -1046,9 +1049,11 @@ function push(local, remote, options) {
 
 function pull(remote, local, options) {
     if (remote.endsWith('/')) { // dir
-        var tarStream = spawn('tar', ['zxvf', '-', '-C', local]);
-        options._stdout = tarStream.stdin;
-        tarStream.on('exit', function (code, signal) { exit(); });
+        var untar = tar.extract(local); // local directory is created if it doesn't exist!
+        var unzip = zlib.createGunzip();
+
+        unzip.pipe(untar);
+        options._stdout = unzip;
 
         exec(['tar', 'zcf', '-', '-C', remote, '.'], options);
     } else {
