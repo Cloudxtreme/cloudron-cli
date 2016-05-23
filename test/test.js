@@ -37,11 +37,6 @@ function cli(args, options) {
     args = util.isArray(args) ? args : args.match(/[^\s"]+|"([^"]+)"/g);
     args = args.map(function (e) { return e[0] === '"' ? e.slice(1, -1) : e; }); // remove the quotes
 
-    // we cannot capture stdout and also use 'inherit' flags. because of this we force tty mode to fake tty code path in cli tool
-    if (args[0] === 'exec' && options.stdin) {
-        args.splice(1, 0, '--track-stdin');
-    }
-
     console.log('cloudron ' + args.join(' '));
 
     try {
