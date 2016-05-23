@@ -1004,7 +1004,7 @@ function push(local, remote, options) {
         // Create a functor for stdin. If no data event handlers are attached, and there are no stream.pipe() destinations, and the stream is
         // switched into flowing mode, then data will be lost. So, we have to start the tarzip only when exec is ready to attach event handlers.
         options._stdin = function () {
-            var tarzip = spawn('tar', ['zcvf', '-', '-C', path.dirname(local), path.basename(local)], { stdio: 'pipe' });
+            var tarzip = spawn('tar', ['zcf', '-', '-C', path.dirname(local), path.basename(local)], { stdio: 'pipe' });
             return tarzip.stdout;
         };
 
@@ -1050,6 +1050,7 @@ function pull(remote, local, options) {
     } else {
         if (fs.existsSync(local) && fs.lstatSync(local).isDirectory()) {
             local = path.join(local, path.basename(remote));
+            options._stdout = fs.createWriteStream(local);
         } else if (local === '-') {
             options._stdout = process.stdout;
         } else {

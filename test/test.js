@@ -14,6 +14,7 @@ var child_process = require('child_process'),
     expect = require('expect.js'),
     fs = require('fs'),
     path = require('path'),
+    rimraf = require('rimraf'),
     safe = require('safetydance'),
     util = require('util');
 
@@ -71,7 +72,7 @@ describe('Login', function () {
 xdescribe('App install', function () {
     it('can install app', function () {
         console.log('Installing app, this can take a while');
-        var out = cli('install --appstore-id com.hastebin.cloudronapp --new --wait --location ' + applocation);
+        var out = cli('install --appstore-id com.hastebin.cloudronapp@0.4.0 --new --wait --location ' + applocation);
         expect(out.stdout).to.contain('App is installed');
     });
 });
@@ -171,26 +172,52 @@ describe('Push', function () {
 });
 
 describe('Pull', function () {
+    var RANDOM_FILE = '/tmp/randombytes';
+
+    before(function () {
+        var randomBytes = crypto.randomBytes(20000);
+        fs.writeFileSync(RANDOM_FILE, randomBytes);
+
+        cli(util.format('push --app %s /tmp/randombytes /tmp/randombytes', app.id));
+    });
+
+    after(function () {
+        fs.unlinkSync(RANDOM_FILE);
+    });
+
     it('can pull a binary file', function () {
-        safe.fs.unlinkSync('/tmp/ls');
-        cli(util.format('pull --app %s /bin/ls /tmp/ls', app.id));
-        expect(md5('/tmp/ls')).to.be('7a92ef62f96553224faece68289b4fc3');
+        cli(util.format('pull --app %s /tmp/randombytes /tmp/pullfiletest', app.id));
+        expect(md5('/tmp/pullfiletest')).to.be(md5('/tmp/randombytes'));
+        fs.unlinkSync('/tmp/pullfiletest');
     });
 
-    xit('can pull a directory', function () {
-
+    it('can pull a directory', function () {
+        rimraf.sync('/tmp/pulldir')
+        safe.fs.mkdirSync('/tmp/pulldir')
+        cli(util.format('pull --app %s /app/code/ /tmp/pulldir', app.id));
+        expect(fs.existsSync('/tmp/pulldir/README.md')).to.be.ok();
+        expect(fs.existsSync('/tmp/pulldir/static/robots.txt')).to.be.ok();
+        expect(fs.existsSync('/tmp/pulldir/.gitignore')).to.be.ok();
+        expect(md5('/tmp/pulldir/node_modules/uglify-js/bin/uglifyjs')).to.be('e1e83d5253cf6dade0a830d874257c6f');
+        rimraf.sync('/tmp/pulldir');
     });
 
-    xit('can pull to directory', function () {
-
+    it('can pull to directory', function () {
+        safe.fs.unlinkSync('/tmp/pulledreadme.md');
+        cli(util.format('pull --app %s /app/code/README.md /tmp/pulledreadme.md', app.id));
+        expect(md5('/tmp/pulledreadme.md')).to.be('562bca2ed9dbd1a11a66e7cf6f65bdb7');
+        fs.unlinkSync('/tmp/pulledreadme.md');
     });
 
-    xit('can pull to stdout', function () {
-
-    });
-
-    xit('can pull a large file', function () {
-
+    it('can pull to stdout', function (done) {
+        safe.fs.unlinkSync('/tmp/pullfiletest');
+        var ostream = fs.createWriteStream('/tmp/pullfiletest');
+        ostream.on('open', function () { // exec requires underlying fd
+            cli(util.format('pull --app %s /tmp/randombytes -', app.id), { stdout: ostream });
+            expect(md5('/tmp/pullfiletest')).to.be(md5('/tmp/randombytes'));
+            fs.unlinkSync('/tmp/pullfiletest');
+            done();
+        });
     });
 });
 
@@ -208,7 +235,7 @@ xdescribe('Uninstall', function () {
     });
 });
 
-describe('Logout', function () {
+xdescribe('Logout', function () {
     it('can logout', function () {
         console.log('Uninstalling app, this can take a while');
         var out = cli('logout');
