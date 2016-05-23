@@ -994,7 +994,7 @@ function exec(cmd, options) {
                 demuxStream(socket, stdout, process.stderr); // can get separate streams in non-tty mode
                 socket.on('end', function () {  // server closed the socket
                     stdin.end(); // required for this process to 'exit' cleanly. do not call exit() because writes may not have finished
-                    if (!stdout.isTTY) stdout.end();
+                    if (stdout !== process.stdout) stdout.end(); // for push stream
                 });
             }
         });
