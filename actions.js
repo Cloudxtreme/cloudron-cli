@@ -964,7 +964,6 @@ function exec(cmd, options) {
 
         req.on('upgrade', function (resThatShouldNotBeUsed, socket, upgradeHead) {
             // do not use res here! it's all socket from here on
-            socket.on('end', exit); // server closed the socket
             socket.on('error', exit);
 
             socket.setNoDelay(true);
@@ -974,6 +973,7 @@ function exec(cmd, options) {
                 stdin.setRawMode(true);
                 stdin.pipe(socket, { end: false }); // the remote will close the connection
                 socket.pipe(stdout); // in tty mode, stdout/stderr is merged
+                socket.on('end', exit); // server closed the socket
             } else {// create stdin process on demand
                 if (typeof stdin === 'function') stdin = stdin();
 
@@ -989,6 +989,10 @@ function exec(cmd, options) {
                     socket.write(buf);
                 });
                 demuxStream(socket, stdout, process.stderr); // can get separate streams in non-tty mode
+                socket.on('end', function () {
+                    if (stdout.isTTY) return exit();
+                    stdout.end();
+                });
             }
         });
 
@@ -1044,7 +1048,7 @@ function pull(remote, local, options) {
     if (remote.endsWith('/')) { // dir
         var tarStream = spawn('tar', ['zxvf', '-', '-C', local]);
         options._stdout = tarStream.stdin;
-        tarStream.on('close', function (code) { exit('Error pulling', code); });
+        tarStream.on('exit', function (code, signal) { exit(); });
 
         exec(['tar', 'zcf', '-', '-C', remote, '.'], options);
     } else {
