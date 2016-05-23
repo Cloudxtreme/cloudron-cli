@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 /* global it:false */
-/* global xit:false */
 /* global describe:false */
 /* global before:false */
 /* global xdescribe:false */
@@ -192,8 +191,8 @@ describe('Pull', function () {
     });
 
     it('can pull a directory', function () {
-        rimraf.sync('/tmp/pulldir')
-        safe.fs.mkdirSync('/tmp/pulldir')
+        rimraf.sync('/tmp/pulldir');
+        safe.fs.mkdirSync('/tmp/pulldir');
         cli(util.format('pull --app %s /app/code/ /tmp/pulldir', app.id));
         expect(fs.existsSync('/tmp/pulldir/README.md')).to.be.ok();
         expect(fs.existsSync('/tmp/pulldir/static/robots.txt')).to.be.ok();
