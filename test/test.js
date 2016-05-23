@@ -68,7 +68,7 @@ describe('Login', function () {
     });
 });
 
-xdescribe('App install', function () {
+describe('App install', function () {
     it('can install app', function () {
         console.log('Installing app, this can take a while');
         var out = cli('install --appstore-id com.hastebin.cloudronapp@0.4.0 --new --wait --location ' + applocation);
@@ -227,14 +227,14 @@ describe('Status', function () {
     });
 });
 
-xdescribe('Uninstall', function () {
+describe('Uninstall', function () {
     it('can uninstall', function () {
         var out = cli('uninstall --app ' + app.id);
         expect(out.stdout).to.contain('successfully uninstalled');
     });
 });
 
-xdescribe('Logout', function () {
+describe('Logout', function () {
     it('can logout', function () {
         console.log('Uninstalling app, this can take a while');
         var out = cli('logout');
