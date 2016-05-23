@@ -908,7 +908,7 @@ function demuxStream(stream, stdout, stderr) {
             header = stream.read(8);
         }
     });
-};
+}
 
 // cloudron exec - must work interactively. needs tty.
 // cloudron exec -- ls asdf  - must work
@@ -988,10 +988,10 @@ function exec(cmd, options) {
                     buf.writeUInt32BE(0, 0 /* offset */);
                     socket.write(buf);
                 });
+
                 demuxStream(socket, stdout, process.stderr); // can get separate streams in non-tty mode
-                socket.on('end', function () {
-                    if (stdout.isTTY) return exit();
-                    stdout.end();
+                socket.on('end', function () {  // server closed the socket
+                    stdin.end(); // required for this process to 'exit' cleanly. do not call exit() because writes may not have finished
                 });
             }
         });
