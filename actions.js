@@ -975,7 +975,17 @@ function exec(cmd, options) {
                 stdin.pipe(socket, { end: false }); // the remote will close the connection
                 socket.pipe(stdout); // in tty mode, stdout/stderr is merged
             } else {
-                stdin.pipe(socket, { end: true }); // closing socket will still get us the result thanks to hijacked mode
+                stdin.on('data', function (d) {
+                    var buf = new Buffer(4);
+                    buf.writeUInt32BE(d.length, 0 /* offset */);
+                    socket.write(buf);
+                    socket.write(d);
+                });
+                stdin.on('end', function () {
+                    var buf = new Buffer(4);
+                    buf.writeUInt32BE(0, 0 /* offset */);
+                    socket.write(buf);
+                });
                 demuxStream(socket, stdout, process.stderr); // can get separate streams in non-tty mode
             }
         });
