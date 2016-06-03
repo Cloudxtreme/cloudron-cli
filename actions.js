@@ -1084,6 +1084,7 @@ function createOAuthAppCredentials(options) {
         .send({ appId: 'localdevelopment', redirectURI: redirectURI, scope: options.scope });
     }, function (error, result) {
         if (error) exit(error);
+        if (result.statusCode === 400) return exit(result.body.message.red);
         if (result.statusCode !== 201) return exit(util.format('Failed to create oauth app credentials.'.red, result.statusCode, result.text));
 
         if (options.shell) {
