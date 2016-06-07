@@ -1088,9 +1088,7 @@ function createOAuthAppCredentials(options) {
         if (result.statusCode !== 201) return exit(util.format('Failed to create oauth app credentials.'.red, result.statusCode, result.text));
 
         if (options.shell) {
-            console.log('CLOUDRON_CLIENT_ID="%s"', result.body.id);
-            console.log('CLOUDRON_CLIENT_SECRET="%s"', result.body.clientSecret);
-            console.log('CLOUDRON_REDIRECT_URI="%s"', result.body.redirectURI);
+            console.log('CLOUDRON_CLIENT_ID="%s"; CLOUDRON_CLIENT_SECRET="%s"; CLOUDRON_REDIRECT_URI="%s"', result.body.id, result.body.clientSecret, result.body.redirectURI);
         } else {
             console.log();
             console.log('New oauth app credentials');
