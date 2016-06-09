@@ -538,7 +538,7 @@ function installFromStore(options) {
         if (error) return exit(util.format('Failed to get app info from store: %s', error.message));
         if (result.statusCode !== 200) return exit(util.format('Failed to get app info from store.'.red, result.statusCode, result.text));
 
-        installer(null, false /* configure */, result.body.manifest, appstoreId, !!options.wait, options.location, false /* force */);
+        installer(null, !!options.configure, result.body.manifest, appstoreId, !!options.wait, options.location, false /* force */);
     });
 }
 
