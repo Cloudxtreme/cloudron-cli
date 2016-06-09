@@ -405,7 +405,7 @@ function waitForFinishInstallation(appId, waitForHealthcheck, callback) {
 function installer(app, configure, manifest, appStoreId, waitForHealthcheck, installLocation, force) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof configure, 'boolean');
-    assert.strictEqual(typeof manifest, 'object');
+    assert(manifest && typeof manifest === 'object');
     assert(!appStoreId || typeof appStoreId === 'string');
     assert.strictEqual(typeof waitForHealthcheck, 'boolean');
     assert(!installLocation || typeof installLocation === 'string');
@@ -464,7 +464,7 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck, ins
         var data = {
             appId: app ? app.id : null, // temporary hack for configure route bug
             appStoreId: appStoreId || '',
-            manifest: manifest,
+            manifest: appStoreId ? null : manifest, // cloudron ignores manifest anyway if appStoreId is set
             location: location,
             portBindings: portBindings,
             accessRestriction: accessRestriction,
@@ -526,35 +526,31 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck, ins
     });
 }
 
-function installFromStore(app, options) {
+function installFromStore(options) {
     var appstoreId = options.appstoreId;
     var parts = appstoreId.split('@');
-    if (parts.length !== 2) console.log('No version specified, using latest published version.');
+    // if (parts.length !== 2) console.log('No version specified, using latest published version.');
 
-    if (app) {
-        console.log('You are installing a published version from the appstore over an existing app at %s.'.yellow, app.location.bold);
-        var reallyInstall = readlineSync.question(util.format('Install anyway? [y/N]: '), {});
-        if (reallyInstall.toUpperCase() !== 'Y') return exit();
-    }
-
+    // NOTE: we download the manifest so we can 'configure' the app (like port bindings).
+    // the cloudron ignores the manifest when appStoreId is set
     var url = config.appStoreOrigin() + '/api/v1/apps/' + parts[0] + (parts[1] ? '/versions/' + parts[1] : '');
     superagent.get(url).end(function (error, result) {
-        if (error) return exit(util.format('Failed to get app info: %s', error.message));
+        if (error) return exit(util.format('Failed to get app info from store: %s', error.message));
         if (result.statusCode !== 200) return exit(util.format('Failed to get app info from store.'.red, result.statusCode, result.text));
 
-        installer(app || null, false /* configure */, result.body.manifest, parts[0] /* appStoreId */, !!options.wait, options.location, false /* force */);
+        installer(null, false /* configure */, result.body.manifest, appstoreId, !!options.wait, options.location, false /* force */);
     });
 }
 
 function install(options) {
     helper.verifyArguments(arguments);
 
+    if (options.appstoreId) return installFromStore(options);
+
     var func = options.new ? getAppNew : getApp.bind(null, options.app);
 
     func(function (error, app, manifestFilePath) {
         if (!options.new && error) exit(error);
-
-        if (options.appstoreId) return installFromStore(app, options);
 
         if (!app) options.new = true; // create new install if we couldn't find an app
         if (!options.new && app) console.log('Reusing app %s installed at %s', app.id.bold, app.location.cyan);
