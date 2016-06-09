@@ -27,7 +27,7 @@ program.command('backup')
 
 program.command('createOAuthAppCredentials')
     .option('--redirect-uri <uri>', 'Redirect Uri')
-    .option('--scope [scopes]', 'Scopes (comma separated)', 'root,apps,profile,users,developer,settings')
+    .option('--scope [scopes]', 'Scopes (comma separated)', '*')
     .option('--shell', 'Print shell friendly output')
     .description('Create oauth app credentials for local development')
     .action(actions.createOAuthAppCredentials);
