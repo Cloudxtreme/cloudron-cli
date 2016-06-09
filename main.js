@@ -11,7 +11,7 @@ var program = require('commander'),
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 var DEV = process.env.NODE_ENV === 'dev';
 
-program.version('0.0.1');
+program.version(require('./package.json').version);
 
 program.command('completion')
     .description('Shows completion for you shell')
