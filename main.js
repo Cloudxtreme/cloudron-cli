@@ -18,11 +18,8 @@ program.command('completion')
     .action(completion);
 
 program.command('backup')
-    .description('Create, List and Download Backups')
+    .description('Create backup')
     .option('--app <id>', 'App id')
-    .option('--download <id>', 'Download specific backup')
-    .option('--list', 'List backups')
-    .option('--create', 'Create a backup') // TODO: remove this as default when app tests are fixed
     .action(actions.backup);
 
 program.command('createOAuthAppCredentials')
@@ -44,6 +41,11 @@ if (DEV) {
         .option('-f, --tail', 'Tail')
         .action(appstoreActions.buildLogs);
 }
+
+program.command('download-backup [file]')
+    .description('Download backup')
+    .option('--id <backup id>', 'Backup id')
+    .action(actions.downloadBackup);
 
 program.command('exec [cmd...]')
     .description('Exec a command in application')
@@ -79,6 +81,11 @@ program.command('install')
 program.command('list')
     .description('List installed applications')
     .action(actions.list);
+
+program.command('list-backups')
+    .description('List backups')
+    .option('--app <id>', 'App id')
+    .action(actions.listBackups);
 
 program.command('login [cloudron]')
     .description('Login to cloudron')

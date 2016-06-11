@@ -47,8 +47,10 @@ exports = module.exports = {
     createOAuthAppCredentials: createOAuthAppCredentials,
     init: init,
     restore: restore,
-    backup: backup,
-    createUrl: createUrl
+    createUrl: createUrl,
+    backup: createBackup,
+    downloadBackup: downloadBackup,
+    listBackups: listBackups
 };
 
 var NO_APP_FOUND_ERROR_STRING = '\nCannot find a matching app.\n' + 'Apps installed from the store are not picked automatically.\n'.gray;
@@ -740,12 +742,8 @@ function restart(options) {
    });
 }
 
-function backup(options) {
+function createBackup(options) {
     helper.verifyArguments(arguments);
-
-    if (options.download) return downloadBackup(options.download);
-
-    if (options.list) return listBackups(options);
 
     var appId = options.app;
 
@@ -814,8 +812,8 @@ function listBackups(options) {
 
         superagentEnd(function () {
             return superagent
-            .get(createUrl('/api/v1/apps/' + app.id + '/backups'))
-            .query({ access_token: config.token() })
+                .get(createUrl('/api/v1/apps/' + app.id + '/backups'))
+                .query({ access_token: config.token() });
         }, function (error, result) {
             if (error) exit(error);
             if (result.statusCode !== 200) return exit(util.format('Failed to list backups.'.red, result.statusCode, result.text));
@@ -836,11 +834,13 @@ function listBackups(options) {
     });
 }
 
-function downloadBackup(id) {
+function downloadBackup(file, options) {
+    var id = options.id;
+
     superagentEnd(function () {
         return superagent
-        .get(createUrl('/api/v1/backups/' + id))
-        .query({ access_token: config.token() })
+            .post(createUrl('/api/v1/backups/' + id + '/download_url'))
+            .query({ access_token: config.token() });
     }, function (error, result) {
         if (error) exit(error);
         if (result.statusCode !== 200) return exit(util.format('Failed to download backup.'.red, result.statusCode, result.text));
@@ -848,7 +848,11 @@ function downloadBackup(id) {
         var cmd = 'curl -s -L "' + result.body.url + '" | openssl aes-256-cbc -d -pass pass:' + result.body.backupKey;
         var curl = spawn('sh', [ '-c', cmd ]);
 
-        curl.stdout.pipe(process.stdout);
+        var out = file === '-' ? process.stdout : fs.createWriteStream(file);
+        out.on('error', function (e) {
+            exit('Error saving backup: ' + e.message);
+        });
+        curl.stdout.pipe(out);
         curl.stderr.pipe(process.stderr);
 
         curl.on('close', function (code, signal) {
