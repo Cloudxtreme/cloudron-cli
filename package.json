@@ -11,7 +11,7 @@
   },
   "author": "Cloudron Developers <support@cloudron.io>",
   "dependencies": {
-    "async": "^2.0.0-rc.6",
+    "async": "^1.5.2",
     "cloudron-manifestformat": "^2.4.0",
     "colors": "^1.0.3",
     "commander": "^2.7.1",
