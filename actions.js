@@ -778,7 +778,7 @@ function listBoxBackups() {
     superagentEnd(function () {
         return superagent
         .get(createUrl('/api/v1/backups'))
-        .query({ access_token: config.token() })
+        .query({ access_token: config.token() });
     }, function (error, result) {
         if (error) exit(error);
         if (result.statusCode !== 200) return exit(util.format('Failed to list backups.'.red, result.statusCode, result.text));
