@@ -42,9 +42,8 @@ if (DEV) {
         .action(appstoreActions.buildLogs);
 }
 
-program.command('download-backup [file]')
+program.command('download-backup <id> [outdir]')
     .description('Download backup')
-    .option('--id <backup id>', 'Backup id')
     .action(actions.downloadBackup);
 
 program.command('exec [cmd...]')
