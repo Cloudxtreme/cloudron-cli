@@ -403,6 +403,33 @@ function waitForFinishInstallation(appId, waitForHealthcheck, callback) {
     checkStatus();
 }
 
+function waitForBackupCompletion(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    process.stdout.write('Waiting for box backup to finish...');
+
+    function checkStatus() {
+        superagentEnd(function () {
+            return superagent.get(createUrl('/api/v1/cloudron/progress'));
+        }, function (error, result) {
+            if (error) return callback(error);
+            if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get backup progress.'.red, result.statusCode, result.text)));
+
+            if (result.body.backup.percent >= 100) {
+                if (result.body.backup.message) return callback(new Error('Backup failed: ' + result.body.backup.message));
+
+                return callback(null);
+            }
+
+            process.stdout.write('.');
+
+            setTimeout(checkStatus, 1000);
+        });
+    }
+
+    checkStatus();
+}
+
 // if app is falsy, we install a new app
 // if configure is truthy we will prompt for all settings
 function installer(app, configure, manifest, appStoreId, waitForHealthcheck, installLocation, force) {
@@ -746,33 +773,56 @@ function restart(options) {
 function createBackup(options) {
     helper.verifyArguments(arguments);
 
-    var appId = options.app;
+    if (options.box && options.app) exit('Either specify --app or --box');
 
-    getApp(appId, function (error, app) {
-        if (error) return exit(error);
-
-        if (!app) exit(NO_APP_FOUND_ERROR_STRING);
-
+    if (options.box) {
         superagentEnd(function () {
-            return superagent
-            .post(createUrl('/api/v1/apps/' + app.id + '/backup'))
-            .query({ access_token: config.token() })
-            .send({});
-        }, function (error, result) {
-            if (error) exit(error);
-            if (result.statusCode !== 202) return exit(util.format('Failed to backup app.'.red, result.statusCode, result.text));
+                return superagent
+                .post(createUrl('/api/v1/backups'))
+                .query({ access_token: config.token() })
+                .send({});
+            }, function (error, result) {
+                if (error) exit(error);
+                if (result.statusCode !== 202) return exit(util.format('Failed to backup box.'.red, result.statusCode, result.text));
 
-            // FIXME: this should be waitForHealthCheck but the box code incorrectly modifies the installationState
-            waitForFinishInstallation(app.id, true, function (error) {
-                if (error) {
-                    return exit('\n\nApp backup error: %s'.red, error.message);
-                }
+                waitForBackupCompletion(function (error) {
+                    if (error) {
+                        return exit('\n\n%s'.red, error.message);
+                    }
 
-                console.log('\n\nApp is backed up'.green);
-                exit();
+                    console.log('\n\nBox is backed up'.green);
+                    exit();
+                });
+            });
+    } else {
+        var appId = options.app;
+
+        getApp(appId, function (error, app) {
+            if (error) return exit(error);
+
+            if (!app) exit(NO_APP_FOUND_ERROR_STRING);
+
+            superagentEnd(function () {
+                return superagent
+                .post(createUrl('/api/v1/apps/' + app.id + '/backup'))
+                .query({ access_token: config.token() })
+                .send({});
+            }, function (error, result) {
+                if (error) exit(error);
+                if (result.statusCode !== 202) return exit(util.format('Failed to backup app.'.red, result.statusCode, result.text));
+
+                // FIXME: this should be waitForHealthCheck but the box code incorrectly modifies the installationState
+                waitForFinishInstallation(app.id, true, function (error) {
+                    if (error) {
+                        return exit('\n\nApp backup error: %s'.red, error.message);
+                    }
+
+                    console.log('\n\nApp is backed up'.green);
+                    exit();
+                });
             });
         });
-    });
+    }
 }
 
 function listBoxBackups() {

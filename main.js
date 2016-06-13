@@ -20,6 +20,7 @@ program.command('completion')
 program.command('backup')
     .description('Create backup')
     .option('--app <id>', 'App id')
+    .option('--box', 'Create whole box backup')
     .action(actions.backup);
 
 program.command('createOAuthAppCredentials')
@@ -82,7 +83,7 @@ program.command('list')
     .action(actions.list);
 
 program.command('list-backups')
-    .description('List app backups')
+    .description('List app or Cloudron backups')
     .option('--app <id>', 'App id')
     .option('--box', 'Display cloudron backups')
     .action(actions.listBackups);
