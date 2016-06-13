@@ -959,6 +959,7 @@ function restore(options) {
             return superagent
             .post(createUrl('/api/v1/apps/' + app.id + '/restore'))
             .query({ access_token: config.token() })
+            .send({ backupId: app.lastBackupId })
             .send({});
         }, function (error, result) {
             if (error) exit(error);
