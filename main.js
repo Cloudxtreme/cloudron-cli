@@ -127,6 +127,7 @@ program.command('push <local> <remote>')
 program.command('restore')
     .description('Restore app from last known backup')
     .option('--app <id>', 'App id')
+    .option('--backup-id <backupId>', 'Backup id')
     .action(actions.restore);
 
 program.command('restart')
