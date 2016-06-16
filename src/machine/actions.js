@@ -11,6 +11,7 @@ var assert = require('assert'),
 
 exports = module.exports = {
     create: create,
+    restore: restore,
     listBackups: listBackups,
     createBackup: createBackup,
     login: helper.login
@@ -25,9 +26,28 @@ function createUrl(api) {
     return 'https://' + gCloudronApiEndpoint + api;
 }
 
+function getBackupListing(cloudron, options, callback) {
+    assert.strictEqual(typeof cloudron, 'string');
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    // FIXME get from S3 or caas as a fallback
+    login(cloudron, options, function (error, token) {
+        if (error) helper.exit(error);
+
+        superagent.get(createUrl('/api/v1/backups')).query({ access_token: token }).end(function (error, result) {
+            if (error) return callback(error);
+            if (result.statusCode !== 200) return callback(util.format('Failed to list backups.'.red, result.statusCode, result.text));
+
+            callback(null, result.body.backups);
+        });
+    });
+}
+
 function create(options) {
     assert.strictEqual(typeof options, 'object');
 
+    var provider = options.provider;
     var region = options.region;
     var accessKeyId = options.accessKeyId;
     var secretAccessKey = options.secretAccessKey;
@@ -35,10 +55,11 @@ function create(options) {
     var release = options.release;
     var type = options.type;
     var key = options.key;
-    var domain = options.domain;
+    var domain = options.fqdn;
     var subnet = options.subnet;
     var securityGroup = options.securityGroup;
 
+    if (!provider) helper.missing('provider');
     if (!region) helper.missing('region');
     if (!accessKeyId) helper.missing('access-key-id');
     if (!secretAccessKey) helper.missing('secret-access-key');
@@ -49,6 +70,11 @@ function create(options) {
     if (!domain) helper.missing('domain');
     if (!subnet) helper.missing('subnet');
     if (!securityGroup) helper.missing('security-group');
+
+    if (provider !== 'caas' && provider !== 'ec2') helper.exit('--provider must be either "caas" or "ec2"');
+
+    // FIXME
+    if (provider === 'caas') helper.exit('caas not yet supported');
 
     versions.resolve(release, function (error, result) {
         if (error) helper.exit(error);
@@ -77,6 +103,70 @@ function create(options) {
     });
 }
 
+function restore(options) {
+    assert.strictEqual(typeof options, 'object');
+
+    var provider = options.provider;
+    var region = options.region;
+    var accessKeyId = options.accessKeyId;
+    var secretAccessKey = options.secretAccessKey;
+    var backupBucket = options.backupBucket;
+    var backup = options.backup;
+    var type = options.type;
+    var key = options.key;
+    var domain = options.fqdn;
+    var subnet = options.subnet;
+    var securityGroup = options.securityGroup;
+
+    if (!provider) helper.missing('provider');
+    if (!region) helper.missing('region');
+    if (!accessKeyId) helper.missing('access-key-id');
+    if (!secretAccessKey) helper.missing('secret-access-key');
+    if (!backupBucket) helper.missing('backup-bucket');
+    if (!backup) helper.missing('backup');
+    if (!type) helper.missing('type');
+    if (!key) helper.missing('key');
+    if (!domain) helper.missing('domain');
+    if (!subnet) helper.missing('subnet');
+    if (!securityGroup) helper.missing('security-group');
+
+    if (provider !== 'caas' && provider !== 'ec2') helper.exit('--provider must be either "caas" or "ec2"');
+
+    // FIXME
+    if (provider === 'caas') helper.exit('caas not yet supported');
+
+    getBackupListing(domain, options, function (error, result) {
+        if (error) helper.exit(error);
+
+        if (result.length === 0) helper.exit('No backups found. Create one first to restore to.');
+
+        var backupTo = result.filter(function (b) { console.log(b); return b.id === backup; })[0];
+        if (!backupTo) helper.exit('Unable to find backup ' + backup + '.');
+
+        var params = {
+            region: region,
+            accessKeyId: accessKeyId,
+            secretAccessKey: secretAccessKey,
+            backupBucket: backupBucket,
+            backup: backupTo,
+            type: type,
+            key: key,
+            domain: domain,
+            subnet: subnet,
+            securityGroup: securityGroup
+        };
+
+        tasks.restore(params, function (error) {
+            if (error) helper.exit(error);
+
+            console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + domain).bold);
+            console.log('');
+
+            helper.exit();
+        });
+    });
+}
+
 function login(cloudron, options, callback) {
     assert.strictEqual(typeof cloudron, 'string');
     assert.strictEqual(typeof options, 'object');
@@ -88,7 +178,8 @@ function login(cloudron, options, callback) {
         gCloudronApiEndpoint = result.apiEndpoint;
 
         console.log();
-        console.log('Enter credentials for ' + cloudron.cyan.bold + ':');
+
+        if (!options.username && !options.password) console.log('Enter credentials for ' + cloudron.cyan.bold + ':');
 
         var username = options.username || readlineSync.question('Username: ', {});
         var password = options.password || readlineSync.question('Password: ', { noEchoBack: true });
@@ -118,29 +209,30 @@ function listBackups(cloudron, options) {
     assert.strictEqual(typeof cloudron, 'string');
     assert.strictEqual(typeof options, 'object');
 
-    login(cloudron, options, function (error, token) {
+    getBackupListing(cloudron, options, function (error, result) {
         if (error) helper.exit(error);
 
-        superagent.get(createUrl('/api/v1/backups')).query({ access_token: token }).end(function (error, result) {
-            if (error) helper.exit(error);
-            if (result.statusCode !== 200) return helper.exit(util.format('Failed to list backups.'.red, result.statusCode, result.text));
+        console.log();
 
-            var t = new Table();
-
-            result.body.backups.forEach(function (backup) {
-                t.cell('Id', backup.id);
-                t.cell('Creation Time', backup.creationTime);
-                t.cell('Version', backup.version);
-                // t.cell('Apps', backup.dependsOn.join(' '));
-
-                t.newRow();
-            });
-
-            console.log();
-            console.log(t.toString());
-
+        if (result.length === 0) {
+            console.log('No backups have been made.');
             helper.exit();
+        }
+
+        var t = new Table();
+
+        result.forEach(function (backup) {
+            t.cell('Id', backup.id);
+            t.cell('Creation Time', backup.creationTime);
+            t.cell('Version', backup.version);
+            // t.cell('Apps', backup.dependsOn.join(' '));
+
+            t.newRow();
         });
+
+        console.log(t.toString());
+
+        helper.exit();
     });
 }
 

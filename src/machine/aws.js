@@ -10,11 +10,13 @@ exports = module.exports = {
     create: create,
     state: state,
     publicIP: publicIP,
-    checkIfDNSZoneExists: checkIfDNSZoneExists
+    checkIfDNSZoneExists: checkIfDNSZoneExists,
+    getBackupDetails: getBackupDetails
 };
 
 var gEC2 = null;
 var gRoute53 = null;
+var gS3 = null;
 
 function init(options) {
     assert.strictEqual(typeof options, 'object');
@@ -24,6 +26,7 @@ function init(options) {
 
     gEC2 = new AWS.EC2(options);
     gRoute53 = new AWS.Route53(options);
+    gS3 = new AWS.S3(options);
 }
 
 function getImageDetails(imageId, callback) {
@@ -167,4 +170,29 @@ function checkIfDNSZoneExists(domain, callback) {
 
         callback(exists ? null : new Error('Please create a hosted zone on Route53 for this domain first.'));
     });
+}
+
+function getBackupDetails(bucket, prefix, backupId, callback) {
+    assert.strictEqual(typeof gS3, 'object');
+    assert.strictEqual(typeof bucket, 'string');
+    assert.strictEqual(typeof prefix, 'string');
+    assert.strictEqual(typeof backupId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var params = {
+        Bucket: bucket,
+        Key: prefix + '/' + backupId,
+        Expires: 60 * 120 /* 120 minutes */
+    };
+
+    debug('getBackupDetails:', params);
+
+    var url = gS3.getSignedUrl('getObject', params);
+
+    var data = {
+        key: 'somesecretkey',   // FIXME
+        url: url
+    };
+
+    callback(null, data);
 }

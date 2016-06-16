@@ -11,10 +11,14 @@ program.version(require('../package.json').version);
 
 program.command('create <domain>')
     .description('Create new backup')
+    .option('-u, --username <username>', 'Username')
+    .option('-p, --password <password>', 'Password (unsafe)')
     .action(actions.createBackup);
 
 program.command('list <domain>')
     .description('List all backups')
+    .option('-u, --username <username>', 'Username')
+    .option('-p, --password <password>', 'Password (unsafe)')
     .action(actions.listBackups);
 
 if (!process.argv.slice(2).length) {

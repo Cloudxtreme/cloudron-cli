@@ -14,7 +14,8 @@ var assert = require('assert'),
     versions = require('./versions.js');
 
 exports = module.exports = {
-    create: create
+    create: create,
+    restore: restore
 };
 
 var gParams = null;
@@ -171,8 +172,8 @@ function getUserData(callback) {
                     webServerOrigin: 'https://dev.cloudron.io',
 
                     restore: {
-                        url: null,
-                        key: null
+                        url: gParams.backupDetails.url || null,
+                        key: gParams.backupDetails.key || null
                     },
                     backupConfig: {
                         provider: 's3',
@@ -280,6 +281,20 @@ function waitForStatus(callback) {
     });
 }
 
+function getBackupDetails(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    console.log('Getting backup details...');
+
+    aws.getBackupDetails(gParams.backupBucket, gParams.domain, gParams.backup.id, function (error, result) {
+        if (error) return callback(error);
+
+        gParams.backupDetails = result;
+
+        callback();
+    });
+}
+
 function create(options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof options.region, 'string');
@@ -306,6 +321,56 @@ function create(options, callback) {
 
     var tasks = [
         checkDNSZone,
+        createServer,
+        waitForServer,
+        getIp,
+        waitForDNS,
+        waitForStatus
+    ];
+
+    async.series(tasks, function (error) {
+        if (error) return callback(error);
+
+        console.log('');
+        console.log('Cloudron created with:');
+        console.log('  ID:        %s', gInstanceId.cyan);
+        console.log('  Public IP: %s', gPublicIP.cyan);
+        console.log('');
+
+        callback();
+    });
+}
+
+function restore(options, callback) {
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof options.region, 'string');
+    assert.strictEqual(typeof options.backup, 'object');
+    assert.strictEqual(typeof options.backupBucket, 'string');
+    assert.strictEqual(typeof options.accessKeyId, 'string');
+    assert.strictEqual(typeof options.secretAccessKey, 'string');
+    assert.strictEqual(typeof options.type, 'string');
+    assert.strictEqual(typeof options.key, 'string');
+    assert.strictEqual(typeof options.subnet, 'string');
+    assert.strictEqual(typeof options.domain, 'string');
+    assert.strictEqual(typeof options.securityGroup, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    console.log('Restoring %s to backup %s with version %s', options.domain.cyan.bold, options.backup.id.cyan.bold, options.backup.version.cyan.bold);
+
+    aws.init({
+        region: options.region,
+        accessKeyId: options.accessKeyId,
+        secretAccessKey: options.secretAccessKey
+    });
+
+    gParams = options;
+
+    // use the version of the backup
+    gParams.version = options.backup.version;
+
+    var tasks = [
+        checkDNSZone,
+        getBackupDetails,
         createServer,
         waitForServer,
         getIp,

@@ -4,12 +4,12 @@
 
 require('../src/common.js');
 
-var program = require('commander'),
-    actions = require('../src/machine/actions.js');
+var program = require('commander');
 
 program
     .version(require('../package.json').version)
     .command('create', 'Creates a new Cloudron')
+    .command('restore', 'Restores a Cloudron')
     .command('backup', 'Manage Cloudron backups');
 
 if (!process.argv.slice(2).length) {

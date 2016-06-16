@@ -9,9 +9,11 @@ var program = require('commander'),
 
 program.version(require('../package.json').version);
 
-program.description('Creates a Cloudron')
+program.description('Restores a Cloudron')
+    .option('-u, --username <username>', 'Username')
+    .option('-p, --password <password>', 'Password (unsafe)')
     .option('--provider <provider>', 'Provider [caas,ec2]')
-    .option('--release [version]', 'Cloudron release version.', 'latest')
+    .option('--backup <backup>', 'The backup to restore to')
     .option('--type <type>', 'Instance type')
     .option('--key <key>', 'SSH key name')
     .option('--fqdn <domain>', 'Domain eg. cloudron.io')
@@ -24,4 +26,4 @@ program.description('Creates a Cloudron')
 
 program.parse(process.argv);
 
-actions.create(program);
+actions.restore(program);
