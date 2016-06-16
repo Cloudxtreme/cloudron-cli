@@ -1,24 +1,33 @@
 {
   "name": "cloudron",
   "version": "0.10.2",
+  "license": "MIT",
   "description": "Cloudron CLI",
   "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@gitlab.smartserver.io:6000/yellowtent/cloudron-cli.git"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "cloudron": "./main.js"
+    "cloudron": "./main.js",
+    "machine": "./bin/machine.js"
   },
   "author": "Cloudron Developers <support@cloudron.io>",
   "dependencies": {
     "async": "^1.5.2",
+    "aws-sdk": "^2.4.0",
     "cloudron-manifestformat": "^2.4.0",
     "colors": "^1.0.3",
     "commander": "^2.7.1",
+    "debug": "^2.2.0",
     "easy-table": "^0.3.0",
     "ejs": "^2.3.1",
     "eventsource": "^0.1.6",
     "micromatch": "^2.2.0",
+    "native-dns": "^0.7.0",
     "opn": "^1.0.1",
     "progress": "^1.1.8",
     "progress-stream": "^1.2.0",
@@ -27,7 +36,9 @@
     "semver": "^4.3.6",
     "split": "^0.3.3",
     "superagent": "^0.21.0",
+    "supererror": "^0.7.1",
     "tar-fs": "https://registry.npmjs.org/tar-fs/-/tar-fs-1.12.0.tgz",
+    "tldjs": "^1.6.2",
     "underscore": "^1.8.2"
   },
   "engines": {
