@@ -7,10 +7,15 @@ require('../src/common.js');
 var program = require('commander'),
     actions = require('../src/machine/actions.js');
 
-program
-    .version(require('../package.json').version)
-    .command('create', 'Creates a new Cloudron')
-    .command('backup', 'Manage Cloudron backups');
+program.version(require('../package.json').version);
+
+program.command('create <domain>')
+    .description('Create new backup')
+    .action(actions.createBackup);
+
+program.command('list <domain>')
+    .description('List all backups')
+    .action(actions.listBackups);
 
 if (!process.argv.slice(2).length) {
     program.outputHelp();

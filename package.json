@@ -12,7 +12,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "cloudron": "./main.js",
+    "cloudron": "./bin/app.js",
     "machine": "./bin/machine.js"
   },
   "author": "Cloudron Developers <support@cloudron.io>",

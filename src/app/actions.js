@@ -4,11 +4,11 @@
 
 var assert = require('assert'),
     async = require('async'),
-    config = require('./config.js'),
+    config = require('../config.js'),
     ejs = require('ejs'),
     EventSource = require('eventsource'),
     fs = require('fs'),
-    helper = require('./helper.js'),
+    helper = require('../helper.js'),
     https = require('https'),
     manifestFormat = require('cloudron-manifestformat'),
     opn = require('opn'),

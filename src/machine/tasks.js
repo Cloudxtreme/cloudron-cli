@@ -13,8 +13,6 @@ var assert = require('assert'),
     tld = require('tldjs'),
     versions = require('./versions.js');
 
-require('colors');
-
 exports = module.exports = {
     create: create
 };
@@ -114,7 +112,7 @@ function createCertificate(domain, callback) {
         'US', 'California', 'San Francisco', 'Cloudron Company', 'Cloudron', domain, 'cert@cloudron.io', outdir
     ];
 
-    var certificateGenerationScript = path.join(__dirname, 'scripts/generate_certificate.sh');
+    var certificateGenerationScript = path.join(__dirname, '../../scripts/generate_certificate.sh');
 
     execFile(certificateGenerationScript, args, {}, function (error, stdout, stderr) {
         if (error) return callback(error);

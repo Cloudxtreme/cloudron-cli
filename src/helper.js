@@ -8,10 +8,13 @@ var path = require('path'),
     util = require('util'),
     readlineSync = require('readline-sync'),
     safe = require('safetydance'),
+    superagent = require('superagent'),
     config = require('./config.js');
 
 exports = module.exports = {
     exit: exit,
+    missing: missing,
+
     locateManifest: locateManifest,
     getAppStoreId: getAppStoreId,
     verifyArguments: verifyArguments,
@@ -20,13 +23,21 @@ exports = module.exports = {
     updateBuild: updateBuild,
     selectImage: selectImage,
     selectBuild: selectBuild,
-    selectUserSync: selectUserSync
+    selectUserSync: selectUserSync,
+
+    showDeveloperModeNotice: showDeveloperModeNotice,
+    detectCloudronApiEndpoint: detectCloudronApiEndpoint
 };
 
 function exit(error) {
-    if (error) console.error(util.format.apply(null, Array.prototype.slice.call(arguments)).red);
+    if (error instanceof Error) console.log(error.message.red);
+    else if (error) console.error(util.format.apply(null, Array.prototype.slice.call(arguments)).red);
 
     process.exit(error ? 1 : 0);
+}
+
+function missing(argument) {
+    exit('You must specify --' + argument);
 }
 
 function locateManifest() {
@@ -163,4 +174,30 @@ function selectUserSync(users) {
     console.log();
 
     return users[index];
+}
+
+function showDeveloperModeNotice(endpoint) {
+    assert(typeof endpoint === 'string');
+
+    console.error('CLI mode is disabled. Enable it at %s.'.red, 'https://' + endpoint + '/#/settings');
+}
+
+function detectCloudronApiEndpoint(cloudron, callback) {
+    assert(typeof cloudron === 'string');
+    assert(typeof callback === 'function');
+
+    if (cloudron.indexOf('https://') === 0) cloudron = cloudron.slice('https://'.length);
+    if (cloudron.indexOf('my-') === 0) cloudron = cloudron.slice('my-'.length);
+    if (cloudron.indexOf('my.') === 0) cloudron = cloudron.slice('my.'.length);
+    if (cloudron.indexOf('/') !== -1) cloudron = cloudron.slice(0, cloudron.indexOf('/'));
+
+    superagent.get('https://my-' + cloudron + '/api/v1/cloudron/status').end(function (error, result) {
+        if (!error && result.statusCode === 200 && result.body.version) return callback(null, { cloudron: cloudron, apiEndpoint: 'my-' + cloudron });
+
+        superagent.get('https://my.' + cloudron + '/api/v1/cloudron/status').end(function (error, result) {
+            if (!error && result.statusCode === 200 && result.body.version) return callback(null, { cloudron: cloudron, apiEndpoint: 'my.' + cloudron });
+
+            callback('Cloudron not found');
+        });
+    });
 }

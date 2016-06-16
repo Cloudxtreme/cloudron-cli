@@ -5,8 +5,6 @@ var assert = require('assert'),
     versions = require('./versions.js'),
     debug = require('debug')('aws');
 
-require('colors');
-
 exports = module.exports = {
     init: init,
     create: create,

@@ -2,7 +2,7 @@
 
 'use strict';
 
-var helper = require('./helper.js'),
+var helper = require('../helper.js'),
     util = require('util');
 
 require('colors');

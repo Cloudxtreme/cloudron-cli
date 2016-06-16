@@ -3,15 +3,15 @@
 'use strict';
 
 var program = require('commander'),
-    completion = require('./completion.js'),
-    appstoreActions = require('./appstoreActions.js'),
-    actions = require('./actions.js');
+    completion = require('../src/app/completion.js'),
+    appstoreActions = require('../src/app/appstoreActions.js'),
+    actions = require('../src/app/actions.js');
 
 // Allow self signed certs!
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 var DEV = process.env.NODE_ENV === 'dev';
 
-program.version(require('./package.json').version);
+program.version(require('../package.json').version);
 
 program.command('completion')
     .description('Shows completion for you shell')
