@@ -51,7 +51,7 @@ function create(options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof options.version, 'string');
     assert.strictEqual(typeof options.type, 'string');
-    assert.strictEqual(typeof options.key, 'string');
+    assert.strictEqual(typeof options.sshKey, 'string');
     assert.strictEqual(typeof options.subnet, 'string');
     assert.strictEqual(typeof options.securityGroup, 'string');
     assert.strictEqual(typeof options.userData, 'object');
@@ -71,7 +71,7 @@ function create(options, callback) {
                 MinCount: 1,
                 MaxCount: 1,
                 InstanceType: options.type,
-                KeyName: options.key,
+                KeyName: options.sshKey,
                 NetworkInterfaces: [{
                     SubnetId: options.subnet,
                     AssociatePublicIpAddress: true,

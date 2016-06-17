@@ -87,7 +87,7 @@ function create(options) {
     var backupBucket = options.backupBucket;
     var release = options.release;
     var type = options.type;
-    var key = options.key;
+    var sshKey = options.sshKey;
     var domain = options.fqdn;
     var subnet = options.subnet;
     var securityGroup = options.securityGroup;
@@ -99,7 +99,7 @@ function create(options) {
     if (!backupBucket) helper.missing('backup-bucket');
     if (!release) helper.missing('release');
     if (!type) helper.missing('type');
-    if (!key) helper.missing('key');
+    if (!sshKey) helper.missing('ssh-key');
     if (!domain) helper.missing('domain');
     if (!subnet) helper.missing('subnet');
     if (!securityGroup) helper.missing('security-group');
@@ -119,7 +119,7 @@ function create(options) {
             backupBucket: backupBucket,
             version: result,
             type: type,
-            key: key,
+            sshKey: sshKey,
             domain: domain,
             subnet: subnet,
             securityGroup: securityGroup
@@ -146,7 +146,7 @@ function restore(options) {
     var backupBucket = options.backupBucket;
     var backup = options.backup;
     var type = options.type;
-    var key = options.key;
+    var sshKey = options.sshKey;
     var domain = options.fqdn;
     var subnet = options.subnet;
     var securityGroup = options.securityGroup;
@@ -158,7 +158,7 @@ function restore(options) {
     if (!backupBucket) helper.missing('backup-bucket');
     if (!backup) helper.missing('backup');
     if (!type) helper.missing('type');
-    if (!key) helper.missing('key');
+    if (!sshKey) helper.missing('ssh-key');
     if (!domain) helper.missing('domain');
     if (!subnet) helper.missing('subnet');
     if (!securityGroup) helper.missing('security-group');
@@ -183,7 +183,7 @@ function restore(options) {
             backupBucket: backupBucket,
             backup: backupTo,
             type: type,
-            key: key,
+            sshKey: sshKey,
             domain: domain,
             subnet: subnet,
             securityGroup: securityGroup

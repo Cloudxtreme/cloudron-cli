@@ -45,7 +45,7 @@ function createServer(callback) {
         var params = {
             version: gParams.version,
             type: gParams.type,
-            key: gParams.key,
+            sshKey: gParams.sshKey,
             subnet: gParams.subnet,
             securityGroup: gParams.securityGroup,
             userData: userData
@@ -303,7 +303,7 @@ function create(options, callback) {
     assert.strictEqual(typeof options.accessKeyId, 'string');
     assert.strictEqual(typeof options.secretAccessKey, 'string');
     assert.strictEqual(typeof options.type, 'string');
-    assert.strictEqual(typeof options.key, 'string');
+    assert.strictEqual(typeof options.sshKey, 'string');
     assert.strictEqual(typeof options.subnet, 'string');
     assert.strictEqual(typeof options.domain, 'string');
     assert.strictEqual(typeof options.securityGroup, 'string');
@@ -349,7 +349,7 @@ function restore(options, callback) {
     assert.strictEqual(typeof options.accessKeyId, 'string');
     assert.strictEqual(typeof options.secretAccessKey, 'string');
     assert.strictEqual(typeof options.type, 'string');
-    assert.strictEqual(typeof options.key, 'string');
+    assert.strictEqual(typeof options.sshKey, 'string');
     assert.strictEqual(typeof options.subnet, 'string');
     assert.strictEqual(typeof options.domain, 'string');
     assert.strictEqual(typeof options.securityGroup, 'string');
