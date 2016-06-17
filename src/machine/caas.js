@@ -7,7 +7,9 @@ var assert = require('assert'),
 
 exports = module.exports = {
     create: create,
-    restore: restore
+    restore: restore,
+    migrate: migrate,
+    getBackupListing: getBackupListing
 };
 
 var APPSTORE_API_ENDPOINT = 'api.dev.cloudron.io';
@@ -60,7 +62,7 @@ function create(options, version, callback) {
     assert.strictEqual(typeof version, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    loginAppstore(options, function (error) {
+    loginAppstore(function (error) {
         if (error) return callback(error);
 
         console.log('Create Cloudron...');
@@ -84,7 +86,7 @@ function restore(options, backup, callback) {
     assert.strictEqual(typeof backup, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    loginAppstore(options, function (error) {
+    loginAppstore(function (error) {
         if (error) return callback(error);
 
         getCloudronByFQDN(options.fqdn, function (error, cloudron) {
@@ -102,9 +104,41 @@ function restore(options, backup, callback) {
     });
 }
 
-function loginAppstore(options, callback) {
+function migrate(options, backup, callback) {
     assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof options.fqdnFrom, 'string');
+    assert.strictEqual(typeof options.fqdnTo, 'string');
+    assert.strictEqual(typeof backup, 'object');
     assert.strictEqual(typeof callback, 'function');
+
+    loginAppstore(function (error) {
+        if (error) return callback(error);
+
+        getCloudronByFQDN(options.fqdnFrom, function (error, cloudron) {
+            if (error) return callback(error);
+
+            console.log('Migrate Cloudron...');
+
+            superagent.post(createUrl(util.format('/api/v1/admin/%s/migrate', cloudron.id))).send({
+                domain: options.fqdnTo,
+                size: options.type,
+                region: options.region,
+                restoreKey: backup.id
+            }).query({ accessToken: gToken }).end(function (error, result) {
+                if (error) return callback(error);
+                if (result.statusCode !== 202) return callback(new Error(util.format('Failed to migrate cloudron: %s message: %s', result.statusCode, result.text)));
+
+                waitForCloudronReady(cloudron, callback);
+            });
+        });
+    });
+}
+
+function loginAppstore(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    // skip if we already have a token
+    if (gToken) return callback(null, gToken);
 
     console.log();
     console.log('Enter ' + 'appstore'.cyan.bold + ' credentials:');
@@ -116,7 +150,7 @@ function loginAppstore(options, callback) {
         if (error) return callback(error);
         if (result.statusCode !== 200) {
             console.log('Login failed.'.red);
-            return loginAppstore(options, callback);
+            return loginAppstore(callback);
         }
 
         console.log('Login successful.'.green);
@@ -124,5 +158,29 @@ function loginAppstore(options, callback) {
         gToken = result.body.accessToken;
 
         callback(null, result.body.accessToken);
+    });
+}
+
+function getBackupListing(fqdn, options, callback) {
+    assert.strictEqual(typeof fqdn, 'string');
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    loginAppstore(function (error) {
+        if (error) return callback(error);
+
+        getCloudronByFQDN(fqdn, function (error, cloudron) {
+            if (error) return callback(error);
+
+            superagent.get(createUrl(util.format('/api/v1/cloudrons/%s/backups', cloudron.id))).query({ accessToken: gToken }).end(function (error, result) {
+                if (error) return callback(error);
+                if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get backups: %s message: %s', result.statusCode, result.text)));
+
+                // Keep the objects in sync
+                result.body.backups.forEach(function (backup) { backup.id = backup.restoreKey; });
+
+                callback(null, result.body.backups);
+            });
+        });
     });
 }

@@ -13,6 +13,7 @@ var assert = require('assert'),
 exports = module.exports = {
     create: create,
     restore: restore,
+    migrate: migrate,
     listBackups: listBackups,
     createBackup: createBackup,
     eventlog: eventlog,
@@ -54,6 +55,29 @@ function getBackupListing(cloudron, options, callback) {
             callback(null, result.body.backups);
         });
     });
+}
+
+function waitForBackupFinish(callback) {
+    if (callback) assert.strictEqual(typeof callback, 'function');
+    else callback = helper.exit;
+
+    process.stdout.write('Waiting for backup to finish...');
+
+    (function checkStatus() {
+        superagent.get(createUrl('/api/v1/cloudron/progress')).end(function (error, result) {
+            if (error) return callback(error);
+            if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get backup progress.'.red, result.statusCode, result.text)));
+
+            if (result.body.backup.percent >= 100) {
+                if (result.body.backup.message) return callback(new Error('Backup failed: ' + result.body.backup.message));
+                return callback();
+            }
+
+            process.stdout.write('.');
+
+            setTimeout(checkStatus, 1000);
+        });
+    })();
 }
 
 function create(options) {
@@ -117,6 +141,54 @@ function restore(options) {
     });
 }
 
+function migrate(options) {
+    assert.strictEqual(typeof options, 'object');
+
+    if (!options.provider) helper.missing('provider');  // FIXME autodetect provider
+    if (!options.fqdnFrom) helper.missing('fqdn-from');
+    if (!options.fqdnTo) helper.missing('fqdn-to');
+    if (!options.type) helper.missing('type');
+    if (!options.region) helper.missing('region');
+
+    if (options.provider === 'caas') {
+        if (!options.sshKeyFile) helper.missing('ssh-key-file');
+
+        // TODO verify the sshKeyFile path
+
+        // TODO my god this is ugly
+        helper.detectCloudronApiEndpoint(options.fqdnFrom, function (error, result) {
+            if (error) helper.exit(error);
+
+            gCloudronApiEndpoint = result.apiEndpoint;
+
+            helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup'), function (error) {
+                if (error) helper.exit(error);
+
+                waitForBackupFinish(function (error) {
+                    if (error) helper.exit(error);
+
+                    caas.getBackupListing(options.fqdnFrom, {}, function (error, result) {
+                        if (error) helper.exit(error);
+                        if (result.length === 0) helper.exit('Missing backup, this should not happen!');
+
+                        caas.migrate(options, result[0], function (error) {
+                            if (error) helper.exit(error);
+
+                            console.log();
+                            console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + options.fqdnTo).bold);
+                            console.log();
+                        });
+                    });
+                });
+            });
+        });
+    } else if (options.provider === 'ec2') {
+        helper.exit('not implemented');
+    } else {
+        helper.exit('--provider must be either "caas" or "ec2"');
+    }
+}
+
 function login(cloudron, options, callback) {
     assert.strictEqual(typeof cloudron, 'string');
     assert.strictEqual(typeof options, 'object');
@@ -175,7 +247,6 @@ function listBackups(cloudron, options) {
             t.cell('Id', backup.id);
             t.cell('Creation Time', backup.creationTime);
             t.cell('Version', backup.version);
-            // t.cell('Apps', backup.dependsOn.join(' '));
 
             t.newRow();
         });
@@ -186,33 +257,14 @@ function listBackups(cloudron, options) {
     });
 }
 
-function waitForBackupFinish() {
-    process.stdout.write('Waiting for Cloudron backup to finish...');
-
-    function checkStatus() {
-        superagent.get(createUrl('/api/v1/cloudron/progress')).end(function (error, result) {
-            if (error) return helper.exit(error);
-            if (result.statusCode !== 200) return helper.exit(new Error(util.format('Failed to get backup progress.'.red, result.statusCode, result.text)));
-
-            if (result.body.backup.percent >= 100) {
-                if (result.body.backup.message) return helper.exit(new Error('Backup failed: ' + result.body.backup.message));
-
-                console.log('\n\nCloudron is backed up'.green);
-                helper.exit();
-            }
-
-            process.stdout.write('.');
-
-            setTimeout(checkStatus, 1000);
-        });
-    }
-
-    checkStatus();
-}
-
 function createBackup(cloudron, options) {
     assert.strictEqual(typeof cloudron, 'string');
     assert.strictEqual(typeof options, 'object');
+
+    function done() {
+        console.log('\n\nCloudron is backed up'.green);
+        helper.exit();
+    }
 
     if (options.ssh) {
         if (!options.sshKeyFile) helper.missing('ssh-key-file');
@@ -222,9 +274,7 @@ function createBackup(cloudron, options) {
         helper.detectCloudronApiEndpoint(cloudron, function (error, result) {
             if (error) helper.exit(error);
 
-            // do not pipe fds. otherwise, the shell does not detect input as a tty and does not change the terminal window size
-            // https://groups.google.com/forum/#!topic/nodejs/vxIwmRdhrWE
-            helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup'), waitForBackupFinish);
+            helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup'), waitForBackupFinish.bind(null, done));
         });
     } else {
         login(cloudron, options, function (error, token) {
@@ -234,7 +284,7 @@ function createBackup(cloudron, options) {
                 if (error) helper.exit(error);
                 if (result.statusCode !== 202) return helper.exit(util.format('Failed to backup Cloudron.'.red, result.statusCode, result.text));
 
-                waitForBackupFinish();
+                waitForBackupFinish(done);
             });
         });
     }
@@ -251,8 +301,6 @@ function eventlog(options) {
         helper.detectCloudronApiEndpoint(options.fqdn, function (error, result) {
             if (error) helper.exit(error);
 
-            // do not pipe fds. otherwise, the shell does not detect input as a tty and does not change the terminal window size
-            // https://groups.google.com/forum/#!topic/nodejs/vxIwmRdhrWE
             if (options.full) {
                 helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,data FROM box.eventlog ORDER BY creationTime DESC"'));
             } else {
@@ -295,8 +343,6 @@ function logs(options) {
     helper.detectCloudronApiEndpoint(options.fqdn, function (error, result) {
         if (error) helper.exit(error);
 
-        // do not pipe fds. otherwise, the shell does not detect input as a tty and does not change the terminal window size
-        // https://groups.google.com/forum/#!topic/nodejs/vxIwmRdhrWE
         helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, 'journalctl -fa'));
     });
 }
