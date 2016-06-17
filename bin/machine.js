@@ -11,6 +11,7 @@ program
     .command('create', 'Creates a new Cloudron')
     .command('restore', 'Restores a Cloudron')
     .command('eventlog', 'Get Cloudron eventlog')
+    .command('logs', 'Get Cloudron logs')
     .command('backup', 'Manage Cloudron backups');
 
 if (!process.argv.slice(2).length) {

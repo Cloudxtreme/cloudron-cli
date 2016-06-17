@@ -15,7 +15,8 @@ exports = module.exports = {
     restore: restore,
     listBackups: listBackups,
     createBackup: createBackup,
-    eventlog: eventlog
+    eventlog: eventlog,
+    logs: logs
 };
 
 var gCloudronApiEndpoint = null;
@@ -220,8 +221,6 @@ function createBackup(cloudron, options) {
         helper.detectCloudronApiEndpoint(cloudron, function (error, result) {
             if (error) helper.exit(error);
 
-            gCloudronApiEndpoint = result.apiEndpoint;
-
             // do not pipe fds. otherwise, the shell does not detect input as a tty and does not change the terminal window size
             // https://groups.google.com/forum/#!topic/nodejs/vxIwmRdhrWE
             helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup'), waitForBackupFinish);
@@ -250,8 +249,6 @@ function eventlog(options) {
 
         helper.detectCloudronApiEndpoint(options.fqdn, function (error, result) {
             if (error) helper.exit(error);
-
-            gCloudronApiEndpoint = result.apiEndpoint;
 
             // do not pipe fds. otherwise, the shell does not detect input as a tty and does not change the terminal window size
             // https://groups.google.com/forum/#!topic/nodejs/vxIwmRdhrWE
@@ -286,4 +283,19 @@ function eventlog(options) {
             });
         });
     }
+}
+
+function logs(options) {
+    assert.strictEqual(typeof options, 'object');
+
+    if (!options.fqdn) helper.missing('fqdn');
+    if (!options.sshKeyFile) helper.missing('ssh-key-file');
+
+    helper.detectCloudronApiEndpoint(options.fqdn, function (error, result) {
+        if (error) helper.exit(error);
+
+        // do not pipe fds. otherwise, the shell does not detect input as a tty and does not change the terminal window size
+        // https://groups.google.com/forum/#!topic/nodejs/vxIwmRdhrWE
+        helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, 'journalctl -fa'));
+    });
 }
