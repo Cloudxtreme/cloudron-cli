@@ -45,7 +45,6 @@ function getBackupListing(cloudron, options, callback) {
         helper.exit('--provider must be either "caas" or "ec2"');
     }
 
-    // FIXME get from S3 or caas as a fallback
     login(cloudron, options, function (error, token) {
         if (error) {
             console.error(error);
