@@ -15,7 +15,7 @@ exports = module.exports = {
     restore: restore,
     listBackups: listBackups,
     createBackup: createBackup,
-    login: helper.login
+    eventlog: eventlog
 };
 
 var gCloudronApiEndpoint = null;
@@ -185,7 +185,7 @@ function listBackups(cloudron, options) {
 }
 
 function waitForBackupFinish() {
-    process.stdout.write('Waiting for box backup to finish...');
+    process.stdout.write('Waiting for Cloudron backup to finish...');
 
     function checkStatus() {
         superagent.get(createUrl('/api/v1/cloudron/progress')).end(function (error, result) {
@@ -232,9 +232,57 @@ function createBackup(cloudron, options) {
 
             superagent.post(createUrl('/api/v1/backups')).query({ access_token: token }).send({}).end(function (error, result) {
                 if (error) helper.exit(error);
-                if (result.statusCode !== 202) return helper.exit(util.format('Failed to backup box.'.red, result.statusCode, result.text));
+                if (result.statusCode !== 202) return helper.exit(util.format('Failed to backup Cloudron.'.red, result.statusCode, result.text));
 
                 waitForBackupFinish();
+            });
+        });
+    }
+}
+
+function eventlog(options) {
+    assert.strictEqual(typeof options, 'object');
+
+    if (!options.fqdn) helper.missing('fqdn');
+
+    if (options.ssh) {
+        if (!options.sshKeyFile) helper.missing('ssh-key-file');
+
+        helper.detectCloudronApiEndpoint(options.fqdn, function (error, result) {
+            if (error) helper.exit(error);
+
+            gCloudronApiEndpoint = result.apiEndpoint;
+
+            // do not pipe fds. otherwise, the shell does not detect input as a tty and does not change the terminal window size
+            // https://groups.google.com/forum/#!topic/nodejs/vxIwmRdhrWE
+            if (options.full) {
+                helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,data FROM box.eventlog ORDER BY creationTime DESC"'));
+            } else {
+                helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,LEFT(data,50) AS data_preview FROM box.eventlog ORDER BY creationTime DESC"'));
+            }
+        });
+    } else {
+        login(options.fqdn, options, function (error, token) {
+            if (error) helper.exit(error);
+
+            superagent.get(createUrl('/api/v1/eventlog')).query({ access_token: token }).send({}).end(function (error, result) {
+                if (error) helper.exit(error);
+                if (result.statusCode !== 200) return helper.exit(util.format('Failed to fetch eventlog.'.red, result.statusCode, result.text));
+
+                var t = new Table();
+
+                result.body.eventlogs.forEach(function (event) {
+                    t.cell('creationTime', event.creationTime);
+                    t.cell('action', event.action);
+                    t.cell('source', event.source.username || event.source.userId || event.source.ip);
+                    t.cell('data_preview', options.full ? JSON.stringify(event.data) : JSON.stringify(event.data).slice(-50));
+
+                    t.newRow();
+                });
+
+                console.log(t.toString());
+
+                helper.exit();
             });
         });
     }

@@ -1,0 +1,22 @@
+#!/usr/bin/env node
+
+'use strict';
+
+require('../src/common.js');
+
+var program = require('commander'),
+    actions = require('../src/machine/actions.js');
+
+program.version(require('../package.json').version);
+
+program.description('Get Cloudron eventlog')
+    .option('-u, --username <username>', 'Username')
+    .option('-p, --password <password>', 'Password (unsafe)')
+    .option('--full', 'Fetch full eventlog')
+    .option('--ssh', 'Use SSH method')
+    .option('--ssh-key-file <ssh key file>', 'SSH key filepath')
+    .option('--fqdn <domain>', 'Domain eg. cloudron.io');
+
+program.parse(process.argv);
+
+actions.eventlog(program);
