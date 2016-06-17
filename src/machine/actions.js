@@ -16,7 +16,8 @@ exports = module.exports = {
     listBackups: listBackups,
     createBackup: createBackup,
     eventlog: eventlog,
-    logs: logs
+    logs: logs,
+    ssh: ssh
 };
 
 var gCloudronApiEndpoint = null;
@@ -297,5 +298,18 @@ function logs(options) {
         // do not pipe fds. otherwise, the shell does not detect input as a tty and does not change the terminal window size
         // https://groups.google.com/forum/#!topic/nodejs/vxIwmRdhrWE
         helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, 'journalctl -fa'));
+    });
+}
+
+function ssh(options) {
+    assert.strictEqual(typeof options, 'object');
+
+    if (!options.fqdn) helper.missing('fqdn');
+    if (!options.sshKeyFile) helper.missing('ssh-key-file');
+
+    helper.detectCloudronApiEndpoint(options.fqdn, function (error, result) {
+        if (error) helper.exit(error);
+
+        helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, options.cmd || ''));
     });
 }

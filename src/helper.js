@@ -206,6 +206,8 @@ function detectCloudronApiEndpoint(cloudron, callback) {
     });
 }
 
+// do not pipe fds. otherwise, the shell does not detect input as a tty and does not change the terminal window size
+// https://groups.google.com/forum/#!topic/nodejs/vxIwmRdhrWE
 function exec(command, args, callback) {
     var options = { stdio: 'inherit' }; // pipe output to console
     var child = spawn(command, args, options);

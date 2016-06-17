@@ -12,6 +12,7 @@ program
     .command('restore', 'Restores a Cloudron')
     .command('eventlog', 'Get Cloudron eventlog')
     .command('logs', 'Get Cloudron logs')
+    .command('ssh', 'Get remote SSH connection')
     .command('backup', 'Manage Cloudron backups');
 
 if (!process.argv.slice(2).length) {
