@@ -184,38 +184,58 @@ function listBackups(cloudron, options) {
     });
 }
 
+function waitForBackupFinish() {
+    process.stdout.write('Waiting for box backup to finish...');
+
+    function checkStatus() {
+        superagent.get(createUrl('/api/v1/cloudron/progress')).end(function (error, result) {
+            if (error) return helper.exit(error);
+            if (result.statusCode !== 200) return helper.exit(new Error(util.format('Failed to get backup progress.'.red, result.statusCode, result.text)));
+
+            if (result.body.backup.percent >= 100) {
+                if (result.body.backup.message) return helper.exit(new Error('Backup failed: ' + result.body.backup.message));
+
+                console.log('\n\nCloudron is backed up'.green);
+                helper.exit();
+            }
+
+            process.stdout.write('.');
+
+            setTimeout(checkStatus, 1000);
+        });
+    }
+
+    checkStatus();
+}
+
 function createBackup(cloudron, options) {
     assert.strictEqual(typeof cloudron, 'string');
     assert.strictEqual(typeof options, 'object');
 
-    login(cloudron, options, function (error, token) {
-        if (error) helper.exit(error);
+    if (options.ssh) {
+        if (!options.sshKeyFile) helper.missing('ssh-key-file');
 
-        superagent.post(createUrl('/api/v1/backups')).query({ access_token: token }).send({}).end(function (error, result) {
+        // TODO verify the sshKeyFile path
+
+        helper.detectCloudronApiEndpoint(cloudron, function (error, result) {
             if (error) helper.exit(error);
-            if (result.statusCode !== 202) return helper.exit(util.format('Failed to backup box.'.red, result.statusCode, result.text));
 
-            process.stdout.write('Waiting for box backup to finish...');
+            gCloudronApiEndpoint = result.apiEndpoint;
 
-            function checkStatus() {
-                superagent.get(createUrl('/api/v1/cloudron/progress')).query({ access_token: token }).end(function (error, result) {
-                    if (error) return helper.exit(error);
-                    if (result.statusCode !== 200) return helper.exit(new Error(util.format('Failed to get backup progress.'.red, result.statusCode, result.text)));
-
-                    if (result.body.backup.percent >= 100) {
-                        if (result.body.backup.message) return helper.exit(new Error('Backup failed: ' + result.body.backup.message));
-
-                        console.log('\n\nCloudron is backed up'.green);
-                        helper.exit();
-                    }
-
-                    process.stdout.write('.');
-
-                    setTimeout(checkStatus, 1000);
-                });
-            }
-
-            checkStatus();
+            // do not pipe fds. otherwise, the shell does not detect input as a tty and does not change the terminal window size
+            // https://groups.google.com/forum/#!topic/nodejs/vxIwmRdhrWE
+            helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup'), waitForBackupFinish);
         });
-    });
+    } else {
+        login(cloudron, options, function (error, token) {
+            if (error) helper.exit(error);
+
+            superagent.post(createUrl('/api/v1/backups')).query({ access_token: token }).send({}).end(function (error, result) {
+                if (error) helper.exit(error);
+                if (result.statusCode !== 202) return helper.exit(util.format('Failed to backup box.'.red, result.statusCode, result.text));
+
+                waitForBackupFinish();
+            });
+        });
+    }
 }

@@ -13,6 +13,8 @@ program.command('create <domain>')
     .description('Create new backup')
     .option('-u, --username <username>', 'Username')
     .option('-p, --password <password>', 'Password (unsafe)')
+    .option('--ssh', 'Use SSH method')
+    .option('--ssh-key-file <ssh key file>', 'SSH key filepath')
     .action(actions.createBackup);
 
 program.command('list <domain>')

@@ -2,14 +2,15 @@
 
 'use strict';
 
-var path = require('path'),
-    assert = require('assert'),
+var assert = require('assert'),
+    config = require('./config.js'),
     fs = require('fs'),
-    util = require('util'),
+    path = require('path'),
     readlineSync = require('readline-sync'),
     safe = require('safetydance'),
+    spawn = require('child_process').spawn,
     superagent = require('superagent'),
-    config = require('./config.js');
+    util = require('util');
 
 exports = module.exports = {
     exit: exit,
@@ -26,7 +27,10 @@ exports = module.exports = {
     selectUserSync: selectUserSync,
 
     showDeveloperModeNotice: showDeveloperModeNotice,
-    detectCloudronApiEndpoint: detectCloudronApiEndpoint
+    detectCloudronApiEndpoint: detectCloudronApiEndpoint,
+
+    exec: exec,
+    getSSH: getSSH
 };
 
 function exit(error) {
@@ -200,4 +204,23 @@ function detectCloudronApiEndpoint(cloudron, callback) {
             callback('Cloudron not found');
         });
     });
+}
+
+function exec(command, args, callback) {
+    var options = { stdio: 'inherit' }; // pipe output to console
+    var child = spawn(command, args, options);
+
+    callback = callback || function () { };
+
+    child.on('error', callback);
+    child.on('close', function (code) { callback(code === 0 ? null : new Error(util.format('%s exited with code %d', command, code))); });
+}
+
+function getSSH(host, sshKey, cmd) {
+    cmd = cmd || '';
+    cmd = Array.isArray(cmd) ? cmd.join(' ') : cmd;
+
+    var SSH = 'root@%s -tt -p 202 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i %s %s';
+
+    return util.format(SSH, host, sshKey, cmd).split(' ');
 }
