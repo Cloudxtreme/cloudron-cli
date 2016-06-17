@@ -11,7 +11,7 @@ exports = module.exports = {
     state: state,
     publicIP: publicIP,
     checkIfDNSZoneExists: checkIfDNSZoneExists,
-    getBackupDetails: getBackupDetails,
+    getBackupUrl: getBackupUrl,
     listBackups: listBackups
 };
 
@@ -173,7 +173,7 @@ function checkIfDNSZoneExists(domain, callback) {
     });
 }
 
-function getBackupDetails(bucket, prefix, backupId, callback) {
+function getBackupUrl(bucket, prefix, backupId, callback) {
     assert.strictEqual(typeof gS3, 'object');
     assert.strictEqual(typeof bucket, 'string');
     assert.strictEqual(typeof prefix, 'string');
@@ -190,12 +190,7 @@ function getBackupDetails(bucket, prefix, backupId, callback) {
 
     var url = gS3.getSignedUrl('getObject', params);
 
-    var data = {
-        key: 'somesecretkey',   // FIXME
-        url: url
-    };
-
-    callback(null, data);
+    callback(null, url);
 }
 
 function listBackups(bucket, prefix, callback) {

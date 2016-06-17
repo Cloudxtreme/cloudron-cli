@@ -177,7 +177,7 @@ function getUserData(callback) {
                     },
                     backupConfig: {
                         provider: 's3',
-                        key: 'somesecretkey',
+                        key: gParams.backupKey,
                         region: gParams.region,
                         bucket: gParams.backupBucket,
                         prefix: gParams.domain,
@@ -286,10 +286,13 @@ function getBackupDetails(callback) {
 
     console.log('Getting backup details...');
 
-    aws.getBackupDetails(gParams.backupBucket, gParams.domain, gParams.backup.id, function (error, result) {
+    aws.getBackupUrl(gParams.backupBucket, gParams.domain, gParams.backup.id, function (error, result) {
         if (error) return callback(error);
 
-        gParams.backupDetails = result;
+        gParams.backupDetails = {
+            key: gParams.backupKey,
+            url: result
+        };
 
         callback();
     });
@@ -299,6 +302,7 @@ function create(options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof options.region, 'string');
     assert.strictEqual(typeof options.version, 'string');
+    assert.strictEqual(typeof options.backupKey, 'string');
     assert.strictEqual(typeof options.backupBucket, 'string');
     assert.strictEqual(typeof options.accessKeyId, 'string');
     assert.strictEqual(typeof options.secretAccessKey, 'string');
@@ -345,6 +349,7 @@ function restore(options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof options.region, 'string');
     assert.strictEqual(typeof options.backup, 'object');
+    assert.strictEqual(typeof options.backupKey, 'string');
     assert.strictEqual(typeof options.backupBucket, 'string');
     assert.strictEqual(typeof options.accessKeyId, 'string');
     assert.strictEqual(typeof options.secretAccessKey, 'string');

@@ -20,6 +20,7 @@ program.description('Creates a Cloudron')
     .option('--region <region>', 'AWS region')
     .option('--access-key-id <accessKeyId>', 'AWS accessKeyId')
     .option('--secret-access-key <secretAccessKey>', 'AWS secretAccessKey')
+    .option('--backup-key <backup-key>', 'Backup key for encryption')
     .option('--backup-bucket <backupBucket>', 'S3 backupBucket');
 
 program.parse(process.argv);

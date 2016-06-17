@@ -84,6 +84,7 @@ function create(options) {
     var region = options.region;
     var accessKeyId = options.accessKeyId;
     var secretAccessKey = options.secretAccessKey;
+    var backupKey = options.backupKey;
     var backupBucket = options.backupBucket;
     var release = options.release;
     var type = options.type;
@@ -96,6 +97,7 @@ function create(options) {
     if (!region) helper.missing('region');
     if (!accessKeyId) helper.missing('access-key-id');
     if (!secretAccessKey) helper.missing('secret-access-key');
+    if (!backupKey) helper.missing('backup-key');
     if (!backupBucket) helper.missing('backup-bucket');
     if (!release) helper.missing('release');
     if (!type) helper.missing('type');
@@ -116,6 +118,7 @@ function create(options) {
             region: region,
             accessKeyId: accessKeyId,
             secretAccessKey: secretAccessKey,
+            backupKey: backupKey,
             backupBucket: backupBucket,
             version: result,
             type: type,
@@ -143,6 +146,7 @@ function restore(options) {
     var region = options.region;
     var accessKeyId = options.accessKeyId;
     var secretAccessKey = options.secretAccessKey;
+    var backupKey = options.backupKey;
     var backupBucket = options.backupBucket;
     var backup = options.backup;
     var type = options.type;
@@ -155,6 +159,7 @@ function restore(options) {
     if (!region) helper.missing('region');
     if (!accessKeyId) helper.missing('access-key-id');
     if (!secretAccessKey) helper.missing('secret-access-key');
+    if (!backupKey) helper.missing('backup-key');
     if (!backupBucket) helper.missing('backup-bucket');
     if (!backup) helper.missing('backup');
     if (!type) helper.missing('type');
@@ -181,6 +186,7 @@ function restore(options) {
             accessKeyId: accessKeyId,
             secretAccessKey: secretAccessKey,
             backupBucket: backupBucket,
+            backupKey: backupKey,
             backup: backupTo,
             type: type,
             sshKey: sshKey,
