@@ -1,14 +1,12 @@
 'use strict';
 
 var assert = require('assert'),
-    aws = require('./aws.js'),
     caas = require('./caas.js'),
     ec2 = require('./ec2.js'),
     helper = require('../helper.js'),
     readlineSync = require('readline-sync'),
     superagent = require('superagent'),
     Table = require('easy-table'),
-    tasks = require('./tasks.js'),
     util = require('util'),
     versions = require('./versions.js');
 
@@ -19,8 +17,6 @@ exports = module.exports = {
     createBackup: createBackup,
     login: helper.login
 };
-
-var APPSTORE_API_ENDPOINT = 'api.dev.cloudron.io';
 
 var gCloudronApiEndpoint = null;
 
@@ -61,18 +57,11 @@ function getBackupListing(cloudron, options, callback) {
 function create(options) {
     assert.strictEqual(typeof options, 'object');
 
-    var provider = options.provider;
-    var region = options.region;
-    var release = options.release;
-    var type = options.type;
-    var fqdn = options.fqdn;
-
-    // shared arguments
-    if (!provider) helper.missing('provider');
-    if (!release) helper.missing('release');
-    if (!fqdn) helper.missing('fqdn');
-    if (!type) helper.missing('type');
-    if (!region) helper.missing('region');
+    if (!options.provider) helper.missing('provider');
+    if (!options.release) helper.missing('release');
+    if (!options.fqdn) helper.missing('fqdn');
+    if (!options.type) helper.missing('type');
+    if (!options.region) helper.missing('region');
 
     versions.resolve(options.release, function (error, result) {
         if (error) helper.exit(error);
@@ -85,8 +74,9 @@ function create(options) {
         func(options, result, function (error) {
             if (error) helper.exit(error);
 
-            console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + fqdn).bold);
-            console.log('');
+            console.log();
+            console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + options.fqdn).bold);
+            console.log();
 
             helper.exit();
         });
@@ -96,64 +86,31 @@ function create(options) {
 function restore(options) {
     assert.strictEqual(typeof options, 'object');
 
-    var provider = options.provider;
-    var region = options.region;
-    var accessKeyId = options.accessKeyId;
-    var secretAccessKey = options.secretAccessKey;
-    var backupKey = options.backupKey;
-    var backupBucket = options.backupBucket;
-    var backup = options.backup;
-    var type = options.type;
-    var sshKey = options.sshKey;
-    var fqdn = options.fqdn;
-    var subnet = options.subnet;
-    var securityGroup = options.securityGroup;
+    if (!options.provider) helper.missing('provider');
+    if (!options.region) helper.missing('region');
+    if (!options.backup) helper.missing('backup');
+    if (!options.type) helper.missing('type');
+    if (!options.fqdn) helper.missing('fqdn');
 
-    if (!provider) helper.missing('provider');
-    if (!region) helper.missing('region');
-    if (!accessKeyId) helper.missing('access-key-id');
-    if (!secretAccessKey) helper.missing('secret-access-key');
-    if (!backupKey) helper.missing('backup-key');
-    if (!backupBucket) helper.missing('backup-bucket');
-    if (!backup) helper.missing('backup');
-    if (!type) helper.missing('type');
-    if (!sshKey) helper.missing('ssh-key');
-    if (!fqdn) helper.missing('fqdn');
-    if (!subnet) helper.missing('subnet');
-    if (!securityGroup) helper.missing('security-group');
-
-    if (provider !== 'caas' && provider !== 'ec2') helper.exit('--provider must be either "caas" or "ec2"');
-
-    // FIXME
-    if (provider === 'caas') helper.exit('caas not yet supported');
-
-    getBackupListing(fqdn, options, function (error, result) {
+    getBackupListing(options.fqdn, options, function (error, result) {
         if (error) helper.exit(error);
 
         if (result.length === 0) helper.exit('No backups found. Create one first to restore to.');
 
-        var backupTo = result.filter(function (b) { console.log(b); return b.id === backup; })[0];
-        if (!backupTo) helper.exit('Unable to find backup ' + backup + '.');
+        var backupTo = result.filter(function (b) { console.log(b); return b.id === options.backup; })[0];
+        if (!backupTo) helper.exit('Unable to find backup ' + options.backup + '.');
 
-        var params = {
-            region: region,
-            accessKeyId: accessKeyId,
-            secretAccessKey: secretAccessKey,
-            backupBucket: backupBucket,
-            backupKey: backupKey,
-            backup: backupTo,
-            type: type,
-            sshKey: sshKey,
-            domain: fqdn,
-            subnet: subnet,
-            securityGroup: securityGroup
-        };
+        var func;
+        if (options.provider === 'ec2') func = ec2.restore;
+        else if (options.provider === 'caas') func = caas.restore;
+        else helper.exit('--provider must be either "caas" or "ec2"');
 
-        tasks.restore(params, function (error) {
+        func(options, backupTo, function (error) {
             if (error) helper.exit(error);
 
-            console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + fqdn).bold);
-            console.log('');
+            console.log();
+            console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + options.fqdn).bold);
+            console.log();
 
             helper.exit();
         });

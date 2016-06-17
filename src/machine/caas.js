@@ -5,7 +5,8 @@ var assert = require('assert'),
     superagent = require('superagent');
 
 exports = module.exports = {
-    create: create
+    create: create,
+    restore: restore
 };
 
 var APPSTORE_API_ENDPOINT = 'api.dev.cloudron.io';
@@ -43,12 +44,24 @@ function create(options, version, callback) {
                 superagent.get(createAppstoreUrl('/api/v1/cloudrons/' + id)).query({ accessToken: token }).end(function (error, result) {
                     if (error) return setTimeout(checkStatus, 2000);
                     if (result.statusCode !== 200) return callback(new Error('Failed to get Cloudron status. ' + result.statusCode + ' - ' + (result.body ? result.body.message : result.text)));
-                    if (result.body.status !== 'ready') return setTimeout(checkStatus, 2000);
+                    if (result.body.box.status !== 'ready') return setTimeout(checkStatus, 2000);
 
                     callback();
                 });
             })();
         });
+    });
+}
+
+function restore(options, backup, callback) {
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof backup, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    loginAppstore(options, function (error, token) {
+        if (error) return callback(error);
+
+        // TODO
     });
 }
 

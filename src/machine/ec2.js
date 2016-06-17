@@ -7,6 +7,7 @@ var assert = require('assert'),
 
 exports = module.exports = {
     create: create,
+    restore: restore,
     getBackupListing: getBackupListing
 };
 
@@ -63,5 +64,42 @@ function create(options, version, callback) {
     tasks.create(params, function (error) {
         if (error) return callback(error);
         callback();
+    });
+}
+
+function restore(options, backup, callback) {
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof backup, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (!options.accessKeyId) helper.missing('access-key-id');
+    if (!options.secretAccessKey) helper.missing('secret-access-key');
+    if (!options.backupKey) helper.missing('backup-key');
+    if (!options.backupBucket) helper.missing('backup-bucket');
+    if (!options.sshKey) helper.missing('ssh-key');
+    if (!options.subnet) helper.missing('subnet');
+    if (!options.securityGroup) helper.missing('security-group');
+
+    var params = {
+        region: options.region,
+        accessKeyId: options.accessKeyId,
+        secretAccessKey: options.secretAccessKey,
+        backupBucket: options.backupBucket,
+        backupKey: options.backupKey,
+        backup: backup,
+        type: options.type,
+        sshKey: options.sshKey,
+        domain: options.fqdn,
+        subnet: options.subnet,
+        securityGroup: options.securityGroup
+    };
+
+    tasks.restore(params, function (error) {
+        if (error) helper.exit(error);
+
+        console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + options.fqdn).bold);
+        console.log('');
+
+        helper.exit();
     });
 }
