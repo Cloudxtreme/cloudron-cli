@@ -72,6 +72,8 @@ function restore(options, backup, callback) {
     assert.strictEqual(typeof backup, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    if (!options.type) helper.missing('type');
+    if (!options.region) helper.missing('region');
     if (!options.accessKeyId) helper.missing('access-key-id');
     if (!options.secretAccessKey) helper.missing('secret-access-key');
     if (!options.backupKey) helper.missing('backup-key');

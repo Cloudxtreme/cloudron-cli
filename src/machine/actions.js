@@ -87,9 +87,7 @@ function restore(options) {
     assert.strictEqual(typeof options, 'object');
 
     if (!options.provider) helper.missing('provider');
-    if (!options.region) helper.missing('region');
     if (!options.backup) helper.missing('backup');
-    if (!options.type) helper.missing('type');
     if (!options.fqdn) helper.missing('fqdn');
 
     getBackupListing(options.fqdn, options, function (error, result) {
@@ -97,7 +95,7 @@ function restore(options) {
 
         if (result.length === 0) helper.exit('No backups found. Create one first to restore to.');
 
-        var backupTo = result.filter(function (b) { console.log(b); return b.id === options.backup; })[0];
+        var backupTo = result.filter(function (b) { return b.id === options.backup; })[0];
         if (!backupTo) helper.exit('Unable to find backup ' + options.backup + '.');
 
         var func;
