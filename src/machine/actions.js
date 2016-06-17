@@ -2,6 +2,8 @@
 
 var assert = require('assert'),
     aws = require('./aws.js'),
+    caas = require('./caas.js'),
+    ec2 = require('./ec2.js'),
     helper = require('../helper.js'),
     readlineSync = require('readline-sync'),
     superagent = require('superagent'),
@@ -29,35 +31,6 @@ function createUrl(api) {
     return 'https://' + gCloudronApiEndpoint + api;
 }
 
-function createAppstoreUrl(api) {
-    assert.strictEqual(typeof api, 'string');
-
-    return 'https://' + APPSTORE_API_ENDPOINT + api;
-}
-
-function getBackupListingFromS3(cloudron, options, callback) {
-    assert.strictEqual(typeof cloudron, 'string');
-    assert.strictEqual(typeof options, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    if (!options.region) helper.missing('region');
-    if (!options.accessKeyId) helper.missing('access-key-id');
-    if (!options.secretAccessKey) helper.missing('secret-access-key');
-    if (!options.backupBucket) helper.missing('backup-bucket');
-
-    aws.init({
-        region: options.region,
-        accessKeyId: options.accessKeyId,
-        secretAccessKey: options.secretAccessKey
-    });
-
-    aws.listBackups(options.backupBucket, cloudron, function (error, result) {
-        if (error) return callback(error);
-
-        callback(null, result);
-    });
-}
-
 function getBackupListing(cloudron, options, callback) {
     assert.strictEqual(typeof cloudron, 'string');
     assert.strictEqual(typeof options, 'object');
@@ -65,7 +38,7 @@ function getBackupListing(cloudron, options, callback) {
 
     if (options.fallback) {
         console.log('Falling back to s3 bucket listing');
-        return getBackupListingFromS3(cloudron, options, callback);
+        return ec2.getBackupListing(cloudron, options, callback);
     }
 
     // FIXME get from S3 or caas as a fallback
@@ -73,7 +46,7 @@ function getBackupListing(cloudron, options, callback) {
         if (error) {
             console.log(error);
             console.log('Falling back to s3 bucket listing');
-            return getBackupListingFromS3(cloudron, options, callback);
+            return ec2.getBackupListing(cloudron, options, callback);
         }
 
         superagent.get(createUrl('/api/v1/backups')).query({ access_token: token }).end(function (error, result) {
@@ -81,62 +54,6 @@ function getBackupListing(cloudron, options, callback) {
             if (result.statusCode !== 200) return callback(util.format('Failed to list backups.'.red, result.statusCode, result.text));
 
             callback(null, result.body.backups);
-        });
-    });
-}
-
-function createEC2(options, version, callback) {
-    assert.strictEqual(typeof options, 'object');
-    assert.strictEqual(typeof version, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    if (!options.accessKeyId) helper.missing('access-key-id');
-    if (!options.secretAccessKey) helper.missing('secret-access-key');
-    if (!options.backupKey) helper.missing('backup-key');
-    if (!options.backupBucket) helper.missing('backup-bucket');
-    if (!options.sshKey) helper.missing('ssh-key');
-    if (!options.subnet) helper.missing('subnet');
-    if (!options.securityGroup) helper.missing('security-group');
-
-    var params = {
-        region: options.region,
-        accessKeyId: options.accessKeyId,
-        secretAccessKey: options.secretAccessKey,
-        backupKey: options.backupKey,
-        backupBucket: options.backupBucket,
-        version: version,
-        type: options.type,
-        sshKey: options.sshKey,
-        domain: options.fqdn,
-        subnet: options.subnet,
-        securityGroup: options.securityGroup
-    };
-
-    tasks.create(params, function (error) {
-        if (error) return callback(error);
-        callback();
-    });
-}
-
-function createCaas(options, version, callback) {
-    assert.strictEqual(typeof options, 'object');
-    assert.strictEqual(typeof version, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    loginAppstore(options, function (error, token) {
-        if (error) return callback(error);
-
-        superagent.post(createAppstoreUrl('/api/v1/cloudrons')).query({ accessToken: token }).send({
-            domain: options.fqdn,
-            region: options.region,
-            size: options.type,
-            version: version
-        }).end(function (error, result) {
-            if (error) return callback(error);
-
-            console.log(result.statusCode, result.body);
-
-            callback(null, result.body);
         });
     });
 }
@@ -161,8 +78,8 @@ function create(options) {
         if (error) helper.exit(error);
 
         var func;
-        if (options.provider === 'ec2') func = createEC2;
-        else if (options.provider === 'caas') func = createCaas;
+        if (options.provider === 'ec2') func = ec2.create;
+        else if (options.provider === 'caas') func = caas.create;
         else helper.exit('--provider must be either "caas" or "ec2"');
 
         func(options, result, function (error) {
@@ -240,30 +157,6 @@ function restore(options) {
 
             helper.exit();
         });
-    });
-}
-
-function loginAppstore(options, callback) {
-    assert.strictEqual(typeof options, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    console.log();
-
-    if (!options.username || !options.password) console.log('Enter appstore credentials:');
-
-    var username = options.username || readlineSync.question('Username: ', {});
-    var password = options.password || readlineSync.question('Password: ', { noEchoBack: true });
-
-    superagent.get(createAppstoreUrl('/api/v1/login')).auth(username, password).end(function (error, result) {
-        if (error) return callback(error);
-        if (result.statusCode !== 200) {
-            console.log('Login failed.'.red);
-            return loginAppstore(options, callback);
-        }
-
-        console.log('Login successful.'.green);
-
-        callback(null, result.body.accessToken);
     });
 }
 
