@@ -23,13 +23,6 @@ program.command('backup')
     .option('--box', 'Create whole box backup')
     .action(actions.backup);
 
-program.command('createOAuthAppCredentials')
-    .option('--redirect-uri <uri>', 'Redirect Uri')
-    .option('--scope [scopes]', 'Scopes (comma separated)', '*')
-    .option('--shell', 'Print shell friendly output')
-    .description('Create oauth app credentials for local development')
-    .action(actions.createOAuthAppCredentials);
-
 program.command('build')
     .description('Build an app')
     .option('--no-cache', 'Do not use cache')
@@ -42,6 +35,20 @@ if (DEV) {
         .option('-f, --tail', 'Tail')
         .action(appstoreActions.buildLogs);
 }
+
+program.command('clone')
+    .option('--app <id>', 'App id')
+    .option('--backup-id <backupId>', 'Backup id')
+    .option('--location <location>', 'Location')
+    .description('Clone an existing app to a new location')
+    .action(actions.clone);
+
+program.command('createOAuthAppCredentials')
+    .option('--redirect-uri <uri>', 'Redirect Uri')
+    .option('--scope [scopes]', 'Scopes (comma separated)', '*')
+    .option('--shell', 'Print shell friendly output')
+    .description('Create oauth app credentials for local development')
+    .action(actions.createOAuthAppCredentials);
 
 program.command('download-backup <id> [outdir]')
     .description('Download backup')

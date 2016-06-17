@@ -48,6 +48,7 @@ exports = module.exports = {
     createOAuthAppCredentials: createOAuthAppCredentials,
     init: init,
     restore: restore,
+    clone: clone,
     createUrl: createUrl,
     backup: createBackup,
     downloadBackup: downloadBackup,
@@ -959,8 +960,7 @@ function restore(options) {
             return superagent
             .post(createUrl('/api/v1/apps/' + app.id + '/restore'))
             .query({ access_token: config.token() })
-            .send({ backupId: options.backupId || app.lastBackupId })
-            .send({});
+            .send({ backupId: options.backupId || app.lastBackupId });
         }, function (error, result) {
             if (error) exit(error);
             if (result.statusCode !== 202) return exit(util.format('Failed to restore app.'.red, result.statusCode, result.text));
@@ -972,6 +972,40 @@ function restore(options) {
                 }
 
                 console.log('\n\nApp is restored'.green);
+                exit();
+            });
+        });
+    });
+}
+
+function clone(options) {
+    helper.verifyArguments(arguments);
+
+    var appId = options.app;
+    getApp(appId, function (error, app) {
+        if (error) exit(error);
+
+        if (!app) exit(NO_APP_FOUND_ERROR_STRING);
+
+        var location = options.location || readlineSync.question('Location: ', {});
+
+        superagentEnd(function () {
+            return superagent
+            .post(createUrl('/api/v1/apps/' + app.id + '/clone'))
+            .query({ access_token: config.token() })
+            .send({ backupId: options.backupId || app.lastBackupId, location: location });
+        }, function (error, result) {
+            if (error) exit(error);
+            if (result.statusCode !== 201) return exit(util.format('Failed to clone app.'.red, result.statusCode, result.text));
+
+            // FIXME: this should be waitForHealthCheck but the box code incorrectly modifies the installationState
+            console.log('App cloned as id ' + result.body.id);
+            waitForFinishInstallation(result.body.id, true, function (error) {
+                if (error) {
+                    return exit('\n\nApp clone error: %s'.red, error.message);
+                }
+
+                console.log('\n\nApp is cloned'.green);
                 exit();
             });
         });
