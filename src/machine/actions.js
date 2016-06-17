@@ -83,10 +83,10 @@ function waitForBackupFinish(callback) {
     })();
 }
 
-function create(options) {
+function create(provider, options) {
+    assert.strictEqual(typeof provider, 'string');
     assert.strictEqual(typeof options, 'object');
 
-    if (!options.provider) helper.missing('provider');
     if (!options.release) helper.missing('release');
     if (!options.fqdn) helper.missing('fqdn');
     if (!options.type) helper.missing('type');
@@ -96,9 +96,9 @@ function create(options) {
         if (error) helper.exit(error);
 
         var func;
-        if (options.provider === 'ec2') func = ec2.create;
-        else if (options.provider === 'caas') func = caas.create;
-        else helper.exit('--provider must be either "caas" or "ec2"');
+        if (provider === 'ec2') func = ec2.create;
+        else if (provider === 'caas') func = caas.create;
+        else helper.exit('<provider> must be either "caas" or "ec2"');
 
         func(options, result, function (error) {
             if (error) helper.exit(error);
@@ -295,15 +295,14 @@ function createBackup(cloudron, options) {
     }
 }
 
-function eventlog(options) {
+function eventlog(fqdn, options) {
+    assert.strictEqual(typeof fqdn, 'string');
     assert.strictEqual(typeof options, 'object');
-
-    if (!options.fqdn) helper.missing('fqdn');
 
     if (options.ssh) {
         if (!options.sshKeyFile) helper.missing('ssh-key-file');
 
-        helper.detectCloudronApiEndpoint(options.fqdn, function (error, result) {
+        helper.detectCloudronApiEndpoint(fqdn, function (error, result) {
             if (error) helper.exit(error);
 
             if (options.full) {
@@ -313,7 +312,7 @@ function eventlog(options) {
             }
         });
     } else {
-        login(options.fqdn, options, function (error, token) {
+        login(fqdn, options, function (error, token) {
             if (error) helper.exit(error);
 
             superagent.get(createUrl('/api/v1/eventlog')).query({ access_token: token }).send({}).end(function (error, result) {
@@ -339,28 +338,29 @@ function eventlog(options) {
     }
 }
 
-function logs(options) {
+function logs(fqdn, options) {
+    assert.strictEqual(typeof fqdn, 'object');
     assert.strictEqual(typeof options, 'object');
 
-    if (!options.fqdn) helper.missing('fqdn');
     if (!options.sshKeyFile) helper.missing('ssh-key-file');
 
-    helper.detectCloudronApiEndpoint(options.fqdn, function (error, result) {
+    helper.detectCloudronApiEndpoint(fqdn, function (error, result) {
         if (error) helper.exit(error);
 
         helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, 'journalctl -fa'));
     });
 }
 
-function ssh(options) {
+function ssh(fqdn, cmds, options) {
+    assert.strictEqual(typeof fqdn, 'string');
+    assert(Array.isArray(cmds));
     assert.strictEqual(typeof options, 'object');
 
-    if (!options.fqdn) helper.missing('fqdn');
     if (!options.sshKeyFile) helper.missing('ssh-key-file');
 
-    helper.detectCloudronApiEndpoint(options.fqdn, function (error, result) {
+    helper.detectCloudronApiEndpoint(fqdn, function (error, result) {
         if (error) helper.exit(error);
 
-        helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, options.cmd || ''));
+        helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, cmds));
     });
 }
