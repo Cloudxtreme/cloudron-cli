@@ -38,7 +38,7 @@ if (DEV) {
 
 program.command('clone')
     .option('--app <id>', 'App id')
-    .option('--backup-id <backupId>', 'Backup id')
+    .option('--backup <backup>', 'Backup id')
     .option('--location <location>', 'Location')
     .description('Clone an existing app to a new location')
     .action(actions.clone);
@@ -134,7 +134,7 @@ program.command('push <local> <remote>')
 program.command('restore')
     .description('Restore app from last known backup')
     .option('--app <id>', 'App id')
-    .option('--backup-id <backupId>', 'Backup id')
+    .option('--backup <backup>', 'Backup id')
     .action(actions.restore);
 
 program.command('restart')

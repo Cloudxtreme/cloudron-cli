@@ -960,7 +960,7 @@ function restore(options) {
             return superagent
             .post(createUrl('/api/v1/apps/' + app.id + '/restore'))
             .query({ access_token: config.token() })
-            .send({ backupId: options.backupId || app.lastBackupId });
+            .send({ backupId: options.backup || app.lastBackupId });
         }, function (error, result) {
             if (error) exit(error);
             if (result.statusCode !== 202) return exit(util.format('Failed to restore app.'.red, result.statusCode, result.text));
@@ -993,7 +993,7 @@ function clone(options) {
             return superagent
             .post(createUrl('/api/v1/apps/' + app.id + '/clone'))
             .query({ access_token: config.token() })
-            .send({ backupId: options.backupId || app.lastBackupId, location: location });
+            .send({ backupId: options.backup || app.lastBackupId, location: location });
         }, function (error, result) {
             if (error) exit(error);
             if (result.statusCode !== 201) return exit(util.format('Failed to clone app.'.red, result.statusCode, result.text));
