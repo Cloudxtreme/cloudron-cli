@@ -100,9 +100,9 @@ function create(options) {
         func(options, result, function (error) {
             if (error) helper.exit(error);
 
-            console.log();
+            console.log('');
             console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + options.fqdn).bold);
-            console.log();
+            console.log('');
 
             helper.exit();
         });
@@ -132,9 +132,9 @@ function restore(options) {
         func(options, backupTo, function (error) {
             if (error) helper.exit(error);
 
-            console.log();
+            console.log('');
             console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + options.fqdn).bold);
-            console.log();
+            console.log('');
 
             helper.exit();
         });
@@ -174,9 +174,9 @@ function migrate(options) {
                         caas.migrate(options, result[0], function (error) {
                             if (error) helper.exit(error);
 
-                            console.log();
+                            console.log('');
                             console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + options.fqdnTo).bold);
-                            console.log();
+                            console.log('');
                         });
                     });
                 });
@@ -199,7 +199,7 @@ function login(cloudron, options, callback) {
 
         gCloudronApiEndpoint = result.apiEndpoint;
 
-        console.log();
+        console.log('');
 
         if (!options.username || !options.password) console.log('Enter credentials for ' + cloudron.cyan.bold + ':');
 
@@ -234,7 +234,7 @@ function listBackups(cloudron, options) {
     getBackupListing(cloudron, options, function (error, result) {
         if (error) helper.exit(error);
 
-        console.log();
+        console.log('');
 
         if (result.length === 0) {
             console.log('No backups have been made.');
