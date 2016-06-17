@@ -18,6 +18,8 @@ exports = module.exports = {
     login: helper.login
 };
 
+var APPSTORE_API_ENDPOINT = 'api.dev.cloudron.io';
+
 var gCloudronApiEndpoint = null;
 
 function createUrl(api) {
@@ -25,6 +27,12 @@ function createUrl(api) {
     assert.strictEqual(typeof api, 'string');
 
     return 'https://' + gCloudronApiEndpoint + api;
+}
+
+function createAppstoreUrl(api) {
+    assert.strictEqual(typeof api, 'string');
+
+    return 'https://' + APPSTORE_API_ENDPOINT + api;
 }
 
 function getBackupListingFromS3(cloudron, options, callback) {
@@ -77,61 +85,90 @@ function getBackupListing(cloudron, options, callback) {
     });
 }
 
+function createEC2(options, version, callback) {
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof version, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (!options.accessKeyId) helper.missing('access-key-id');
+    if (!options.secretAccessKey) helper.missing('secret-access-key');
+    if (!options.backupKey) helper.missing('backup-key');
+    if (!options.backupBucket) helper.missing('backup-bucket');
+    if (!options.sshKey) helper.missing('ssh-key');
+    if (!options.subnet) helper.missing('subnet');
+    if (!options.securityGroup) helper.missing('security-group');
+
+    var params = {
+        region: options.region,
+        accessKeyId: options.accessKeyId,
+        secretAccessKey: options.secretAccessKey,
+        backupKey: options.backupKey,
+        backupBucket: options.backupBucket,
+        version: version,
+        type: options.type,
+        sshKey: options.sshKey,
+        domain: options.fqdn,
+        subnet: options.subnet,
+        securityGroup: options.securityGroup
+    };
+
+    tasks.create(params, function (error) {
+        if (error) return callback(error);
+        callback();
+    });
+}
+
+function createCaas(options, version, callback) {
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof version, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    loginAppstore(options, function (error, token) {
+        if (error) return callback(error);
+
+        superagent.post(createAppstoreUrl('/api/v1/cloudrons')).query({ accessToken: token }).send({
+            domain: options.fqdn,
+            region: options.region,
+            size: options.type,
+            version: version
+        }).end(function (error, result) {
+            if (error) return callback(error);
+
+            console.log(result.statusCode, result.body);
+
+            callback(null, result.body);
+        });
+    });
+}
+
 function create(options) {
     assert.strictEqual(typeof options, 'object');
 
     var provider = options.provider;
     var region = options.region;
-    var accessKeyId = options.accessKeyId;
-    var secretAccessKey = options.secretAccessKey;
-    var backupKey = options.backupKey;
-    var backupBucket = options.backupBucket;
     var release = options.release;
     var type = options.type;
-    var sshKey = options.sshKey;
-    var domain = options.fqdn;
-    var subnet = options.subnet;
-    var securityGroup = options.securityGroup;
+    var fqdn = options.fqdn;
 
+    // shared arguments
     if (!provider) helper.missing('provider');
-    if (!region) helper.missing('region');
-    if (!accessKeyId) helper.missing('access-key-id');
-    if (!secretAccessKey) helper.missing('secret-access-key');
-    if (!backupKey) helper.missing('backup-key');
-    if (!backupBucket) helper.missing('backup-bucket');
     if (!release) helper.missing('release');
+    if (!fqdn) helper.missing('fqdn');
     if (!type) helper.missing('type');
-    if (!sshKey) helper.missing('ssh-key');
-    if (!domain) helper.missing('domain');
-    if (!subnet) helper.missing('subnet');
-    if (!securityGroup) helper.missing('security-group');
+    if (!region) helper.missing('region');
 
-    if (provider !== 'caas' && provider !== 'ec2') helper.exit('--provider must be either "caas" or "ec2"');
-
-    // FIXME
-    if (provider === 'caas') helper.exit('caas not yet supported');
-
-    versions.resolve(release, function (error, result) {
+    versions.resolve(options.release, function (error, result) {
         if (error) helper.exit(error);
 
-        var params = {
-            region: region,
-            accessKeyId: accessKeyId,
-            secretAccessKey: secretAccessKey,
-            backupKey: backupKey,
-            backupBucket: backupBucket,
-            version: result,
-            type: type,
-            sshKey: sshKey,
-            domain: domain,
-            subnet: subnet,
-            securityGroup: securityGroup
-        };
+        var func;
+        if (options.provider === 'ec2') func = createEC2;
+        else if (options.provider === 'caas') func = createCaas;
+        else helper.exit('--provider must be either "caas" or "ec2"');
 
-        tasks.create(params, function (error) {
+        func(options, result, function (error) {
             if (error) helper.exit(error);
 
-            console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + domain).bold);
+            console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + fqdn).bold);
             console.log('');
 
             helper.exit();
@@ -151,7 +188,7 @@ function restore(options) {
     var backup = options.backup;
     var type = options.type;
     var sshKey = options.sshKey;
-    var domain = options.fqdn;
+    var fqdn = options.fqdn;
     var subnet = options.subnet;
     var securityGroup = options.securityGroup;
 
@@ -164,7 +201,7 @@ function restore(options) {
     if (!backup) helper.missing('backup');
     if (!type) helper.missing('type');
     if (!sshKey) helper.missing('ssh-key');
-    if (!domain) helper.missing('domain');
+    if (!fqdn) helper.missing('fqdn');
     if (!subnet) helper.missing('subnet');
     if (!securityGroup) helper.missing('security-group');
 
@@ -173,7 +210,7 @@ function restore(options) {
     // FIXME
     if (provider === 'caas') helper.exit('caas not yet supported');
 
-    getBackupListing(domain, options, function (error, result) {
+    getBackupListing(fqdn, options, function (error, result) {
         if (error) helper.exit(error);
 
         if (result.length === 0) helper.exit('No backups found. Create one first to restore to.');
@@ -190,7 +227,7 @@ function restore(options) {
             backup: backupTo,
             type: type,
             sshKey: sshKey,
-            domain: domain,
+            domain: fqdn,
             subnet: subnet,
             securityGroup: securityGroup
         };
@@ -198,11 +235,35 @@ function restore(options) {
         tasks.restore(params, function (error) {
             if (error) helper.exit(error);
 
-            console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + domain).bold);
+            console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + fqdn).bold);
             console.log('');
 
             helper.exit();
         });
+    });
+}
+
+function loginAppstore(options, callback) {
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    console.log();
+
+    if (!options.username || !options.password) console.log('Enter appstore credentials:');
+
+    var username = options.username || readlineSync.question('Username: ', {});
+    var password = options.password || readlineSync.question('Password: ', { noEchoBack: true });
+
+    superagent.get(createAppstoreUrl('/api/v1/login')).auth(username, password).end(function (error, result) {
+        if (error) return callback(error);
+        if (result.statusCode !== 200) {
+            console.log('Login failed.'.red);
+            return loginAppstore(options, callback);
+        }
+
+        console.log('Login successful.'.green);
+
+        callback(null, result.body.accessToken);
     });
 }
 
@@ -218,7 +279,7 @@ function login(cloudron, options, callback) {
 
         console.log();
 
-        if (!options.username && !options.password) console.log('Enter credentials for ' + cloudron.cyan.bold + ':');
+        if (!options.username || !options.password) console.log('Enter credentials for ' + cloudron.cyan.bold + ':');
 
         var username = options.username || readlineSync.question('Username: ', {});
         var password = options.password || readlineSync.question('Password: ', { noEchoBack: true });

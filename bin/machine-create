@@ -10,6 +10,8 @@ var program = require('commander'),
 program.version(require('../package.json').version);
 
 program.description('Creates a Cloudron')
+    .option('-u, --username <username>', 'Username')
+    .option('-p, --password <password>', 'Password (unsafe)')
     .option('--provider <provider>', 'Provider [caas,ec2]')
     .option('--release [version]', 'Cloudron release version.', 'latest')
     .option('--type <type>', 'Instance type')
