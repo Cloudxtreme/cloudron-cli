@@ -11,7 +11,8 @@ exports = module.exports = {
     state: state,
     publicIP: publicIP,
     checkIfDNSZoneExists: checkIfDNSZoneExists,
-    getBackupDetails: getBackupDetails
+    getBackupDetails: getBackupDetails,
+    listBackups: listBackups
 };
 
 var gEC2 = null;
@@ -195,4 +196,41 @@ function getBackupDetails(bucket, prefix, backupId, callback) {
     };
 
     callback(null, data);
+}
+
+function listBackups(bucket, prefix, callback) {
+    assert.strictEqual(typeof gS3, 'object');
+    assert.strictEqual(typeof bucket, 'string');
+    assert.strictEqual(typeof prefix, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var params = {
+        Bucket: bucket,
+        Prefix: prefix
+    };
+
+    gS3.listObjects(params, function(error, data) {
+        if (error) return callback(error);
+
+        var backups = [];
+        var contents = data.Contents;
+
+        for (var i = 0; i < contents.length; ++i) {
+            var match = contents[i].Key.match(/\/backup_(.*)-v(.*).tar.gz$/);
+            if (!match) continue;
+
+            var date = new Date(match[1]);
+            if (date.toString() === 'Invalid Date') continue;
+
+            backups.push({
+                id: contents[i].Key.split('/')[1],
+                creationTime: date.toISOString(),
+                version: match[2],
+                filename: contents[i].Key.split('/')[1]
+            });
+        }
+
+        // backup results are sorted alphabetically by filename
+        return callback(null, backups);
+    });
 }

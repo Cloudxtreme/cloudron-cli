@@ -19,6 +19,11 @@ program.command('list <domain>')
     .description('List all backups')
     .option('-u, --username <username>', 'Username')
     .option('-p, --password <password>', 'Password (unsafe)')
+    .option('--fallback', 'Fallback to S3 listing')
+    .option('--region <region>', 'AWS region')
+    .option('--access-key-id <accessKeyId>', 'AWS accessKeyId')
+    .option('--secret-access-key <secretAccessKey>', 'AWS secretAccessKey')
+    .option('--backup-bucket <backupBucket>', 'S3 backupBucket')
     .action(actions.listBackups);
 
 if (!process.argv.slice(2).length) {

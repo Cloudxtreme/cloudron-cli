@@ -1,6 +1,7 @@
 'use strict';
 
 var assert = require('assert'),
+    aws = require('./aws.js'),
     helper = require('../helper.js'),
     readlineSync = require('readline-sync'),
     superagent = require('superagent'),
@@ -26,14 +27,46 @@ function createUrl(api) {
     return 'https://' + gCloudronApiEndpoint + api;
 }
 
+function getBackupListingFromS3(cloudron, options, callback) {
+    assert.strictEqual(typeof cloudron, 'string');
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (!options.region) helper.missing('region');
+    if (!options.accessKeyId) helper.missing('access-key-id');
+    if (!options.secretAccessKey) helper.missing('secret-access-key');
+    if (!options.backupBucket) helper.missing('backup-bucket');
+
+    aws.init({
+        region: options.region,
+        accessKeyId: options.accessKeyId,
+        secretAccessKey: options.secretAccessKey
+    });
+
+    aws.listBackups(options.backupBucket, cloudron, function (error, result) {
+        if (error) return callback(error);
+
+        callback(null, result);
+    });
+}
+
 function getBackupListing(cloudron, options, callback) {
     assert.strictEqual(typeof cloudron, 'string');
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
+    if (options.fallback) {
+        console.log('Falling back to s3 bucket listing');
+        return getBackupListingFromS3(cloudron, options, callback);
+    }
+
     // FIXME get from S3 or caas as a fallback
     login(cloudron, options, function (error, token) {
-        if (error) helper.exit(error);
+        if (error) {
+            console.log(error);
+            console.log('Falling back to s3 bucket listing');
+            return getBackupListingFromS3(cloudron, options, callback);
+        }
 
         superagent.get(createUrl('/api/v1/backups')).query({ access_token: token }).end(function (error, result) {
             if (error) return callback(error);
@@ -173,7 +206,7 @@ function login(cloudron, options, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     helper.detectCloudronApiEndpoint(cloudron, function (error, result) {
-        if (error) helper.exit(error);
+        if (error) return callback(error);
 
         gCloudronApiEndpoint = result.apiEndpoint;
 
@@ -188,7 +221,7 @@ function login(cloudron, options, callback) {
             username: username,
             password: password
         }).end(function (error, result) {
-            if (error) helper.exit(error);
+            if (error) return callback(error);
             if (result.statusCode === 412) {
                 helper.showDeveloperModeNotice(cloudron);
                 return login(cloudron, options, callback);
