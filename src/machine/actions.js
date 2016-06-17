@@ -35,17 +35,21 @@ function getBackupListing(cloudron, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    if (options.fallback) {
-        console.log('Falling back to s3 bucket listing');
+    if (options.provider === 'caas') {
+        console.log('Using caas backup listing');
+        return caas.getBackupListing(cloudron, {}, callback);
+    } else if (options.provider === 'ec2') {
+        console.log('Using s3 backup listing');
         return ec2.getBackupListing(cloudron, options, callback);
+    } else if (options.provider) {
+        helper.exit('--provider must be either "caas" or "ec2"');
     }
 
     // FIXME get from S3 or caas as a fallback
     login(cloudron, options, function (error, token) {
         if (error) {
-            console.log(error);
-            console.log('Falling back to s3 bucket listing');
-            return ec2.getBackupListing(cloudron, options, callback);
+            console.error(error);
+            helper.exit('Try using the --provider argument');
         }
 
         superagent.get(createUrl('/api/v1/backups')).query({ access_token: token }).end(function (error, result) {
@@ -273,6 +277,8 @@ function createBackup(cloudron, options) {
 
         helper.detectCloudronApiEndpoint(cloudron, function (error, result) {
             if (error) helper.exit(error);
+
+            gCloudronApiEndpoint = result.apiEndpoint;
 
             helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup'), waitForBackupFinish.bind(null, done));
         });

@@ -1,6 +1,7 @@
 'use strict';
 
 var assert = require('assert'),
+    config = require('../config.js'),
     readlineSync = require('readline-sync'),
     superagent = require('superagent'),
     util = require('util');
@@ -12,17 +13,14 @@ exports = module.exports = {
     getBackupListing: getBackupListing
 };
 
-var APPSTORE_API_ENDPOINT = 'api.dev.cloudron.io';
-
-var gToken = null;
-
 function createUrl(api) {
     assert.strictEqual(typeof api, 'string');
 
-    return 'https://' + APPSTORE_API_ENDPOINT + api;
+    return config.appStoreOrigin() + api;
 }
 
 function waitForCloudronReady(cloudron, callback) {
+    assert.strictEqual(typeof config.appStoreToken(), 'string');
     assert.strictEqual(typeof cloudron, 'object');
     assert.strictEqual(typeof callback, 'function');
 
@@ -31,7 +29,7 @@ function waitForCloudronReady(cloudron, callback) {
     (function checkStatus() {
         process.stdout.write('.');
 
-        superagent.get(createUrl('/api/v1/cloudrons/' + cloudron.id)).query({ accessToken: gToken }).end(function (error, result) {
+        superagent.get(createUrl('/api/v1/cloudrons/' + cloudron.id)).query({ accessToken: config.appStoreToken() }).end(function (error, result) {
             if (error) return setTimeout(checkStatus, 2000);
             if (result.statusCode !== 200) return callback(new Error('Failed to get Cloudron status. ' + result.statusCode + ' - ' + (result.body ? result.body.message : result.text)));
             if (result.body.box.status !== 'ready') return setTimeout(checkStatus, 2000);
@@ -42,11 +40,11 @@ function waitForCloudronReady(cloudron, callback) {
 }
 
 function getCloudronByFQDN(fqdn, callback) {
-    assert.strictEqual(typeof gToken, 'string');
+    assert.strictEqual(typeof config.appStoreToken(), 'string');
     assert.strictEqual(typeof fqdn, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    superagent.get(createUrl('/api/v1/cloudrons')).query({ accessToken: gToken }).end(function (error, result) {
+    superagent.get(createUrl('/api/v1/cloudrons')).query({ accessToken: config.appStoreToken() }).end(function (error, result) {
         if (error) return callback(new Error(util.format('Failed to list cloudrons: %s', error.message)));
         if (result.statusCode !== 200) return callback(new Error(util.format('Failed to list cloudrons: %s message: %s', result.statusCode, result.text)));
 
@@ -67,7 +65,7 @@ function create(options, version, callback) {
 
         console.log('Create Cloudron...');
 
-        superagent.post(createUrl('/api/v1/cloudrons')).query({ accessToken: gToken }).send({
+        superagent.post(createUrl('/api/v1/cloudrons')).query({ accessToken: config.appStoreToken() }).send({
             domain: options.fqdn,
             region: options.region,
             size: options.type,
@@ -94,7 +92,7 @@ function restore(options, backup, callback) {
 
             console.log('Restore Cloudron...');
 
-            superagent.post(createUrl(util.format('/api/v1/cloudrons/%s/restore/%s', cloudron.id, backup.id))).query({ accessToken: gToken }).end(function (error, result) {
+            superagent.post(createUrl(util.format('/api/v1/cloudrons/%s/restore/%s', cloudron.id, backup.id))).query({ accessToken: config.appStoreToken() }).end(function (error, result) {
                 if (error) return callback(error);
                 if (result.statusCode !== 202) return callback(new Error(util.format('Failed to restore cloudron: %s message: %s', result.statusCode, result.text)));
 
@@ -124,7 +122,7 @@ function migrate(options, backup, callback) {
                 size: options.type,
                 region: options.region,
                 restoreKey: backup.id
-            }).query({ accessToken: gToken }).end(function (error, result) {
+            }).query({ accessToken: config.appStoreToken() }).end(function (error, result) {
                 if (error) return callback(error);
                 if (result.statusCode !== 202) return callback(new Error(util.format('Failed to migrate cloudron: %s message: %s', result.statusCode, result.text)));
 
@@ -137,28 +135,40 @@ function migrate(options, backup, callback) {
 function loginAppstore(callback) {
     assert.strictEqual(typeof callback, 'function');
 
+    function relogin() {
+        console.log();
+        console.log('Enter ' + 'appstore'.cyan.bold + ' credentials:');
+
+        var username = readlineSync.question('Username: ', {});
+        var password = readlineSync.question('Password: ', { noEchoBack: true });
+
+        superagent.get(createUrl('/api/v1/login')).auth(username, password).end(function (error, result) {
+            if (error) return callback(error);
+            if (result.statusCode !== 200) {
+                console.log('Login failed.'.red);
+                return relogin();
+            }
+
+            console.log('Login successful.'.green);
+
+            config.set('appStoreToken', result.body.accessToken);
+
+            callback(null);
+        });
+    }
+
     // skip if we already have a token
-    if (gToken) return callback(null, gToken);
+    if (config.appStoreToken()) {
+        // verify the token
+        superagent.get(createUrl('/api/v1/profile')).query({ accessToken: config.appStoreToken() }).end(function (error, result) {
+            if (error) return callback(error);
+            if (result.statusCode !== 200) return relogin();
 
-    console.log();
-    console.log('Enter ' + 'appstore'.cyan.bold + ' credentials:');
-
-    var username = readlineSync.question('Username: ', {});
-    var password = readlineSync.question('Password: ', { noEchoBack: true });
-
-    superagent.get(createUrl('/api/v1/login')).auth(username, password).end(function (error, result) {
-        if (error) return callback(error);
-        if (result.statusCode !== 200) {
-            console.log('Login failed.'.red);
-            return loginAppstore(callback);
-        }
-
-        console.log('Login successful.'.green);
-
-        gToken = result.body.accessToken;
-
-        callback(null, result.body.accessToken);
-    });
+            callback(null);
+        });
+    } else {
+        relogin();
+    }
 }
 
 function getBackupListing(fqdn, options, callback) {
@@ -172,7 +182,7 @@ function getBackupListing(fqdn, options, callback) {
         getCloudronByFQDN(fqdn, function (error, cloudron) {
             if (error) return callback(error);
 
-            superagent.get(createUrl(util.format('/api/v1/cloudrons/%s/backups', cloudron.id))).query({ accessToken: gToken }).end(function (error, result) {
+            superagent.get(createUrl(util.format('/api/v1/cloudrons/%s/backups', cloudron.id))).query({ accessToken: config.appStoreToken() }).end(function (error, result) {
                 if (error) return callback(error);
                 if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get backups: %s message: %s', result.statusCode, result.text)));
 
