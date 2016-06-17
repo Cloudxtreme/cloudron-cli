@@ -205,7 +205,7 @@ function createBackup(cloudron, options) {
                     if (result.body.backup.percent >= 100) {
                         if (result.body.backup.message) return helper.exit(new Error('Backup failed: ' + result.body.backup.message));
 
-                        console.log('\n\nBox is backed up'.green);
+                        console.log('\n\nCloudron is backed up'.green);
                         helper.exit();
                     }
 
