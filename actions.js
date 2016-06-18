@@ -431,6 +431,22 @@ function waitForBackupCompletion(callback) {
     checkStatus();
 }
 
+function queryPortBindings(app, manifest) {
+    var portBindings = { };
+    for (var env in (manifest.tcpPorts || {})) {
+        var defaultPort = (app && app.portBindings && app.portBindings[env]) ? app.portBindings[env] : (manifest.tcpPorts[env].defaultValue || '');
+        var port = readlineSync.question(manifest.tcpPorts[env].description + ' (default ' + env + '=' + defaultPort + '. "x" to disable): ', {});
+        if (port === '') {
+            portBindings[env] = defaultPort;
+        } else if (isNaN(parseInt(port, 10))) {
+            console.log(('Cleared ' + env).gray);
+        } else {
+            portBindings[env] = parseInt(port, 10);
+        }
+    }
+    return portBindings;
+}
+
 // if app is falsy, we install a new app
 // if configure is truthy we will prompt for all settings
 function installer(app, configure, manifest, appStoreId, waitForHealthcheck, installLocation, force) {
@@ -469,18 +485,7 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck, ins
         // port bindings
         if (configure || (app && !_.isEqual(Object.keys(app.portBindings || { }).sort(), Object.keys(manifest.tcpPorts || { }).sort()))) {
             // ask the user for port values if the ports are different in the app and the manifest
-            portBindings = {};
-            for (var env in (manifest.tcpPorts || {})) {
-                var defaultPort = (app && app.portBindings && app.portBindings[env]) ? app.portBindings[env] : (manifest.tcpPorts[env].defaultValue || '');
-                var port = readlineSync.question(manifest.tcpPorts[env].description + ' (default ' + env + '=' + defaultPort + '. "x" to disable): ', {});
-                if (port === '') {
-                    portBindings[env] = defaultPort;
-                } else if (isNaN(parseInt(port, 10))) {
-                    console.log(('Cleared ' + env).gray);
-                } else {
-                    portBindings[env] = parseInt(port, 10);
-                }
-            }
+            portBindings = queryPortBindings(app, manifest);
         } else if (!app) {
             portBindings = {};
             for (var env in (manifest.tcpPorts || {})) {
@@ -988,12 +993,13 @@ function clone(options) {
         if (!app) exit(NO_APP_FOUND_ERROR_STRING);
 
         var location = options.location || readlineSync.question('Location: ', {});
+        var portBindings = queryPortBindings(app, app.manifest);
 
         superagentEnd(function () {
             return superagent
             .post(createUrl('/api/v1/apps/' + app.id + '/clone'))
             .query({ access_token: config.token() })
-            .send({ backupId: options.backup || app.lastBackupId, location: location });
+            .send({ backupId: options.backup || app.lastBackupId, location: location, portBindings: portBindings });
         }, function (error, result) {
             if (error) exit(error);
             if (result.statusCode !== 201) return exit(util.format('Failed to clone app.'.red, result.statusCode, result.text));
