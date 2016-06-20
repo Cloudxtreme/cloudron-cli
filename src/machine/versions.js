@@ -1,10 +1,11 @@
 'use strict';
 
 var assert = require('assert'),
+    semver = require('semver'),
     superagent = require('superagent');
 
 exports = module.exports = {
-    versionsUrl: 'https://s3.amazonaws.com/prod-cloudron-releases/versions.json',
+    versionsUrl: 'https://s3.amazonaws.com/dev-cloudron-releases/versions.json',
     init: init,
     resolve: resolve,
     details: details
@@ -34,8 +35,9 @@ function resolve(version, callback) {
     init(function (error) {
         if (error) return callback(error);
 
-        // FIXME use semver to determine that
-        if (version === 'latest') return callback(null, '0.15.0');
+        var sortedVersions = Object.keys(gVersions).sort(semver.compare);
+
+        if (version === 'latest') version = sortedVersions[sortedVersions.length-1];
         if (!gVersions[version]) return callback(new Error('Unknown version'));
 
         callback(null, version);
@@ -48,10 +50,6 @@ function details(version, callback) {
 
     resolve(version, function (error) {
         if (error) return callback(error);
-
-        // FIXME should be real
-        gVersions[version].ami = 'ami-0035dc6f';
-        gVersions[version].sourceTarballUrl = 'https://dev-cloudron-releases.s3.amazonaws.com/box-7d4905296664ecd69c801a60caaab9d10a409e83.tar.gz';
 
         callback(null, gVersions[version]);
     });

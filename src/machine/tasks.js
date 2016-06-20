@@ -172,8 +172,8 @@ function getUserData(callback) {
                     webServerOrigin: 'https://dev.cloudron.io',
 
                     restore: {
-                        url: gParams.backupDetails.url || null,
-                        key: gParams.backupDetails.key || null
+                        url: gParams.backupDetails ? gParams.backupDetails.url : null,
+                        key: gParams.backupDetails ? gParams.backupDetails.key : null
                     },
                     backupConfig: {
                         provider: 's3',
