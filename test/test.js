@@ -71,7 +71,7 @@ describe('Login', function () {
 describe('App install', function () {
     it('can install app', function () {
         console.log('Installing app, this can take a while');
-        var out = cli('install --appstore-id com.hastebin.cloudronapp@0.4.0 --new --wait --location ' + applocation);
+        var out = cli('install --appstore-id com.hastebin.cloudronapp --new --wait --location ' + applocation);
         expect(out.stdout).to.contain('App is installed');
     });
 });
