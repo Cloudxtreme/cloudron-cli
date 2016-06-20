@@ -8,6 +8,7 @@ var assert = require('assert'),
 exports = module.exports = {
     create: create,
     restore: restore,
+    upgrade: upgrade,
     getBackupListing: getBackupListing
 };
 
@@ -104,4 +105,24 @@ function restore(options, backup, callback) {
 
         helper.exit();
     });
+}
+
+function upgrade(updateInfo, options, callback) {
+    assert.strictEqual(typeof updateInfo, 'object');
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    if (!options.region) helper.missing('region');
+    if (!options.instanceId) helper.missing('instance-id');
+    if (!options.accessKeyId) helper.missing('access-key-id');
+    if (!options.secretAccessKey) helper.missing('secret-access-key');
+
+    var params = {
+        region: options.region,
+        instanceId: options.instanceId,
+        accessKeyId: options.accessKeyId,
+        secretAccessKey: options.secretAccessKey
+    };
+
+    tasks.upgrade(params, callback);
 }

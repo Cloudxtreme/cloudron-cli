@@ -411,30 +411,32 @@ function waitForUpdateFinish(callback) {
 }
 
 // calls the rest api to update and upgrade
-function performUpdate(cloudron, options) {
+function performUpdate(cloudron, options, callback) {
     assert.strictEqual(typeof gCloudronToken, 'string');
     assert.strictEqual(typeof cloudron, 'object');
     assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
 
     superagent.post(createUrl('/api/v1/cloudron/update')).query({ access_token: gCloudronToken }).send({}).end(function (error, result) {
-        if (error) helper.exit(error);
-        if (result.statusCode !== 202) return helper.exit(util.format('Failed to update Cloudron.'.red, result.statusCode, result.text));
+        if (error) return callback(error);
+        if (result.statusCode !== 202) return callback(util.format('Failed to update Cloudron.'.red, result.statusCode, result.text));
 
-        waitForUpdateFinish();
+        waitForUpdateFinish(callback);
     });
 }
 
 // performs a upgrade for selfhosters
-function performUpgrade(cloudron, options) {
+function performUpgrade(cloudron, options, callback) {
     assert.strictEqual(typeof gCloudronToken, 'string');
     assert.strictEqual(typeof cloudron, 'object');
     assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof callback, 'function');
 
     if (cloudron.provider === 'caas') {
         // same as update on caas
-        performUpdate(cloudron, options);
+        performUpdate(cloudron, options, callback);
     } else {
-        helper.exit('Not implemented');
+        ec2.upgrade(cloudron.update.box, options, callback);
     }
 }
 
@@ -460,6 +462,13 @@ function updateOrUpgrade(fqdn, options) {
             boxUpdate.changelog.forEach(function (c) { console.log('  * ' + c.bold.white); });
             console.log('');
 
+            function done(error) {
+                if (error) helper.exit(error);
+
+                console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + options.fqdn).bold);
+                console.log('');
+            }
+
             if (boxUpdate.upgrade) {
                 console.log('This is an upgrade and will result in a few minutes of downtime!'.red);
 
@@ -468,11 +477,11 @@ function updateOrUpgrade(fqdn, options) {
 
                 console.log('Upgrading...');
 
-                performUpgrade(result.body, options);
+                performUpgrade(result.body, options, done);
             } else {
                 console.log('Updating...');
 
-                performUpdate(result.body, options);
+                performUpdate(result.body, options, done);
             }
         });
     });

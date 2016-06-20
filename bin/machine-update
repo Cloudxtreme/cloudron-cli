@@ -16,6 +16,8 @@ program.description('Upgrade or updates a Cloudron')
     .option('--ssh-key <ssh-key>', 'SSH key name')
     .option('--access-key-id <accessKeyId>', 'AWS accessKeyId')
     .option('--secret-access-key <secretAccessKey>', 'AWS secretAccessKey')
+    .option('--region <region>', 'AWS region')
+    .option('--instance-id <instanceId>', 'EC2 instance id')
     .action(actions.updateOrUpgrade);
 
 if (!process.argv.slice(2).length) {

@@ -15,10 +15,14 @@ var assert = require('assert'),
 
 exports = module.exports = {
     create: create,
-    restore: restore
+    restore: restore,
+    upgrade: upgrade
 };
 
+// gParams holds input values
 var gParams = null;
+
+// those hold output values
 var gInstanceId = null;
 var gPublicIP = null;
 
@@ -394,4 +398,47 @@ function restore(options, callback) {
 
         callback();
     });
+}
+
+function upgrade(version, options, callback) {
+    assert.strictEqual(typeof version, 'object');
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof options.accessKeyId, 'string');
+    assert.strictEqual(typeof options.secretAccessKey, 'string');
+    assert.strictEqual(typeof options.region, 'string');
+    assert.strictEqual(typeof options.instanceId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    console.log('Upgrading %s to version %s...', options.instanceId.cyan.bold, version.cyan.bold);
+
+    aws.init({
+        region: options.region,
+        accessKeyId: options.accessKeyId,
+        secretAccessKey: options.secretAccessKey
+    });
+
+    gParams = options;
+    gParams.version = options.backup.version;
+    gParams.instanceId = options.instanceId;
+
+    // var tasks = [
+    //     checkDNSZone,
+    //     getBackupDetails,
+    //     createServer,
+    //     waitForServer,
+    //     getIp,
+    //     waitForDNS,
+    //     waitForStatus
+    // ];
+
+    // async.series(tasks, function (error) {
+    //     if (error) return callback(error);
+
+    //     console.log('');
+    //     console.log('Cloudron upgraded with:');
+    //     console.log('  ID:        %s', gInstanceId.cyan);
+    //     console.log('');
+
+    //     callback();
+    // });
 }
