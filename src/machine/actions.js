@@ -398,8 +398,8 @@ function waitForUpdateFinish(callback) {
             if (error) return callback(error);
             if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get update progress.'.red, result.statusCode, result.text)));
 
-            if (result.body.update.percent >= 100) {
-                if (result.body.update.message) return callback(new Error('Update failed: ' + result.body.update.message));
+            if (result.body.update === null || result.body.update.percent >= 100) {
+                if (result.body.update && result.body.update.message) return callback(new Error('Update failed: ' + result.body.update.message));
                 return callback();
             }
 
