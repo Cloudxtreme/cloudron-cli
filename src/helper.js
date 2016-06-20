@@ -250,7 +250,7 @@ function exec(command, args, callback) {
 function getSSH(host, sshKey, cmd, user) {
     cmd = cmd || '';
     cmd = Array.isArray(cmd) ? cmd.join(' ') : cmd;
-    user = user || 'ubuntu';
+    user = user || 'root';
 
     var SSH = '%s@%s -tt -p 202 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i %s %s';
 

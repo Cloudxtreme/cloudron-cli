@@ -288,7 +288,10 @@ function logs(fqdn, options) {
                 helper.exit(error);
             }
         }
-        helper.exec('ssh', helper.getSSH(ip || config.apiEndpoint(), options.sshKeyFile, 'journalctl -fa', options.sshUser));
+
+        var sshUser = config.provider() === 'caas' ? 'root' : 'ubuntu';
+
+        helper.exec('ssh', helper.getSSH(ip || config.apiEndpoint(), options.sshKeyFile, 'journalctl -fa', sshUser));
     });
 }
 
