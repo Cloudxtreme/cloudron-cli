@@ -400,16 +400,17 @@ function restore(options, callback) {
     });
 }
 
-function upgrade(version, options, callback) {
+function upgrade(options, callback) {
     assert.strictEqual(typeof version, 'object');
     assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof options.version, 'string');
     assert.strictEqual(typeof options.accessKeyId, 'string');
     assert.strictEqual(typeof options.secretAccessKey, 'string');
     assert.strictEqual(typeof options.region, 'string');
     assert.strictEqual(typeof options.instanceId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    console.log('Upgrading %s to version %s...', options.instanceId.cyan.bold, version.cyan.bold);
+    console.log('Upgrading %s to version %s...', options.instanceId.cyan.bold, options.version.cyan.bold);
 
     aws.init({
         region: options.region,
@@ -418,7 +419,6 @@ function upgrade(version, options, callback) {
     });
 
     gParams = options;
-    gParams.version = options.backup.version;
     gParams.instanceId = options.instanceId;
 
     // var tasks = [

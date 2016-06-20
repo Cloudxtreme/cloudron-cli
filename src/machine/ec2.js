@@ -118,6 +118,7 @@ function upgrade(updateInfo, options, callback) {
     if (!options.secretAccessKey) helper.missing('secret-access-key');
 
     var params = {
+        version: updateInfo.version,
         region: options.region,
         instanceId: options.instanceId,
         accessKeyId: options.accessKeyId,
