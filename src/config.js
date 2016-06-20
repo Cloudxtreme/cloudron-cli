@@ -18,6 +18,7 @@ exports = module.exports = {
     token: function () { return get('token'); },
     appStoreToken: function () { return get('appStoreToken'); },
     cloudron: function () { return get('cloudron'); },
+    provider: function () { return get('provider'); },
     apiEndpoint: function () { return get('apiEndpoint'); },
     appStoreOrigin: function () { return get('appStoreOrigin'); }
 };

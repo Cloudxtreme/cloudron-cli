@@ -116,9 +116,11 @@ function upgrade(updateInfo, options, callback) {
     if (!options.instanceId) helper.missing('instance-id');
     if (!options.accessKeyId) helper.missing('access-key-id');
     if (!options.secretAccessKey) helper.missing('secret-access-key');
+    if (!options.sshKeyFile) helper.missing('ssh-key-file');
 
     var params = {
         version: updateInfo.version,
+        sshKeyFile: options.sshKeyFile,
         region: options.region,
         instanceId: options.instanceId,
         accessKeyId: options.accessKeyId,

@@ -35,7 +35,9 @@ exports = module.exports = {
 
     createUrl: createUrl,
     authenticate: authenticate,
-    superagentEnd: superagentEnd
+    superagentEnd: superagentEnd,
+
+    waitForBackupFinish: waitForBackupFinish
 };
 
 function exit(error) {
@@ -201,18 +203,19 @@ function detectCloudronApiEndpoint(cloudron, callback) {
     if (cloudron.indexOf('/') !== -1) cloudron = cloudron.slice(0, cloudron.indexOf('/'));
 
     superagent.get('https://my-' + cloudron + '/api/v1/cloudron/status').timeout(5000).end(function (error, result) {
-        if (!error && result.statusCode === 200 && result.body.version) {
-
+        if (!error && result.statusCode === 200) {
             config.set('apiEndpoint', 'my-' + cloudron);
             config.set('cloudron', cloudron);
+            config.set('provider', result.body.provider);
 
             return callback(null);
         }
 
         superagent.get('https://my.' + cloudron + '/api/v1/cloudron/status').timeout(5000).end(function (error, result) {
-            if (!error && result.statusCode === 200 && result.body.version) {
+            if (!error && result.statusCode === 200) {
                 config.set('apiEndpoint', 'my.' + cloudron);
                 config.set('cloudron', cloudron);
+                config.set('provider', result.body.provider);
 
                 return callback(null);
             }
@@ -299,4 +302,26 @@ function superagentEnd(requestFactory, callback) {
         if (!error && result.statusCode === 401) return authenticate({}, superagentEnd.bind(null, requestFactory, callback));
         callback(error, result);
     });
+}
+
+function waitForBackupFinish(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    process.stdout.write('Waiting for backup to finish...');
+
+    (function checkStatus() {
+        superagent.get(createUrl('/api/v1/cloudron/progress')).end(function (error, result) {
+            if (error) return callback(error);
+            if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get backup progress.'.red, result.statusCode, result.text)));
+
+            if (result.body.backup.percent >= 100) {
+                if (result.body.backup.message) return callback(new Error('Backup failed: ' + result.body.backup.message));
+                return callback();
+            }
+
+            process.stdout.write('.');
+
+            setTimeout(checkStatus, 1000);
+        });
+    })();
 }

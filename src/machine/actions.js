@@ -55,29 +55,6 @@ function getBackupListing(cloudron, options, callback) {
     });
 }
 
-function waitForBackupFinish(callback) {
-    if (callback) assert.strictEqual(typeof callback, 'function');
-    else callback = helper.exit;
-
-    process.stdout.write('Waiting for backup to finish...');
-
-    (function checkStatus() {
-        superagent.get(helper.createUrl('/api/v1/cloudron/progress')).end(function (error, result) {
-            if (error) return callback(error);
-            if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get backup progress.'.red, result.statusCode, result.text)));
-
-            if (result.body.backup.percent >= 100) {
-                if (result.body.backup.message) return callback(new Error('Backup failed: ' + result.body.backup.message));
-                return callback();
-            }
-
-            process.stdout.write('.');
-
-            setTimeout(checkStatus, 1000);
-        });
-    })();
-}
-
 function create(provider, options) {
     assert.strictEqual(typeof provider, 'string');
     assert.strictEqual(typeof options, 'object');
@@ -160,7 +137,7 @@ function migrate(options) {
             helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup', options.sshUser), function (error) {
                 if (error) helper.exit(error);
 
-                waitForBackupFinish(function (error) {
+                helper.waitForBackupFinish(function (error) {
                     if (error) helper.exit(error);
 
                     caas.getBackupListing(options.fqdnFrom, {}, function (error, result) {
@@ -230,7 +207,7 @@ function createBackup(cloudron, options) {
         if (options.ssh) {
             if (!options.sshKeyFile) helper.missing('ssh-key-file');
 
-            helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup', options.sshUser), waitForBackupFinish.bind(null, done));
+            helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup', options.sshUser), helper.waitForBackupFinish.bind(null, done));
 
             return;
         }
@@ -241,10 +218,10 @@ function createBackup(cloudron, options) {
                 .query({ access_token: config.token() })
                 .send({});
         }, function (error, result) {
-            if (error) helper.exit(error);
+            if (error) return helper.exit(error);
             if (result.statusCode !== 202) return helper.exit(util.format('Failed to backup Cloudron.'.red, result.statusCode, result.text));
 
-            waitForBackupFinish(done);
+            helper.waitForBackupFinish(helper.exit);
         });
     });
 }

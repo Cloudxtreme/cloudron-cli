@@ -3,9 +3,11 @@
 var assert = require('assert'),
     async = require('async'),
     aws = require('./aws.js'),
+    config = require('../config.js'),
     debug = require('debug')('tasks'),
     dns = require('native-dns'),
     execFile = require('child_process').execFile,
+    helper = require('../helper.js'),
     os = require('os'),
     path = require('path'),
     safe = require('safetydance'),
@@ -302,6 +304,18 @@ function getBackupDetails(callback) {
     });
 }
 
+function createBackup(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    helper.exec('ssh', helper.getSSH(config.apiEndpoint(), gParams.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup'), helper.waitForBackupFinish.bind(null, callback));
+}
+
+function retireOldCloudron(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    helper.exec('ssh', helper.getSSH(config.apiEndpoint(), gParams.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/retire'), callback);
+}
+
 function create(options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof options.region, 'string');
@@ -401,7 +415,6 @@ function restore(options, callback) {
 }
 
 function upgrade(options, callback) {
-    assert.strictEqual(typeof version, 'object');
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof options.version, 'string');
     assert.strictEqual(typeof options.accessKeyId, 'string');
@@ -419,26 +432,27 @@ function upgrade(options, callback) {
     });
 
     gParams = options;
-    gParams.instanceId = options.instanceId;
+    gParams.oldInstanceId = options.oldInstanceId;
 
-    // var tasks = [
-    //     checkDNSZone,
-    //     getBackupDetails,
-    //     createServer,
-    //     waitForServer,
-    //     getIp,
-    //     waitForDNS,
-    //     waitForStatus
-    // ];
+    var tasks = [
+        createBackup,
+        getBackupDetails,
+        retireOldCloudron,
+        createServer,
+        waitForServer,
+        getIp,
+        waitForDNS,
+        waitForStatus
+    ];
 
-    // async.series(tasks, function (error) {
-    //     if (error) return callback(error);
+    async.series(tasks, function (error) {
+        if (error) return callback(error);
 
-    //     console.log('');
-    //     console.log('Cloudron upgraded with:');
-    //     console.log('  ID:        %s', gInstanceId.cyan);
-    //     console.log('');
+        console.log('');
+        console.log('Cloudron upgraded with:');
+        console.log('  ID:        %s', gInstanceId.cyan);
+        console.log('');
 
-    //     callback();
-    // });
+        callback();
+    });
 }
