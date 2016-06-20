@@ -3,7 +3,7 @@
 var assert = require('assert'),
     aws = require('./aws.js'),
     helper = require('../helper.js'),
-    tasks = require('./tasks.js');
+    ec2tasks = require('./ec2tasks.js');
 
 exports = module.exports = {
     create: create,
@@ -62,7 +62,7 @@ function create(options, version, callback) {
         securityGroup: options.securityGroup
     };
 
-    tasks.create(params, function (error) {
+    ec2tasks.create(params, function (error) {
         if (error) return callback(error);
         callback();
     });
@@ -97,7 +97,7 @@ function restore(options, backup, callback) {
         securityGroup: options.securityGroup
     };
 
-    tasks.restore(params, function (error) {
+    ec2tasks.restore(params, function (error) {
         if (error) helper.exit(error);
 
         console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + options.fqdn).bold);
@@ -124,5 +124,5 @@ function upgrade(updateInfo, options, callback) {
         secretAccessKey: options.secretAccessKey
     };
 
-    tasks.upgrade(params, callback);
+    ec2tasks.upgrade(params, callback);
 }
