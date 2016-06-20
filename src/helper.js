@@ -229,11 +229,12 @@ function exec(command, args, callback) {
     child.on('close', function (code) { callback(code === 0 ? null : new Error(util.format('%s exited with code %d', command, code))); });
 }
 
-function getSSH(host, sshKey, cmd) {
+function getSSH(host, sshKey, cmd, user) {
     cmd = cmd || '';
     cmd = Array.isArray(cmd) ? cmd.join(' ') : cmd;
+    user = user || 'ubuntu';
 
-    var SSH = 'ubuntu@%s -tt -p 202 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i %s %s';
+    var SSH = '%s@%s -tt -p 202 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i %s %s';
 
-    return util.format(SSH, host, sshKey, cmd).split(' ');
+    return util.format(SSH, user, host, sshKey, cmd).split(' ');
 }

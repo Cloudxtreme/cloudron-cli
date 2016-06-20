@@ -164,7 +164,7 @@ function migrate(options) {
 
             gCloudronApiEndpoint = result.apiEndpoint;
 
-            helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup'), function (error) {
+            helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup', options.sshUser), function (error) {
                 if (error) helper.exit(error);
 
                 waitForBackupFinish(function (error) {
@@ -279,7 +279,7 @@ function createBackup(cloudron, options) {
 
             gCloudronApiEndpoint = result.apiEndpoint;
 
-            helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup'), waitForBackupFinish.bind(null, done));
+            helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup', options.sshUser), waitForBackupFinish.bind(null, done));
         });
     } else {
         login(cloudron, options, function (error, token) {
@@ -306,9 +306,9 @@ function eventlog(fqdn, options) {
             if (error) helper.exit(error);
 
             if (options.full) {
-                helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,data FROM box.eventlog ORDER BY creationTime DESC"'));
+                helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,data FROM box.eventlog ORDER BY creationTime DESC"', options.sshUser));
             } else {
-                helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,LEFT(data,50) AS data_preview FROM box.eventlog ORDER BY creationTime DESC"'));
+                helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,LEFT(data,50) AS data_preview FROM box.eventlog ORDER BY creationTime DESC"', options.sshUser));
             }
         });
     } else {
@@ -354,7 +354,7 @@ function logs(fqdn, options) {
                 helper.exit(error);
             }
         }
-        helper.exec('ssh', helper.getSSH(ip || result.apiEndpoint, options.sshKeyFile, 'journalctl -fa'));
+        helper.exec('ssh', helper.getSSH(ip || result.apiEndpoint, options.sshKeyFile, 'journalctl -fa', options.sshUser));
     });
 }
 
@@ -376,6 +376,6 @@ function ssh(fqdn, cmds, options) {
             }
         }
 
-        helper.exec('ssh', helper.getSSH(ip || result.apiEndpoint, options.sshKeyFile, cmds));
+        helper.exec('ssh', helper.getSSH(ip || result.apiEndpoint, options.sshKeyFile, cmds, options.sshUser));
     });
 }

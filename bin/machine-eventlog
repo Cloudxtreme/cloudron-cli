@@ -16,6 +16,7 @@ program.description('Get Cloudron eventlog')
     .option('--full', 'Fetch full eventlog')
     .option('--ssh', 'Use SSH method')
     .option('--ssh-key-file <ssh key file>', 'SSH key filepath')
+    .option('--ssh-user <ssh user>', 'SSH user')
     .action(actions.eventlog);
 
 if (!process.argv.slice(2).length) {

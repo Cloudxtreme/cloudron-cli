@@ -15,6 +15,7 @@ program.command('create <domain>')
     .option('-p, --password <password>', 'Password (unsafe)')
     .option('--ssh', 'Use SSH method')
     .option('--ssh-key-file <ssh key file>', 'SSH key filepath')
+    .option('--ssh-user <ssh user>', 'SSH user')
     .action(actions.createBackup);
 
 program.command('list <domain>')
