@@ -11,6 +11,7 @@ program
     .command('create', 'Creates a new Cloudron')
     .command('restore', 'Restores a Cloudron')
     .command('migrate', 'Migrates a Cloudron')
+    .command('update', 'Upgrade or updates a Cloudron')
     .command('eventlog', 'Get Cloudron eventlog')
     .command('logs', 'Get Cloudron logs')
     .command('ssh', 'Get remote SSH connection')

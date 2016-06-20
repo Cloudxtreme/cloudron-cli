@@ -18,10 +18,12 @@ exports = module.exports = {
     createBackup: createBackup,
     eventlog: eventlog,
     logs: logs,
-    ssh: ssh
+    ssh: ssh,
+    updateOrUpgrade: updateOrUpgrade
 };
 
 var gCloudronApiEndpoint = null;
+var gCloudronToken = null;
 
 function createUrl(api) {
     assert.strictEqual(typeof gCloudronApiEndpoint, 'string');
@@ -202,6 +204,9 @@ function login(cloudron, options, callback) {
 
         gCloudronApiEndpoint = result.apiEndpoint;
 
+        // skip if already set
+        if (gCloudronToken) return callback(null, gCloudronToken);
+
         console.log('');
 
         if (!options.username || !options.password) console.log('Enter credentials for ' + cloudron.cyan.bold + ':');
@@ -224,6 +229,8 @@ function login(cloudron, options, callback) {
             }
 
             console.log('Login successful.'.green);
+
+            gCloudronToken = result.body.token;
 
             callback(null, result.body.token);
         });
@@ -377,5 +384,98 @@ function ssh(fqdn, cmds, options) {
         }
 
         helper.exec('ssh', helper.getSSH(ip || result.apiEndpoint, options.sshKeyFile, cmds, options.sshUser));
+    });
+}
+
+function waitForUpdateFinish(callback) {
+    if (callback) assert.strictEqual(typeof callback, 'function');
+    else callback = helper.exit;
+
+    process.stdout.write('Waiting for update to finish...');
+
+    (function checkStatus() {
+        superagent.get(createUrl('/api/v1/cloudron/progress')).end(function (error, result) {
+            if (error) return callback(error);
+            if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get update progress.'.red, result.statusCode, result.text)));
+
+            if (result.body.update.percent >= 100) {
+                if (result.body.update.message) return callback(new Error('Update failed: ' + result.body.update.message));
+                return callback();
+            }
+
+            process.stdout.write('.');
+
+            setTimeout(checkStatus, 1000);
+        });
+    })();
+}
+
+// calls the rest api to update and upgrade
+function performUpdate(cloudron, options) {
+    assert.strictEqual(typeof gCloudronToken, 'string');
+    assert.strictEqual(typeof cloudron, 'object');
+    assert.strictEqual(typeof options, 'object');
+
+    console.log('Updating...');
+
+    superagent.post(createUrl('/api/v1/cloudron/update')).query({ access_token: gCloudronToken }).send({}).end(function (error, result) {
+        if (error) helper.exit(error);
+        if (result.statusCode !== 202) return helper.exit(util.format('Failed to update Cloudron.'.red, result.statusCode, result.text));
+
+        waitForUpdateFinish();
+    });
+}
+
+// performs a upgrade for selfhosters
+function performUpgrade(cloudron, options) {
+    assert.strictEqual(typeof gCloudronToken, 'string');
+    assert.strictEqual(typeof cloudron, 'object');
+    assert.strictEqual(typeof options, 'object');
+
+    console.log('Upgrading...');
+
+    if (cloudron.provider === 'caas') {
+        superagent.post(createUrl('/api/v1/cloudron/update')).query({ access_token: gCloudronToken }).send({}).end(function (error, result) {
+            if (error) helper.exit(error);
+            if (result.statusCode !== 202) return helper.exit(util.format('Failed to update Cloudron.'.red, result.statusCode, result.text));
+
+            waitForUpdateFinish();
+        });
+    } else {
+        helper.exit('Not implemented');
+    }
+}
+
+function updateOrUpgrade(fqdn, options) {
+    assert.strictEqual(typeof fqdn, 'string');
+    assert.strictEqual(typeof options, 'object');
+
+    login(fqdn, options, function (error, token) {
+        if (error) helper.exit(error);
+
+        superagent.get(createUrl('/api/v1/cloudron/config')).query({ access_token: token }).send({}).end(function (error, result) {
+            if (error) helper.exit(error);
+            if (result.statusCode !== 200) return helper.exit(util.format('Failed to get Cloudron configuration.'.red, result.statusCode, result.text));
+            if (!result.body.update || !result.body.update.box) return helper.exit('No update available.'.red);
+
+            var boxUpdate = result.body.update.box;
+
+            console.log('New version %s available.', boxUpdate.version.cyan);
+            console.log('');
+            console.log('Changelog:');
+            boxUpdate.changelog.forEach(function (c) { console.log('  * ' + c.bold.white); });
+            console.log('');
+
+            if (boxUpdate.upgrade) {
+                console.log('This is an upgrade and will result in a few minutes of downtime!'.red);
+
+                var answer = readlineSync.question('Perform upgrade now (y/n)? ');
+                if (answer !== 'y') return helper.exit();
+
+                performUpgrade(result.body, options);
+            } else {
+                performUpdate(result.body, options);
+            }
+        });
     });
 }
