@@ -2,6 +2,7 @@
 
 var assert = require('assert'),
     caas = require('./caas.js'),
+    config = require('../config.js'),
     ec2 = require('./ec2.js'),
     helper = require('../helper.js'),
     readlineSync = require('readline-sync'),
@@ -22,16 +23,6 @@ exports = module.exports = {
     updateOrUpgrade: updateOrUpgrade
 };
 
-var gCloudronApiEndpoint = null;
-var gCloudronToken = null;
-
-function createUrl(api) {
-    assert.strictEqual(typeof gCloudronApiEndpoint, 'string');
-    assert.strictEqual(typeof api, 'string');
-
-    return 'https://' + gCloudronApiEndpoint + api;
-}
-
 function getBackupListing(cloudron, options, callback) {
     assert.strictEqual(typeof cloudron, 'string');
     assert.strictEqual(typeof options, 'object');
@@ -47,13 +38,15 @@ function getBackupListing(cloudron, options, callback) {
         helper.exit('--provider must be either "caas" or "ec2"');
     }
 
-    login(cloudron, options, function (error, token) {
+    helper.detectCloudronApiEndpoint(cloudron, function (error) {
         if (error) {
             console.error(error);
             helper.exit('Try using the --provider argument');
         }
 
-        superagent.get(createUrl('/api/v1/backups')).query({ access_token: token }).end(function (error, result) {
+        helper.superagentEnd(function () {
+            return superagent.get(helper.createUrl('/api/v1/backups')).query({ access_token: config.token() });
+        }, function (error, result) {
             if (error) return callback(error);
             if (result.statusCode !== 200) return callback(util.format('Failed to list backups.'.red, result.statusCode, result.text));
 
@@ -69,7 +62,7 @@ function waitForBackupFinish(callback) {
     process.stdout.write('Waiting for backup to finish...');
 
     (function checkStatus() {
-        superagent.get(createUrl('/api/v1/cloudron/progress')).end(function (error, result) {
+        superagent.get(helper.createUrl('/api/v1/cloudron/progress')).end(function (error, result) {
             if (error) return callback(error);
             if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get backup progress.'.red, result.statusCode, result.text)));
 
@@ -161,12 +154,10 @@ function migrate(options) {
         // TODO verify the sshKeyFile path
 
         // TODO my god this is ugly
-        helper.detectCloudronApiEndpoint(options.fqdnFrom, function (error, result) {
+        helper.detectCloudronApiEndpoint(options.fqdnFrom, function (error) {
             if (error) helper.exit(error);
 
-            gCloudronApiEndpoint = result.apiEndpoint;
-
-            helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup', options.sshUser), function (error) {
+            helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup', options.sshUser), function (error) {
                 if (error) helper.exit(error);
 
                 waitForBackupFinish(function (error) {
@@ -192,49 +183,6 @@ function migrate(options) {
     } else {
         helper.exit('--provider must be either "caas" or "ec2"');
     }
-}
-
-function login(cloudron, options, callback) {
-    assert.strictEqual(typeof cloudron, 'string');
-    assert.strictEqual(typeof options, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    helper.detectCloudronApiEndpoint(cloudron, function (error, result) {
-        if (error) return callback(error);
-
-        gCloudronApiEndpoint = result.apiEndpoint;
-
-        // skip if already set
-        if (gCloudronToken) return callback(null, gCloudronToken);
-
-        console.log('');
-
-        if (!options.username || !options.password) console.log('Enter credentials for ' + cloudron.cyan.bold + ':');
-
-        var username = options.username || readlineSync.question('Username: ', {});
-        var password = options.password || readlineSync.question('Password: ', { noEchoBack: true });
-
-        superagent.post(createUrl('/api/v1/developer/login')).send({
-            username: username,
-            password: password
-        }).end(function (error, result) {
-            if (error) return callback(error);
-            if (result.statusCode === 412) {
-                helper.showDeveloperModeNotice(cloudron);
-                return login(cloudron, options, callback);
-            }
-            if (result.statusCode !== 200) {
-                console.log('Login failed.'.red);
-                return login(cloudron, options, callback);
-            }
-
-            console.log('Login successful.'.green);
-
-            gCloudronToken = result.body.token;
-
-            callback(null, result.body.token);
-        });
-    });
 }
 
 function listBackups(cloudron, options) {
@@ -281,23 +229,22 @@ function createBackup(cloudron, options) {
 
         // TODO verify the sshKeyFile path
 
-        helper.detectCloudronApiEndpoint(cloudron, function (error, result) {
+        helper.detectCloudronApiEndpoint(cloudron, function (error) {
             if (error) helper.exit(error);
 
-            gCloudronApiEndpoint = result.apiEndpoint;
-
-            helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup', options.sshUser), waitForBackupFinish.bind(null, done));
+            helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup', options.sshUser), waitForBackupFinish.bind(null, done));
         });
     } else {
-        login(cloudron, options, function (error, token) {
+        helper.superagentEnd(function () {
+            return superagent
+                .post(helper.createUrl('/api/v1/backups'))
+                .query({ access_token: config.token() })
+                .send({});
+        }, function (error, result) {
             if (error) helper.exit(error);
+            if (result.statusCode !== 202) return helper.exit(util.format('Failed to backup Cloudron.'.red, result.statusCode, result.text));
 
-            superagent.post(createUrl('/api/v1/backups')).query({ access_token: token }).send({}).end(function (error, result) {
-                if (error) helper.exit(error);
-                if (result.statusCode !== 202) return helper.exit(util.format('Failed to backup Cloudron.'.red, result.statusCode, result.text));
-
-                waitForBackupFinish(done);
-            });
+            waitForBackupFinish(done);
         });
     }
 }
@@ -306,43 +253,46 @@ function eventlog(fqdn, options) {
     assert.strictEqual(typeof fqdn, 'string');
     assert.strictEqual(typeof options, 'object');
 
-    if (options.ssh) {
-        if (!options.sshKeyFile) helper.missing('ssh-key-file');
+    helper.detectCloudronApiEndpoint(fqdn, function (error) {
+        if (error) helper.exit(error);
 
-        helper.detectCloudronApiEndpoint(fqdn, function (error, result) {
-            if (error) helper.exit(error);
+        if (options.ssh) {
+            if (!options.sshKeyFile) helper.missing('ssh-key-file');
 
             if (options.full) {
-                helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,data FROM box.eventlog ORDER BY creationTime DESC"', options.sshUser));
+                helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,data FROM box.eventlog ORDER BY creationTime DESC"', options.sshUser));
             } else {
-                helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,LEFT(data,50) AS data_preview FROM box.eventlog ORDER BY creationTime DESC"', options.sshUser));
+                helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,LEFT(data,50) AS data_preview FROM box.eventlog ORDER BY creationTime DESC"', options.sshUser));
             }
-        });
-    } else {
-        login(fqdn, options, function (error, token) {
+
+            return;
+        }
+
+        helper.superagentEnd(function () {
+            return superagent
+                .get(helper.createUrl('/api/v1/eventlog'))
+                .query({ access_token: config.token() })
+                .send({});
+        }, function (error, result) {
             if (error) helper.exit(error);
+            if (result.statusCode !== 200) return helper.exit(util.format('Failed to fetch eventlog.'.red, result.statusCode, result.text));
 
-            superagent.get(createUrl('/api/v1/eventlog')).query({ access_token: token }).send({}).end(function (error, result) {
-                if (error) helper.exit(error);
-                if (result.statusCode !== 200) return helper.exit(util.format('Failed to fetch eventlog.'.red, result.statusCode, result.text));
+            var t = new Table();
 
-                var t = new Table();
+            result.body.eventlogs.forEach(function (event) {
+                t.cell('creationTime', event.creationTime);
+                t.cell('action', event.action);
+                t.cell('source', event.source.username || event.source.userId || event.source.ip);
+                t.cell('data_preview', options.full ? JSON.stringify(event.data) : JSON.stringify(event.data).slice(-50));
 
-                result.body.eventlogs.forEach(function (event) {
-                    t.cell('creationTime', event.creationTime);
-                    t.cell('action', event.action);
-                    t.cell('source', event.source.username || event.source.userId || event.source.ip);
-                    t.cell('data_preview', options.full ? JSON.stringify(event.data) : JSON.stringify(event.data).slice(-50));
-
-                    t.newRow();
-                });
-
-                console.log(t.toString());
-
-                helper.exit();
+                t.newRow();
             });
+
+            console.log(t.toString());
+
+            helper.exit();
         });
-    }
+    });
 }
 
 function logs(fqdn, options) {
@@ -351,7 +301,7 @@ function logs(fqdn, options) {
 
     if (!options.sshKeyFile) helper.missing('ssh-key-file');
 
-    helper.detectCloudronApiEndpoint(fqdn, function (error, result) {
+    helper.detectCloudronApiEndpoint(fqdn, function (error) {
         var ip = null;
 
         if (error) {
@@ -361,7 +311,7 @@ function logs(fqdn, options) {
                 helper.exit(error);
             }
         }
-        helper.exec('ssh', helper.getSSH(ip || result.apiEndpoint, options.sshKeyFile, 'journalctl -fa', options.sshUser));
+        helper.exec('ssh', helper.getSSH(ip || config.apiEndpoint(), options.sshKeyFile, 'journalctl -fa', options.sshUser));
     });
 }
 
@@ -372,7 +322,7 @@ function ssh(fqdn, cmds, options) {
 
     if (!options.sshKeyFile) helper.missing('ssh-key-file');
 
-    helper.detectCloudronApiEndpoint(fqdn, function (error, result) {
+    helper.detectCloudronApiEndpoint(fqdn, function (error) {
         var ip = null;
 
         if (error) {
@@ -383,7 +333,7 @@ function ssh(fqdn, cmds, options) {
             }
         }
 
-        helper.exec('ssh', helper.getSSH(ip || result.apiEndpoint, options.sshKeyFile, cmds, options.sshUser));
+        helper.exec('ssh', helper.getSSH(ip || config.apiEndpoint(), options.sshKeyFile, cmds, options.sshUser));
     });
 }
 
@@ -394,7 +344,7 @@ function waitForUpdateFinish(callback) {
     process.stdout.write('Waiting for update to finish...');
 
     (function checkStatus() {
-        superagent.get(createUrl('/api/v1/cloudron/progress')).end(function (error, result) {
+        superagent.get(helper.createUrl('/api/v1/cloudron/progress')).end(function (error, result) {
             if (error) return callback(error);
             if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get update progress.'.red, result.statusCode, result.text)));
 
@@ -412,12 +362,17 @@ function waitForUpdateFinish(callback) {
 
 // calls the rest api to update and upgrade
 function performUpdate(cloudron, options, callback) {
-    assert.strictEqual(typeof gCloudronToken, 'string');
+    assert.strictEqual(typeof config.token(), 'string');
     assert.strictEqual(typeof cloudron, 'object');
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    superagent.post(createUrl('/api/v1/cloudron/update')).query({ access_token: gCloudronToken }).send({}).end(function (error, result) {
+    helper.superagentEnd(function () {
+        return superagent
+            .post(helper.createUrl('/api/v1/cloudron/update'))
+            .query({ access_token: config.token() })
+            .send({});
+    }, function (error, result) {
         if (error) return callback(error);
         if (result.statusCode !== 202) return callback(util.format('Failed to update Cloudron.'.red, result.statusCode, result.text));
 
@@ -427,7 +382,6 @@ function performUpdate(cloudron, options, callback) {
 
 // performs a upgrade for selfhosters
 function performUpgrade(cloudron, options, callback) {
-    assert.strictEqual(typeof gCloudronToken, 'string');
     assert.strictEqual(typeof cloudron, 'object');
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -446,10 +400,14 @@ function updateOrUpgrade(fqdn, options) {
 
     // FIXME add ssh version for us
 
-    login(fqdn, options, function (error, token) {
+    helper.detectCloudronApiEndpoint(fqdn, function (error) {
         if (error) helper.exit(error);
 
-        superagent.get(createUrl('/api/v1/cloudron/config')).query({ access_token: token }).send({}).end(function (error, result) {
+        helper.superagentEnd(function () {
+            return superagent
+                .get(helper.createUrl('/api/v1/cloudron/config'))
+                .query({ access_token: config.token() });
+        }, function (error, result) {
             if (error) helper.exit(error);
             if (result.statusCode !== 200) return helper.exit(util.format('Failed to get Cloudron configuration.'.red, result.statusCode, result.text));
             if (!result.body.update || !result.body.update.box) return helper.exit('No update available.'.red);

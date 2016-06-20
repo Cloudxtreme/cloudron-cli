@@ -31,7 +31,11 @@ exports = module.exports = {
     isIp: isIp,
 
     exec: exec,
-    getSSH: getSSH
+    getSSH: getSSH,
+
+    createUrl: createUrl,
+    authenticate: authenticate,
+    superagentEnd: superagentEnd
 };
 
 function exit(error) {
@@ -196,11 +200,22 @@ function detectCloudronApiEndpoint(cloudron, callback) {
     if (cloudron.indexOf('my.') === 0) cloudron = cloudron.slice('my.'.length);
     if (cloudron.indexOf('/') !== -1) cloudron = cloudron.slice(0, cloudron.indexOf('/'));
 
-    superagent.get('https://my-' + cloudron + '/api/v1/cloudron/status').end(function (error, result) {
-        if (!error && result.statusCode === 200 && result.body.version) return callback(null, { cloudron: cloudron, apiEndpoint: 'my-' + cloudron });
+    superagent.get('https://my-' + cloudron + '/api/v1/cloudron/status').timeout(5000).end(function (error, result) {
+        if (!error && result.statusCode === 200 && result.body.version) {
 
-        superagent.get('https://my.' + cloudron + '/api/v1/cloudron/status').end(function (error, result) {
-            if (!error && result.statusCode === 200 && result.body.version) return callback(null, { cloudron: cloudron, apiEndpoint: 'my.' + cloudron });
+            config.set('apiEndpoint', 'my-' + cloudron);
+            config.set('cloudron', cloudron);
+
+            return callback(null);
+        }
+
+        superagent.get('https://my.' + cloudron + '/api/v1/cloudron/status').timeout(5000).end(function (error, result) {
+            if (!error && result.statusCode === 200 && result.body.version) {
+                config.set('apiEndpoint', 'my.' + cloudron);
+                config.set('cloudron', cloudron);
+
+                return callback(null);
+            }
 
             callback('Cloudron not found');
         });
@@ -237,4 +252,51 @@ function getSSH(host, sshKey, cmd, user) {
     var SSH = '%s@%s -tt -p 202 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i %s %s';
 
     return util.format(SSH, user, host, sshKey, cmd).split(' ');
+}
+
+function createUrl(api) {
+    assert.strictEqual(typeof config.apiEndpoint(), 'string');
+    assert.strictEqual(typeof api, 'string');
+
+    return 'https://' + config.apiEndpoint() + api;
+}
+
+function authenticate(options, callback) {
+    assert.strictEqual(typeof options, 'object');
+
+    console.log();
+    console.log('Enter credentials for ' + config.cloudron().bold + ':');
+    var username = options.username || readlineSync.question('Username: ', {});
+    var password = options.password || readlineSync.question('Password: ', { noEchoBack: true });
+
+    config.unset('token');
+
+    superagent.post(createUrl('/api/v1/developer/login')).send({
+        username: username,
+        password: password
+    }).end(function (error, result) {
+        if (error) exit(error);
+        if (result.statusCode === 412) {
+            showDeveloperModeNotice();
+            return authenticate({}, callback);
+        }
+        if (result.statusCode !== 200) {
+            console.log('Login failed.'.red);
+            return authenticate({}, callback);
+        }
+
+        config.set('token', result.body.token);
+
+        console.log('Login successful.'.green);
+
+        if (typeof callback === 'function') callback();
+    });
+}
+
+// takes a function returning a superagent request instance and will reauthenticate in case the token is invalid
+function superagentEnd(requestFactory, callback) {
+    requestFactory().end(function (error, result) {
+        if (!error && result.statusCode === 401) return authenticate({}, superagentEnd.bind(null, requestFactory, callback));
+        callback(error, result);
+    });
 }
