@@ -991,6 +991,7 @@ function clone(options) {
         if (error) exit(error);
 
         if (!app) exit(NO_APP_FOUND_ERROR_STRING);
+        if (!options.backup && !app.lastBackupId) exit('No previous backup found to clone from. Create a backup first.');
 
         var location = options.location || readlineSync.question('Location: ', {});
         var portBindings = queryPortBindings(app, app.manifest);
