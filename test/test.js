@@ -23,7 +23,7 @@ var password = process.env.PASSWORD;
 var applocation = 'loctest';
 var app;
 
-var CLI = path.resolve(__dirname + '/../main.js');
+var CLI = path.resolve(__dirname + '/../bin/app.js');
 
 function md5(file) {
     var data = fs.readFileSync(file);
