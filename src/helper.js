@@ -28,6 +28,7 @@ exports = module.exports = {
 
     showDeveloperModeNotice: showDeveloperModeNotice,
     detectCloudronApiEndpoint: detectCloudronApiEndpoint,
+    isIp: isIp,
 
     exec: exec,
     getSSH: getSSH
@@ -206,6 +207,16 @@ function detectCloudronApiEndpoint(cloudron, callback) {
     });
 }
 
+function isIp(input) {
+    assert(typeof input === 'string');
+
+    var parts = input.split('.');
+
+    if (parts.length !== 4) return false;
+
+    return parts.every(function (p) { return parseInt(p, 10); });
+}
+
 // do not pipe fds. otherwise, the shell does not detect input as a tty and does not change the terminal window size
 // https://groups.google.com/forum/#!topic/nodejs/vxIwmRdhrWE
 function exec(command, args, callback) {
@@ -222,7 +233,7 @@ function getSSH(host, sshKey, cmd) {
     cmd = cmd || '';
     cmd = Array.isArray(cmd) ? cmd.join(' ') : cmd;
 
-    var SSH = 'root@%s -tt -p 202 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i %s %s';
+    var SSH = 'ubuntu@%s -tt -p 202 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i %s %s';
 
     return util.format(SSH, host, sshKey, cmd).split(' ');
 }

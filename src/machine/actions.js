@@ -345,9 +345,16 @@ function logs(fqdn, options) {
     if (!options.sshKeyFile) helper.missing('ssh-key-file');
 
     helper.detectCloudronApiEndpoint(fqdn, function (error, result) {
-        if (error) helper.exit(error);
+        var ip = null;
 
-        helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, 'journalctl -fa'));
+        if (error) {
+            if (helper.isIp(fqdn)) {
+                ip = fqdn;
+            } else {
+                helper.exit(error);
+            }
+        }
+        helper.exec('ssh', helper.getSSH(ip || result.apiEndpoint, options.sshKeyFile, 'journalctl -fa'));
     });
 }
 
@@ -359,8 +366,16 @@ function ssh(fqdn, cmds, options) {
     if (!options.sshKeyFile) helper.missing('ssh-key-file');
 
     helper.detectCloudronApiEndpoint(fqdn, function (error, result) {
-        if (error) helper.exit(error);
+        var ip = null;
 
-        helper.exec('ssh', helper.getSSH(result.apiEndpoint, options.sshKeyFile, cmds));
+        if (error) {
+            if (helper.isIp(fqdn)) {
+                ip = fqdn;
+            } else {
+                helper.exit(error);
+            }
+        }
+
+        helper.exec('ssh', helper.getSSH(ip || result.apiEndpoint, options.sshKeyFile, cmds));
     });
 }
