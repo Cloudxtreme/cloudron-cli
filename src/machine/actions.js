@@ -416,8 +416,6 @@ function performUpdate(cloudron, options) {
     assert.strictEqual(typeof cloudron, 'object');
     assert.strictEqual(typeof options, 'object');
 
-    console.log('Updating...');
-
     superagent.post(createUrl('/api/v1/cloudron/update')).query({ access_token: gCloudronToken }).send({}).end(function (error, result) {
         if (error) helper.exit(error);
         if (result.statusCode !== 202) return helper.exit(util.format('Failed to update Cloudron.'.red, result.statusCode, result.text));
@@ -432,15 +430,9 @@ function performUpgrade(cloudron, options) {
     assert.strictEqual(typeof cloudron, 'object');
     assert.strictEqual(typeof options, 'object');
 
-    console.log('Upgrading...');
-
     if (cloudron.provider === 'caas') {
-        superagent.post(createUrl('/api/v1/cloudron/update')).query({ access_token: gCloudronToken }).send({}).end(function (error, result) {
-            if (error) helper.exit(error);
-            if (result.statusCode !== 202) return helper.exit(util.format('Failed to update Cloudron.'.red, result.statusCode, result.text));
-
-            waitForUpdateFinish();
-        });
+        // same as update on caas
+        performUpdate(cloudron, options);
     } else {
         helper.exit('Not implemented');
     }
@@ -449,6 +441,8 @@ function performUpgrade(cloudron, options) {
 function updateOrUpgrade(fqdn, options) {
     assert.strictEqual(typeof fqdn, 'string');
     assert.strictEqual(typeof options, 'object');
+
+    // FIXME add ssh version for us
 
     login(fqdn, options, function (error, token) {
         if (error) helper.exit(error);
@@ -472,8 +466,12 @@ function updateOrUpgrade(fqdn, options) {
                 var answer = readlineSync.question('Perform upgrade now (y/n)? ');
                 if (answer !== 'y') return helper.exit();
 
+                console.log('Upgrading...');
+
                 performUpgrade(result.body, options);
             } else {
+                console.log('Updating...');
+
                 performUpdate(result.body, options);
             }
         });
