@@ -219,22 +219,22 @@ function createBackup(cloudron, options) {
     assert.strictEqual(typeof cloudron, 'string');
     assert.strictEqual(typeof options, 'object');
 
-    function done() {
-        console.log('\n\nCloudron is backed up'.green);
-        helper.exit();
-    }
+    helper.detectCloudronApiEndpoint(cloudron, function (error) {
+        if (error) helper.exit(error);
 
-    if (options.ssh) {
-        if (!options.sshKeyFile) helper.missing('ssh-key-file');
+        function done() {
+            console.log('\n\nCloudron is backed up'.green);
+            helper.exit();
+        }
 
-        // TODO verify the sshKeyFile path
-
-        helper.detectCloudronApiEndpoint(cloudron, function (error) {
-            if (error) helper.exit(error);
+        if (options.ssh) {
+            if (!options.sshKeyFile) helper.missing('ssh-key-file');
 
             helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup', options.sshUser), waitForBackupFinish.bind(null, done));
-        });
-    } else {
+
+            return;
+        }
+
         helper.superagentEnd(function () {
             return superagent
                 .post(helper.createUrl('/api/v1/backups'))
@@ -246,7 +246,7 @@ function createBackup(cloudron, options) {
 
             waitForBackupFinish(done);
         });
-    }
+    });
 }
 
 function eventlog(fqdn, options) {
