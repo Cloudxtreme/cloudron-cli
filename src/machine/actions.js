@@ -339,7 +339,7 @@ function eventlog(fqdn, options) {
 }
 
 function logs(fqdn, options) {
-    assert.strictEqual(typeof fqdn, 'object');
+    assert.strictEqual(typeof fqdn, 'string');
     assert.strictEqual(typeof options, 'object');
 
     if (!options.sshKeyFile) helper.missing('ssh-key-file');
