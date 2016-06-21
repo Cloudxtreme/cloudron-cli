@@ -6,6 +6,7 @@ var assert = require('assert'),
     config = require('./config.js'),
     fs = require('fs'),
     path = require('path'),
+    os = require('os'),
     readlineSync = require('readline-sync'),
     safe = require('safetydance'),
     spawn = require('child_process').spawn,
@@ -32,6 +33,7 @@ exports = module.exports = {
 
     exec: exec,
     getSSH: getSSH,
+    findSSHKey: findSSHKey,
 
     createUrl: createUrl,
     authenticate: authenticate,
@@ -208,6 +210,8 @@ function detectCloudronApiEndpoint(cloudron, callback) {
             config.set('cloudron', cloudron);
             config.set('provider', result.body.provider);
 
+            if (!config.provider()) console.log('WARNING provider is not set, this is most likely a bug!'.red);
+
             return callback(null);
         }
 
@@ -216,6 +220,8 @@ function detectCloudronApiEndpoint(cloudron, callback) {
                 config.set('apiEndpoint', 'my.' + cloudron);
                 config.set('cloudron', cloudron);
                 config.set('provider', result.body.provider);
+
+                if (!config.provider()) console.log('WARNING provider is not set, this is most likely a bug!'.red);
 
                 return callback(null);
             }
@@ -247,14 +253,38 @@ function exec(command, args, callback) {
     child.on('close', function (code) { callback(code === 0 ? null : new Error(util.format('%s exited with code %d', command, code))); });
 }
 
-function getSSH(host, sshKey, cmd, user) {
+function getSSH(host, sshKey, sshUser, cmd) {
     cmd = cmd || '';
     cmd = Array.isArray(cmd) ? cmd.join(' ') : cmd;
-    user = user || 'root';
+
+    // try to detect ssh key
+    sshKey = findSSHKey(sshKey);
+    if (!sshKey) exit('SSH key not found');
+
+    // try to detect user
+    sshUser = sshUser || (config.provider() === 'caas' ? 'root' : 'ubuntu');
 
     var SSH = '%s@%s -tt -p 202 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i %s %s';
 
-    return util.format(SSH, user, host, sshKey, cmd).split(' ');
+    return util.format(SSH, sshUser, host, sshKey, cmd).split(' ');
+}
+
+function findSSHKey(key) {
+    assert.strictEqual(typeof key, 'string');
+
+    var test = key;
+    if (fs.existsSync(test)) return test;
+
+    test = path.join(os.homedir(), '.ssh', key);
+    if (fs.existsSync(test)) return test;
+
+    test = path.join(os.homedir(), '.ssh', 'id_rsa_' + key);
+    if (fs.existsSync(test)) return test;
+
+    test = path.join(os.homedir(), '.ssh', 'id_rsa_caas_' + key);
+    if (fs.existsSync(test)) return test;
+
+    return null;
 }
 
 function createUrl(api) {
