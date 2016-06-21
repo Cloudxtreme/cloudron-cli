@@ -202,29 +202,30 @@ function detectCloudronApiEndpoint(cloudron, callback) {
     assert(typeof cloudron === 'string');
     assert(typeof callback === 'function');
 
-    function done(result) {
-        if (!config.provider()) console.log('WARNING provider is not set, this is most likely a bug! Falling back to caas.'.red);
-
-        config.set('apiEndpoint', 'my-' + cloudron);
-        config.set('cloudron', cloudron);
-        config.set('provider', result.provider || 'caas');
-
-        return callback(null);
-    }
-
     if (cloudron.indexOf('https://') === 0) cloudron = cloudron.slice('https://'.length);
     if (cloudron.indexOf('my-') === 0) cloudron = cloudron.slice('my-'.length);
     if (cloudron.indexOf('my.') === 0) cloudron = cloudron.slice('my.'.length);
     if (cloudron.indexOf('/') !== -1) cloudron = cloudron.slice(0, cloudron.indexOf('/'));
 
-    superagent.get('https://my-' + cloudron + '/api/v1/cloudron/status').timeout(5000).end(function (error, result) {
-        if (!error && result.statusCode === 200) return done(result.body);
+    var apiEndpoint;
+    if (cloudron.match(/.*\.cloudron\.(me|eu|de)$/)) {
+        apiEndpoint = 'my-' + cloudron;
+    } else {
+        apiEndpoint = 'my.' + cloudron;
+    }
 
-        superagent.get('https://my.' + cloudron + '/api/v1/cloudron/status').timeout(5000).end(function (error, result) {
-            if (!error && result.statusCode === 200) return done(result.body);
+    superagent.get('https://' + apiEndpoint + '/api/v1/cloudron/status').timeout(5000).end(function (error, result) {
+        if (!error && result.statusCode === 200) {
+            if (!result.body.provider) console.log('WARNING provider is not set, this is most likely a bug! Falling back to caas.'.red);
 
-            callback('Cloudron not found');
-        });
+            config.set('apiEndpoint', apiEndpoint);
+            config.set('cloudron', cloudron);
+            config.set('provider', result.body.provider || 'caas');
+
+            return callback(null);
+        }
+
+        callback('Cloudron not found');
     });
 }
 
