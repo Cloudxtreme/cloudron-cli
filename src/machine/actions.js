@@ -356,6 +356,7 @@ function performUpgrade(cloudron, options, callback) {
         options.sshKeyFile = helper.findSSHKey(options.sshKey);
         if (!options.sshKeyFile) helper.exit('No SSH key found');
 
+        // FIXME block here if we can't upgrade due to apptasks
         ec2.upgrade(cloudron.update.box, options, callback);
     }
 }
