@@ -381,6 +381,7 @@ function createCloudronBackup(callback) {
             .send({});
     }, function (error, result) {
         if (error) return callback(error);
+        if (result.statusCode === 409) return callback('The Cloudron is unable to backup at the moment. Please retry later.');
         if (result.statusCode !== 202) return callback(util.format('Failed to backup Cloudron.'.red, result.statusCode, result.text));
 
         waitForBackupFinish(callback);
