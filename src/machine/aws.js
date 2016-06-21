@@ -117,7 +117,7 @@ function terminateInstance(instanceId, callback) {
         InstanceIds: [ instanceId ]
     };
 
-    gEC2.teriminateInstances(params, function (error) {
+    gEC2.terminateInstances(params, function (error) {
         if (error) return callback(error);
 
         callback();
