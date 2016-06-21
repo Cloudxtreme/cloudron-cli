@@ -3,7 +3,6 @@
 /* global it:false */
 /* global describe:false */
 /* global before:false */
-/* global xdescribe:false */
 /* global after:false */
 
 'use strict';
