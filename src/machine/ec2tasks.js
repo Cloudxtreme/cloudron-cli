@@ -307,7 +307,12 @@ function getBackupDetails(callback) {
 function retireOldCloudron(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    helper.exec('ssh', helper.getSSH(config.apiEndpoint(), gParams.sshKeyFile, null, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/retire'), callback);
+    helper.exec('ssh', helper.getSSH(config.apiEndpoint(), gParams.sshKeyFile, null, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/retire'), function (error) {
+        if (error) console.error('Retire failed: ', error);
+
+        // FIXME retire is a bit flaky due to a hit timeout on the cloudron side
+        callback();
+    });
 }
 
 function getInstanceResources(callback) {
@@ -479,11 +484,11 @@ function upgrade(options, callback) {
         getLastBackup,
         getBackupDetails,
         retireOldCloudron,
-        // createServer,
-        // waitForServer,
-        // getIp,
-        // waitForDNS,
-        // waitForStatus
+        createServer,
+        waitForServer,
+        getIp,
+        waitForDNS,
+        waitForStatus
     ];
 
     async.series(tasks, function (error) {
@@ -492,6 +497,7 @@ function upgrade(options, callback) {
         console.log('');
         console.log('Cloudron upgraded with:');
         console.log('  ID:        %s', gInstanceId.cyan);
+        console.log('  Public IP: %s', gPublicIP.cyan);
         console.log('');
 
         callback();
