@@ -81,13 +81,13 @@ function restore(provider, options) {
     assert.strictEqual(typeof provider, 'string');
     assert.strictEqual(typeof options, 'object');
 
-    if (!options.backup) helper.missing('backup');
-    if (!options.fqdn) helper.missing('fqdn');
-
     var api;
     if (provider === 'ec2') api = ec2;
     else if (provider === 'caas') api = caas;
     else helper.exit('<provider> must be either "caas" or "ec2"');
+
+    if (!options.backup) helper.missing('backup');
+    if (!options.fqdn) helper.missing('fqdn');
 
     api.getBackupListing(options.fqdn, options, function (error, result) {
         if (error) helper.exit(error);
