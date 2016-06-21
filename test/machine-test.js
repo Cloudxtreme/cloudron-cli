@@ -88,3 +88,24 @@ describe('Eventlog', function () {
         });
     }
 });
+
+// FIXME not sure how to test this, since it is a continous stream
+// if (sshKey) {
+//     describe('Cloudron logs', function () {
+//         it('succeeds', function (done) {
+//             var out = cli(util.format('logs %s --ssh-key %s', cloudron, sshKey));
+//             expect(out.stdout.indexOf('creationTime')).to.not.be(-1);
+//             done();
+//         });
+//     });
+// }
+
+if (sshKey) {
+    describe('ssh', function () {
+        it('succeeds', function (done) {
+            var out = cli(util.format('ssh %s "echo foobar" --ssh-key %s', cloudron, sshKey));
+            expect(out.stdout.indexOf('foobar')).to.not.be(-1);
+            done();
+        });
+    });
+}
