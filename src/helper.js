@@ -344,6 +344,10 @@ function waitForBackupFinish(callback) {
 
             if (result.body.backup === null || result.body.backup.percent >= 100) {
                 if (result.body.backup && result.body.backup.message) return callback(new Error('Backup failed: ' + result.body.backup.message));
+
+                // break line
+                console.log('');
+
                 return callback();
             }
 
