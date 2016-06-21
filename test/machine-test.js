@@ -15,6 +15,7 @@ var child_process = require('child_process'),
 var cloudron = process.env.CLOUDRON;
 var username = process.env.USERNAME;
 var password = process.env.PASSWORD;
+var sshKey = process.env.SSH_KEY;
 
 var CLI = path.resolve(__dirname + '/../bin/machine.js');
 
@@ -48,9 +49,29 @@ after(function (done) {
 });
 
 describe('Backup', function () {
-    it('can create', function (done) {
+    it('can create with rest route', function (done) {
         var out = cli(util.format('backup create %s --username %s --password %s', cloudron, username, password));
         expect(out.stdout.indexOf('Backup successful')).to.not.be(-1);
+        done();
+    });
+
+    it('can create using ssh', function (done) {
+        if (!sshKey) {
+            console.log('Skipping ssh test');
+            return done();
+        }
+
+        var out = cli(util.format('backup create %s --ssh-key %s', cloudron, sshKey));
+        expect(out.stdout.indexOf('Backup successful')).to.not.be(-1);
+        done();
+    });
+
+    it('can list', function (done) {
+        var out = cli(util.format('backup list %s --username %s --password %s', cloudron, username, password));
+
+        var backupCount = out.stdout.split('\n').filter(function(l) { return l.match(/^backup_/); }).length;
+        expect(backupCount).to.be.greaterThan(sshKey ? 1 : 0);
+
         done();
     });
 });
