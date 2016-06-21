@@ -197,15 +197,11 @@ function createBackup(cloudron, options) {
             helper.exit();
         }
 
-        if (options.ssh) {
-            if (!options.sshKeyFile) helper.missing('ssh-key-file');
-
-            helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, options.sshUser, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup'), helper.waitForBackupFinish.bind(null, done));
-
-            return;
+        if (options.sshKey) {
+            helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKey, options.sshUser, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup'), helper.waitForBackupFinish.bind(null, done));
+        } else {
+            helper.createCloudronBackup(helper.exit);
         }
-
-        helper.createCloudronBackup(helper.exit);
     });
 }
 
