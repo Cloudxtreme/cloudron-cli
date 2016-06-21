@@ -340,6 +340,7 @@ function getInstanceResources(callback) {
 
         aws.getInstanceDetails(gParams.instanceId, function (error, result) {
             if (error) return callback(error);
+            if (result.State.Name === 'terminated') return callback('Instance is terminated. Maybe wrong instance-id provided?');
 
             gParams.sshKey = result.KeyName;
             gParams.type = result.InstanceType;
@@ -488,7 +489,8 @@ function upgrade(options, callback) {
         waitForServer,
         getIp,
         waitForDNS,
-        waitForStatus
+        waitForStatus,
+        aws.terminateInstance.bind(null, gParams.instanceId)
     ];
 
     async.series(tasks, function (error) {

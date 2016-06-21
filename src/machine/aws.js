@@ -8,6 +8,7 @@ var assert = require('assert'),
 exports = module.exports = {
     init: init,
     create: create,
+    terminateInstance: terminateInstance,
     state: state,
     publicIP: publicIP,
     checkIfDNSZoneExists: checkIfDNSZoneExists,
@@ -104,6 +105,22 @@ function create(options, callback) {
                 callback(null, result.Instances[0].InstanceId);
             });
         });
+    });
+}
+
+function terminateInstance(instanceId, callback) {
+    assert.strictEqual(typeof gEC2, 'object');
+    assert.strictEqual(typeof instanceId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var params = {
+        InstanceIds: [ instanceId ]
+    };
+
+    gEC2.teriminateInstances(params, function (error) {
+        if (error) return callback(error);
+
+        callback();
     });
 }
 
