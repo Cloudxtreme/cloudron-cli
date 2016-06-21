@@ -77,14 +77,19 @@ function create(provider, options) {
     });
 }
 
-function restore(options) {
+function restore(provider, options) {
+    assert.strictEqual(typeof provider, 'string');
     assert.strictEqual(typeof options, 'object');
 
-    if (!options.provider) helper.missing('provider');
     if (!options.backup) helper.missing('backup');
     if (!options.fqdn) helper.missing('fqdn');
 
-    getBackupListing(options.fqdn, options, function (error, result) {
+    var api;
+    if (provider === 'ec2') api = ec2;
+    else if (provider === 'caas') api = caas;
+    else helper.exit('<provider> must be either "caas" or "ec2"');
+
+    api.getBackupListing(options.fqdn, options, function (error, result) {
         if (error) helper.exit(error);
 
         if (result.length === 0) helper.exit('No backups found. Create one first to restore to.');
@@ -92,12 +97,7 @@ function restore(options) {
         var backupTo = result.filter(function (b) { return b.id === options.backup; })[0];
         if (!backupTo) helper.exit('Unable to find backup ' + options.backup + '.');
 
-        var func;
-        if (options.provider === 'ec2') func = ec2.restore;
-        else if (options.provider === 'caas') func = caas.restore;
-        else helper.exit('--provider must be either "caas" or "ec2"');
-
-        func(options, backupTo, function (error) {
+        api.restore(options, backupTo, function (error) {
             if (error) helper.exit(error);
 
             console.log('');
