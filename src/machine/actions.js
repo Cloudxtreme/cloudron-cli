@@ -192,15 +192,15 @@ function createBackup(cloudron, options) {
     helper.detectCloudronApiEndpoint(cloudron, function (error) {
         if (error) helper.exit(error);
 
-        function done() {
-            console.log('\n\nCloudron is backed up'.green);
-            helper.exit();
+        function done(error) {
+            if (error) helper.exit(error);
+            console.log('Backup successful');
         }
 
         if (options.sshKey) {
             helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKey, options.sshUser, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup'), helper.waitForBackupFinish.bind(null, done));
         } else {
-            helper.createCloudronBackup(helper.exit);
+            helper.createCloudronBackup(done);
         }
     });
 }
