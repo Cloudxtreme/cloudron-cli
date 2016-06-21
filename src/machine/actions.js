@@ -385,7 +385,7 @@ function updateOrUpgrade(fqdn, options) {
             function done(error) {
                 if (error) helper.exit(error);
 
-                console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + options.fqdn).bold);
+                console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://' + config.apiEndpoint()).bold);
                 console.log('');
             }
 
