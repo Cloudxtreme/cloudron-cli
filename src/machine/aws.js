@@ -83,7 +83,7 @@ function create(options, callback) {
                     DeviceName: '/dev/xvda',
                     Ebs: {
                         SnapshotId: mainBlockDevice.Ebs.SnapshotId,
-                        VolumeSize: 40,
+                        VolumeSize: 40,     // FIXME let the user specify this
                         DeleteOnTermination: true,
                         VolumeType: 'gp2'
                     }
