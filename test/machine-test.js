@@ -55,16 +55,13 @@ describe('Backup', function () {
         done();
     });
 
-    it('can create using ssh', function (done) {
-        if (!sshKey) {
-            console.log('Skipping ssh test');
-            return done();
-        }
-
-        var out = cli(util.format('backup create %s --ssh-key %s', cloudron, sshKey));
-        expect(out.stdout.indexOf('Backup successful')).to.not.be(-1);
-        done();
-    });
+    if (sshKey) {
+        it('can create using ssh', function (done) {
+            var out = cli(util.format('backup create %s --ssh-key %s', cloudron, sshKey));
+            expect(out.stdout.indexOf('Backup successful')).to.not.be(-1);
+            done();
+        });
+    }
 
     it('can list', function (done) {
         var out = cli(util.format('backup list %s --username %s --password %s', cloudron, username, password));
@@ -74,4 +71,20 @@ describe('Backup', function () {
 
         done();
     });
+});
+
+describe('Eventlog', function () {
+    it('succeeds with rest route', function (done) {
+        var out = cli(util.format('eventlog %s --username %s --password %s', cloudron, username, password));
+        expect(out.stdout.indexOf('creationTime')).to.not.be(-1);
+        done();
+    });
+
+    if (sshKey) {
+        it('succeeds with ssh', function (done) {
+            var out = cli(util.format('eventlog %s --ssh-key %s', cloudron, sshKey));
+            expect(out.stdout.indexOf('creationTime')).to.not.be(-1);
+            done();
+        });
+    }
 });
