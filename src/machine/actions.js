@@ -212,13 +212,12 @@ function eventlog(fqdn, options) {
     helper.detectCloudronApiEndpoint(fqdn, function (error) {
         if (error) helper.exit(error);
 
-        if (options.ssh) {
-            if (!options.sshKeyFile) helper.missing('ssh-key-file');
+        if (options.sshKey) {
 
             if (options.full) {
-                helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, options.sshUser, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,data FROM box.eventlog ORDER BY creationTime DESC"'));
+                helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKey, options.sshUser, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,data FROM box.eventlog ORDER BY creationTime DESC"'));
             } else {
-                helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, options.sshUser, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,LEFT(data,50) AS data_preview FROM box.eventlog ORDER BY creationTime DESC"'));
+                helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKey, options.sshUser, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,LEFT(data,50) AS data_preview FROM box.eventlog ORDER BY creationTime DESC"'));
             }
 
             return;
