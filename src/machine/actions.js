@@ -259,7 +259,7 @@ function logs(fqdn, options) {
     assert.strictEqual(typeof fqdn, 'string');
     assert.strictEqual(typeof options, 'object');
 
-    if (!options.sshKeyFile) helper.missing('ssh-key-file');
+    if (!options.sshKey) helper.missing('ssh-key');
 
     helper.detectCloudronApiEndpoint(fqdn, function (error) {
         var ip = null;
@@ -272,7 +272,7 @@ function logs(fqdn, options) {
             }
         }
 
-        helper.exec('ssh', helper.getSSH(ip || config.apiEndpoint(), options.sshKeyFile, options.sshUser, 'journalctl -fa'));
+        helper.exec('ssh', helper.getSSH(ip || config.apiEndpoint(), options.sshKey, options.sshUser, 'journalctl -fa'));
     });
 }
 
@@ -281,7 +281,7 @@ function ssh(fqdn, cmds, options) {
     assert(Array.isArray(cmds));
     assert.strictEqual(typeof options, 'object');
 
-    if (!options.sshKeyFile) helper.missing('ssh-key-file');
+    if (!options.sshKey) helper.missing('ssh-key');
 
     helper.detectCloudronApiEndpoint(fqdn, function (error) {
         var ip = null;
@@ -294,7 +294,7 @@ function ssh(fqdn, cmds, options) {
             }
         }
 
-        helper.exec('ssh', helper.getSSH(ip || config.apiEndpoint(), options.sshKeyFile, options.sshUser, cmds));
+        helper.exec('ssh', helper.getSSH(ip || config.apiEndpoint(), options.sshKey, options.sshUser, cmds));
     });
 }
 
@@ -351,6 +351,11 @@ function performUpgrade(cloudron, options, callback) {
         // same as update on caas
         performUpdate(cloudron, options, callback);
     } else {
+        if (!options.sshKey) helper.missing('ssh-key');
+
+        options.sshKeyFile = helper.findSSHKey(options.sshKey);
+        if (!options.sshKeyFile) helper.exit('No SSH key found');
+
         ec2.upgrade(cloudron.update.box, options, callback);
     }
 }
@@ -359,7 +364,7 @@ function updateOrUpgrade(fqdn, options) {
     assert.strictEqual(typeof fqdn, 'string');
     assert.strictEqual(typeof options, 'object');
 
-    // FIXME add ssh version for us
+    options.domain = fqdn;
 
     helper.detectCloudronApiEndpoint(fqdn, function (error) {
         if (error) helper.exit(error);

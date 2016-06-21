@@ -112,19 +112,13 @@ function upgrade(updateInfo, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    if (!options.region) helper.missing('region');
     if (!options.instanceId) helper.missing('instance-id');
-    if (!options.accessKeyId) helper.missing('access-key-id');
-    if (!options.secretAccessKey) helper.missing('secret-access-key');
-    // if (!options.sshKeyFile) helper.missing('ssh-key-file');
 
     var params = {
         version: updateInfo.version,
+        domain: options.domain,
         sshKeyFile: options.sshKeyFile,
-        region: options.region,
-        instanceId: options.instanceId,
-        accessKeyId: options.accessKeyId,
-        secretAccessKey: options.secretAccessKey
+        instanceId: options.instanceId
     };
 
     ec2tasks.upgrade(params, callback);

@@ -314,22 +314,35 @@ function getInstanceResources(callback) {
     assert.strictEqual(typeof callback, 'function');
     assert.strictEqual(typeof gParams.instanceId, 'string');
 
-    // backupKey
-    // backupBucket
-
-    aws.getInstanceDetails(gParams.instanceId, function (error, result) {
+    helper.superagentEnd(function () {
+        return superagent.get(helper.createUrl('/api/v1/settings/backup_config')).query({ access_token: config.token() });
+    }, function (error, result) {
         if (error) return callback(error);
 
-        console.log(result);
+        gParams.backupKey = result.body.key;
+        gParams.backupBucket = result.body.bucket;
 
-        gParams.sshKey = result.KeyName;
-        gParams.type = result.InstanceType;
-        gParams.subnet = result.SubnetId;
-        gParams.securityGroup = result.SecurityGroups[0].GroupId;
+        // FIXME maybe not the best way to get these
+        gParams.region = result.body.region;
+        gParams.accessKeyId = result.body.accessKeyId;
+        gParams.secretAccessKey = result.body.secretAccessKey;
 
+        aws.init({
+            region: gParams.region,
+            accessKeyId: gParams.accessKeyId,
+            secretAccessKey: gParams.secretAccessKey
+        });
 
+        aws.getInstanceDetails(gParams.instanceId, function (error, result) {
+            if (error) return callback(error);
 
-        callback(null);
+            gParams.sshKey = result.KeyName;
+            gParams.type = result.InstanceType;
+            gParams.subnet = result.SubnetId;
+            gParams.securityGroup = result.SecurityGroups[0].GroupId;
+
+            callback(null);
+        });
     });
 }
 
@@ -451,19 +464,12 @@ function restore(options, callback) {
 function upgrade(options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof options.version, 'string');
-    assert.strictEqual(typeof options.accessKeyId, 'string');
-    assert.strictEqual(typeof options.secretAccessKey, 'string');
-    assert.strictEqual(typeof options.region, 'string');
+    assert.strictEqual(typeof options.domain, 'string');
+    assert.strictEqual(typeof options.sshKeyFile, 'string');
     assert.strictEqual(typeof options.instanceId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    console.log('Upgrading %s to version %s...', options.instanceId.cyan.bold, options.version.cyan.bold);
-
-    aws.init({
-        region: options.region,
-        accessKeyId: options.accessKeyId,
-        secretAccessKey: options.secretAccessKey
-    });
+    console.log('Upgrading %s to version %s...', options.domain.cyan.bold, options.version.cyan.bold);
 
     gParams = options;
 
@@ -472,7 +478,7 @@ function upgrade(options, callback) {
         helper.createCloudronBackup,
         getLastBackup,
         getBackupDetails,
-        // retireOldCloudron,
+        retireOldCloudron,
         // createServer,
         // waitForServer,
         // getIp,

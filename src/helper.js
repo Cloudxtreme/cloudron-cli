@@ -347,8 +347,8 @@ function waitForBackupFinish(callback) {
             if (error) return callback(error);
             if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get backup progress.'.red, result.statusCode, result.text)));
 
-            if (result.body.backup.percent >= 100) {
-                if (result.body.backup.message) return callback(new Error('Backup failed: ' + result.body.backup.message));
+            if (result.body.backup === null || result.body.backup.percent >= 100) {
+                if (result.body.backup && result.body.backup.message) return callback(new Error('Backup failed: ' + result.body.backup.message));
                 return callback();
             }
 

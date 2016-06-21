@@ -11,7 +11,7 @@ program.version(require('../package.json').version);
 
 program.description('Get Cloudron logs')
     .arguments('<domain>')
-    .option('--ssh-key-file <ssh key file>', 'SSH key filepath')
+    .option('--ssh-key <ssh key>', 'SSH key filepath')
     .option('--ssh-user <ssh user>', 'SSH user')
     .action(actions.logs);
 
