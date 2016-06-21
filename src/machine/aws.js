@@ -12,7 +12,8 @@ exports = module.exports = {
     publicIP: publicIP,
     checkIfDNSZoneExists: checkIfDNSZoneExists,
     getBackupUrl: getBackupUrl,
-    listBackups: listBackups
+    listBackups: listBackups,
+    getInstanceDetails: getInstanceDetails
 };
 
 var gEC2 = null;
@@ -227,5 +228,21 @@ function listBackups(bucket, prefix, callback) {
 
         // backup results are sorted alphabetically by filename
         return callback(null, backups);
+    });
+}
+
+function getInstanceDetails(instanceId, callback) {
+    assert.strictEqual(typeof gEC2, 'object');
+    assert.strictEqual(typeof instanceId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var params = {
+        InstanceIds: [ instanceId ]
+    };
+
+    gEC2.describeInstances(params, function (error, result) {
+        if (error) return callback(error);
+
+        callback(null, result.Reservations[0].Instances[0]);
     });
 }

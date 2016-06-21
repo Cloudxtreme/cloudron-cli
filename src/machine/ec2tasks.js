@@ -272,7 +272,7 @@ function waitForStatus(callback) {
 
     async.forever(function (callback) {
         superagent.get('https://my.' + gParams.domain + '/api/v1/cloudron/status').end(function (error, result) {
-            if (!error & result.statusCode === 200) return callback('done');
+            if (!error && result.statusCode === 200) return callback('done');
 
             process.stdout.write('.');
 
@@ -304,17 +304,51 @@ function getBackupDetails(callback) {
     });
 }
 
-function createBackup(callback) {
-    assert.strictEqual(typeof callback, 'function');
-
-    helper.exec('ssh', helper.getSSH(config.apiEndpoint(), gParams.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup'), helper.waitForBackupFinish.bind(null, callback));
-}
-
 function retireOldCloudron(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    helper.exec('ssh', helper.getSSH(config.apiEndpoint(), gParams.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/retire'), callback);
+    helper.exec('ssh', helper.getSSH(config.apiEndpoint(), gParams.sshKeyFile, null, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/retire'), callback);
 }
+
+function getInstanceResources(callback) {
+    assert.strictEqual(typeof callback, 'function');
+    assert.strictEqual(typeof gParams.instanceId, 'string');
+
+    // backupKey
+    // backupBucket
+
+    aws.getInstanceDetails(gParams.instanceId, function (error, result) {
+        if (error) return callback(error);
+
+        console.log(result);
+
+        gParams.sshKey = result.KeyName;
+        gParams.type = result.InstanceType;
+        gParams.subnet = result.SubnetId;
+        gParams.securityGroup = result.SecurityGroups[0].GroupId;
+
+
+
+        callback(null);
+    });
+}
+
+function getLastBackup(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    helper.getCloudronBackupList(function (error, result) {
+        if (error) return callback(error);
+
+        gParams.backup = result[0];
+
+        callback(null);
+    });
+}
+
+
+// ----------------------------------------------------------------------------
+//   Tasks
+// ----------------------------------------------------------------------------
 
 function create(options, callback) {
     assert.strictEqual(typeof options, 'object');
@@ -432,17 +466,18 @@ function upgrade(options, callback) {
     });
 
     gParams = options;
-    gParams.oldInstanceId = options.oldInstanceId;
 
     var tasks = [
-        createBackup,
+        getInstanceResources,
+        helper.createCloudronBackup,
+        getLastBackup,
         getBackupDetails,
-        retireOldCloudron,
-        createServer,
-        waitForServer,
-        getIp,
-        waitForDNS,
-        waitForStatus
+        // retireOldCloudron,
+        // createServer,
+        // waitForServer,
+        // getIp,
+        // waitForDNS,
+        // waitForStatus
     ];
 
     async.series(tasks, function (error) {

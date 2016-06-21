@@ -39,7 +39,10 @@ exports = module.exports = {
     authenticate: authenticate,
     superagentEnd: superagentEnd,
 
-    waitForBackupFinish: waitForBackupFinish
+    // these work with the rest route
+    waitForBackupFinish: waitForBackupFinish,
+    getCloudronBackupList: getCloudronBackupList,
+    createCloudronBackup: createCloudronBackup
 };
 
 function exit(error) {
@@ -354,4 +357,33 @@ function waitForBackupFinish(callback) {
             setTimeout(checkStatus, 1000);
         });
     })();
+}
+
+function getCloudronBackupList(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    superagentEnd(function () {
+        return superagent.get(createUrl('/api/v1/backups')).query({ access_token: config.token() });
+    }, function (error, result) {
+        if (error) return callback(error);
+        if (result.statusCode !== 200) return callback(util.format('Failed to list backups.'.red, result.statusCode, result.text));
+
+        callback(null, result.body.backups);
+    });
+}
+
+function createCloudronBackup(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    superagentEnd(function () {
+        return superagent
+            .post(createUrl('/api/v1/backups'))
+            .query({ access_token: config.token() })
+            .send({});
+    }, function (error, result) {
+        if (error) return callback(error);
+        if (result.statusCode !== 202) return callback(util.format('Failed to backup Cloudron.'.red, result.statusCode, result.text));
+
+        waitForBackupFinish(callback);
+    });
 }

@@ -44,14 +44,7 @@ function getBackupListing(cloudron, options, callback) {
             helper.exit('Try using the --provider argument');
         }
 
-        helper.superagentEnd(function () {
-            return superagent.get(helper.createUrl('/api/v1/backups')).query({ access_token: config.token() });
-        }, function (error, result) {
-            if (error) return callback(error);
-            if (result.statusCode !== 200) return callback(util.format('Failed to list backups.'.red, result.statusCode, result.text));
-
-            callback(null, result.body.backups);
-        });
+        helper.getCloudronBackupList(callback);
     });
 }
 
@@ -134,7 +127,7 @@ function migrate(options) {
         helper.detectCloudronApiEndpoint(options.fqdnFrom, function (error) {
             if (error) helper.exit(error);
 
-            helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup', options.sshUser), function (error) {
+            helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, options.sshUser, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup'), function (error) {
                 if (error) helper.exit(error);
 
                 helper.waitForBackupFinish(function (error) {
@@ -207,22 +200,12 @@ function createBackup(cloudron, options) {
         if (options.ssh) {
             if (!options.sshKeyFile) helper.missing('ssh-key-file');
 
-            helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup', options.sshUser), helper.waitForBackupFinish.bind(null, done));
+            helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, options.sshUser, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup'), helper.waitForBackupFinish.bind(null, done));
 
             return;
         }
 
-        helper.superagentEnd(function () {
-            return superagent
-                .post(helper.createUrl('/api/v1/backups'))
-                .query({ access_token: config.token() })
-                .send({});
-        }, function (error, result) {
-            if (error) return helper.exit(error);
-            if (result.statusCode !== 202) return helper.exit(util.format('Failed to backup Cloudron.'.red, result.statusCode, result.text));
-
-            helper.waitForBackupFinish(helper.exit);
-        });
+        helper.createCloudronBackup(helper.exit);
     });
 }
 
@@ -237,9 +220,9 @@ function eventlog(fqdn, options) {
             if (!options.sshKeyFile) helper.missing('ssh-key-file');
 
             if (options.full) {
-                helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,data FROM box.eventlog ORDER BY creationTime DESC"', options.sshUser));
+                helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, options.sshUser, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,data FROM box.eventlog ORDER BY creationTime DESC"'));
             } else {
-                helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,LEFT(data,50) AS data_preview FROM box.eventlog ORDER BY creationTime DESC"', options.sshUser));
+                helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, options.sshUser, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,LEFT(data,50) AS data_preview FROM box.eventlog ORDER BY creationTime DESC"'));
             }
 
             return;
@@ -289,9 +272,7 @@ function logs(fqdn, options) {
             }
         }
 
-        var sshUser = config.provider() === 'caas' ? 'root' : 'ubuntu';
-
-        helper.exec('ssh', helper.getSSH(ip || config.apiEndpoint(), options.sshKeyFile, 'journalctl -fa', sshUser));
+        helper.exec('ssh', helper.getSSH(ip || config.apiEndpoint(), options.sshKeyFile, options.sshUser, 'journalctl -fa'));
     });
 }
 
@@ -313,7 +294,7 @@ function ssh(fqdn, cmds, options) {
             }
         }
 
-        helper.exec('ssh', helper.getSSH(ip || config.apiEndpoint(), options.sshKeyFile, cmds, options.sshUser));
+        helper.exec('ssh', helper.getSSH(ip || config.apiEndpoint(), options.sshKeyFile, options.sshUser, cmds));
     });
 }
 
