@@ -157,13 +157,9 @@ function getUserData(callback) {
 
                     appstore: {
                         token: '',
-                        apiServerOrigin: 'https://api.dev.cloudron.io'
+                        apiServerOrigin: config.appStoreOrigin()
                     },
-                    caas: {
-                        token: '',
-                        apiServerOrigin: 'https://api.dev.cloudron.io',
-                        webServerOrigin: 'https://dev.cloudron.io'
-                    },
+                    caas: null,
                     tlsConfig: {
                         provider: 'letsencrypt-dev',
                     },
@@ -174,8 +170,8 @@ function getUserData(callback) {
 
                     // obsolete
                     token: '',
-                    apiServerOrigin: 'https://api.dev.cloudron.io',
-                    webServerOrigin: 'https://dev.cloudron.io',
+                    apiServerOrigin: config.appStoreOrigin(),
+                    webServerOrigin: 'https://cloudron.io',
 
                     restore: {
                         url: gParams.backupDetails ? gParams.backupDetails.url : null,
