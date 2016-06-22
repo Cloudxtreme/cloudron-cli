@@ -5,7 +5,7 @@ var assert = require('assert'),
     superagent = require('superagent');
 
 exports = module.exports = {
-    versionsUrl: 'https://s3.amazonaws.com/dev-cloudron-releases/versions.json',
+    versionsUrl: process.env.CLOUDRON_VERSIONS_URL || 'https://s3.amazonaws.com/prod-cloudron-releases/versions.json',
     init: init,
     resolve: resolve,
     details: details
