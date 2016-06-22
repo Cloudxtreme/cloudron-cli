@@ -109,16 +109,16 @@ function restore(provider, options) {
     });
 }
 
-function migrate(options) {
+function migrate(provider, options) {
+    assert.strictEqual(typeof provider, 'string');
     assert.strictEqual(typeof options, 'object');
 
-    if (!options.provider) helper.missing('provider');  // FIXME autodetect provider
     if (!options.fqdnFrom) helper.missing('fqdn-from');
     if (!options.fqdnTo) helper.missing('fqdn-to');
     if (!options.type) helper.missing('type');
     if (!options.region) helper.missing('region');
 
-    if (options.provider === 'caas') {
+    if (provider === 'caas') {
         if (!options.sshKeyFile) helper.missing('ssh-key-file');
 
         // TODO verify the sshKeyFile path
@@ -127,7 +127,7 @@ function migrate(options) {
         helper.detectCloudronApiEndpoint(options.fqdnFrom, function (error) {
             if (error) helper.exit(error);
 
-            helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, options.sshUser, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup'), function (error) {
+            helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup'), function (error) {
                 if (error) helper.exit(error);
 
                 helper.waitForBackupFinish(function (error) {
@@ -148,7 +148,7 @@ function migrate(options) {
                 });
             });
         });
-    } else if (options.provider === 'ec2') {
+    } else if (provider === 'ec2') {
         helper.exit('not implemented');
     } else {
         helper.exit('--provider must be either "caas" or "ec2"');
@@ -198,7 +198,7 @@ function createBackup(cloudron, options) {
         }
 
         if (options.sshKey) {
-            helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKey, options.sshUser, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup'), helper.waitForBackupFinish.bind(null, done));
+            helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKey, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup'), helper.waitForBackupFinish.bind(null, done));
         } else {
             helper.createCloudronBackup(done);
         }
@@ -215,9 +215,9 @@ function eventlog(fqdn, options) {
         if (options.sshKey) {
 
             if (options.full) {
-                helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKey, options.sshUser, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,data FROM box.eventlog ORDER BY creationTime DESC"'));
+                helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKey, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,data FROM box.eventlog ORDER BY creationTime DESC"'));
             } else {
-                helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKey, options.sshUser, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,LEFT(data,50) AS data_preview FROM box.eventlog ORDER BY creationTime DESC"'));
+                helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKey, ' mysql -uroot -ppassword -e "SELECT creationTime,action,source,LEFT(data,50) AS data_preview FROM box.eventlog ORDER BY creationTime DESC"'));
             }
 
             return;
@@ -267,7 +267,7 @@ function logs(fqdn, options) {
             }
         }
 
-        helper.exec('ssh', helper.getSSH(ip || config.apiEndpoint(), options.sshKey, options.sshUser, 'journalctl -fa'));
+        helper.exec('ssh', helper.getSSH(ip || config.apiEndpoint(), options.sshKey, 'journalctl -fa'));
     });
 }
 
@@ -289,7 +289,7 @@ function ssh(fqdn, cmds, options) {
             }
         }
 
-        helper.exec('ssh', helper.getSSH(ip || config.apiEndpoint(), options.sshKey, options.sshUser, cmds));
+        helper.exec('ssh', helper.getSSH(ip || config.apiEndpoint(), options.sshKey, cmds));
     });
 }
 

@@ -251,7 +251,7 @@ function exec(command, args, callback) {
     child.on('close', function (code) { callback(code === 0 ? null : new Error(util.format('%s exited with code %d', command, code))); });
 }
 
-function getSSH(host, sshKey, sshUser, cmd) {
+function getSSH(host, sshKey, cmd) {
     cmd = cmd || '';
     cmd = Array.isArray(cmd) ? cmd.join(' ') : cmd;
 
@@ -259,12 +259,9 @@ function getSSH(host, sshKey, sshUser, cmd) {
     sshKey = findSSHKey(sshKey);
     if (!sshKey) exit('SSH key not found');
 
-    // try to detect user
-    sshUser = sshUser || (config.provider() === 'caas' ? 'root' : 'ubuntu');
+    var SSH = 'root@%s -tt -p 202 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i %s %s';
 
-    var SSH = '%s@%s -tt -p 202 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i %s %s';
-
-    return util.format(SSH, sshUser, host, sshKey, cmd).split(' ');
+    return util.format(SSH, host, sshKey, cmd).split(' ');
 }
 
 function findSSHKey(key) {
