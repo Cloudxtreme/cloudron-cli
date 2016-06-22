@@ -133,9 +133,9 @@ describe('Push', function () {
     });
 
     it('can push to directory', function () {
-        var testFile = __dirname + '/test.js';
+        var testFile = __dirname + '/cloudron-test.js';
         cli(util.format('push --app %s %s /tmp/', app.id, testFile));
-        var out = cli(util.format('exec --app %s md5sum /tmp/test.js', app.id));
+        var out = cli(util.format('exec --app %s md5sum /tmp/cloudron-test.js', app.id));
         expect(out.stdout).to.contain(md5(testFile));
     });
 
@@ -154,9 +154,9 @@ describe('Push', function () {
     });
 
     it('can push a directory', function () {
-        var testDir = __dirname, testFile = __dirname + '/test.js';
+        var testDir = __dirname, testFile = __dirname + '/cloudron-test.js';
         cli(util.format('push --app %s %s /run', app.id, testDir));
-        var out = cli(util.format('exec --app %s md5sum /run/' + path.basename(__dirname) + '/test.js', app.id));
+        var out = cli(util.format('exec --app %s md5sum /run/' + path.basename(__dirname) + '/cloudron-test.js', app.id));
         expect(out.stdout).to.contain(md5(testFile));
     });
 
@@ -203,7 +203,7 @@ describe('Pull', function () {
     it('can pull to directory', function () {
         safe.fs.unlinkSync('/tmp/pulledreadme.md');
         cli(util.format('pull --app %s /app/code/README.md /tmp/pulledreadme.md', app.id));
-        expect(md5('/tmp/pulledreadme.md')).to.be('562bca2ed9dbd1a11a66e7cf6f65bdb7');
+        expect(md5('/tmp/pulledreadme.md')).to.be('2c24ee8d511ca4eb71d6b5e2ee6cb9e5');
         fs.unlinkSync('/tmp/pulledreadme.md');
     });
 
