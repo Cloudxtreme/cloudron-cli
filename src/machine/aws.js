@@ -61,6 +61,7 @@ function create(options, callback) {
 
     versions.details(options.version, function (error, result) {
         if (error) return callback(error);
+        if (!result.ami) return callback('This version does not have an EC2 image.');
 
         getImageDetails(result.ami, function (error, amiDetails) {
             if (error) return callback(error);
