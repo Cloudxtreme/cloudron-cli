@@ -70,7 +70,7 @@ function create(options, version, callback) {
 
 function restore(options, backup, callback) {
     assert.strictEqual(typeof options, 'object');
-    assert.strictEqual(typeof backup, 'string');
+    assert.strictEqual(typeof backup, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     if (!options.type) helper.missing('type');
