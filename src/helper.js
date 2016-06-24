@@ -42,7 +42,9 @@ exports = module.exports = {
     // these work with the rest route
     waitForBackupFinish: waitForBackupFinish,
     getCloudronBackupList: getCloudronBackupList,
-    createCloudronBackup: createCloudronBackup
+    createCloudronBackup: createCloudronBackup,
+
+    saveBackupStream: saveBackupStream
 };
 
 function exit(error) {
@@ -285,7 +287,7 @@ function findSSHKey(key) {
 function createUrl(api) {
     assert.strictEqual(typeof api, 'string');
 
-    if (!config.has('cloudron', 'apiEndpoint')) exit(util.format('Not setup yet. Please use the ' + 'login'.yellow.bold + ' command first.'));
+    if (!config.has('cloudron', 'apiEndpoint')) exit(util.format('Not setup yet. Please use the ' + 'login'.yellow.bold + ' command first.'.red));
 
     return 'https://' + config.apiEndpoint() + api;
 }
@@ -383,5 +385,29 @@ function createCloudronBackup(callback) {
         if (result.statusCode !== 202) return callback(util.format('Failed to backup Cloudron.'.red, result.statusCode, result.text));
 
         waitForBackupFinish(callback);
+    });
+}
+
+function saveBackupStream(id, outstream, callback) {
+    superagentEnd(function () {
+        return superagent
+            .post(createUrl('/api/v1/backups/' + id + '/download_url'))
+            .query({ access_token: config.token() });
+    }, function (error, result) {
+        if (error) callback(error);
+        if (result.statusCode !== 200) return callback(util.format('Failed to download backup.'.red, result.statusCode, result.text));
+
+        var cmd = 'curl -s -L "' + result.body.url + '" | openssl aes-256-cbc -d -pass pass:' + result.body.backupKey;
+        var curl = spawn('sh', [ '-c', cmd ]);
+
+        outstream.on('error', function (e) {
+            callback('Error saving backup: ' + e.message);
+        });
+        curl.stdout.pipe(outstream);
+        curl.stderr.pipe(process.stderr);
+
+        curl.on('close', function (code, signal) {
+            callback(code ? 'Error downloading backup' : null);
+        });
     });
 }

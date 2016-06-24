@@ -1,10 +1,13 @@
 'use strict';
 
 var assert = require('assert'),
+    async = require('async'),
     caas = require('./caas.js'),
     config = require('../config.js'),
     ec2 = require('./ec2.js'),
+    fs = require('fs'),
     helper = require('../helper.js'),
+    path = require('path'),
     readlineSync = require('readline-sync'),
     superagent = require('superagent'),
     Table = require('easy-table'),
@@ -17,6 +20,7 @@ exports = module.exports = {
     migrate: migrate,
     listBackups: listBackups,
     createBackup: createBackup,
+    downloadBackup: downloadBackup,
     eventlog: eventlog,
     logs: logs,
     ssh: ssh,
@@ -206,6 +210,42 @@ function createBackup(cloudron, options) {
                 helper.createCloudronBackup(done);
             });
         }
+    });
+}
+
+function downloadBackup(cloudron, outdir, options) {
+    assert.strictEqual(typeof cloudron, 'string');
+    assert.strictEqual(typeof options, 'object');
+
+    if (!options.backupId) helper.missing('backup-id');
+
+    helper.detectCloudronApiEndpoint(cloudron, function (error) {
+        if (error) helper.exit(error);
+
+        helper.superagentEnd(function () {
+            return superagent
+                .get(helper.createUrl('/api/v1/backups'))
+                .query({ access_token: config.token() });
+        }, function (error, result) {
+            if (error) helper.exit(error);
+            if (result.statusCode !== 200) return helper.exit(util.format('Failed to box list backups.'.red, result.statusCode, result.text));
+
+            var dependsOn = [];
+            for (var i = 0; i < result.body.backups.length; i++) {
+                if (result.body.backups[i].id === options.backupId) {
+                    dependsOn = result.body.backups[i].dependsOn;
+                    break;
+                }
+            }
+
+            async.eachSeries([ options.backupId ].concat(dependsOn), function (backupId, iteratorDone) {
+                var outstream = fs.createWriteStream(path.join(outdir || process.cwd(), backupId));
+
+                console.log('Downloading', backupId);
+
+                helper.saveBackupStream(backupId, outstream, iteratorDone);
+            }, helper.exit);
+        });
     });
 }
 

@@ -16,6 +16,13 @@ program.command('create <domain>')
     .option('--ssh-key <ssh key>', 'SSH key')
     .action(actions.createBackup);
 
+program.command('download <domain> [outdir]')
+    .description('Download backup')
+    .option('-u, --username <username>', 'Username')
+    .option('-p, --password <password>', 'Password (unsafe)')
+    .option('--backup-id <backupId>', 'Backup Id')
+    .action(actions.downloadBackup);
+
 program.command('list <domain>')
     .description('List all backups')
     .option('-u, --username <username>', 'Username')

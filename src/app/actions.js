@@ -810,65 +810,12 @@ function listBackups(options) {
     });
 }
 
-function saveBackup(id, outstream, callback) {
-    helper.superagentEnd(function () {
-        return superagent
-            .post(helper.createUrl('/api/v1/backups/' + id + '/download_url'))
-            .query({ access_token: config.token() });
-    }, function (error, result) {
-        if (error) callback(error);
-        if (result.statusCode !== 200) return callback(util.format('Failed to download backup.'.red, result.statusCode, result.text));
-
-        var cmd = 'curl -s -L "' + result.body.url + '" | openssl aes-256-cbc -d -pass pass:' + result.body.backupKey;
-        var curl = spawn('sh', [ '-c', cmd ]);
-
-        outstream.on('error', function (e) {
-            callback('Error saving backup: ' + e.message);
-        });
-        curl.stdout.pipe(outstream);
-        curl.stderr.pipe(process.stderr);
-
-        curl.on('close', function (code, signal) {
-            callback(code ? 'Error downloading backup' : null);
-        });
-    });
-}
-
-function downloadBoxBackup(id, outdir, options) {
-    helper.superagentEnd(function () {
-        return superagent
-            .get(helper.createUrl('/api/v1/backups'))
-            .query({ access_token: config.token() });
-    }, function (error, result) {
-        if (error) exit(error);
-        if (result.statusCode !== 200) return exit(util.format('Failed to box list backups.'.red, result.statusCode, result.text));
-
-        var dependsOn = [ ];
-        for (var i = 0; i < result.body.backups.length; i++) {
-            if (result.body.backups[i].id === id) {
-                dependsOn = result.body.backups[i].dependsOn;
-                break;
-            }
-        }
-
-        async.eachSeries([ id ].concat(dependsOn), function (backupId, iteratorDone) {
-            var outstream = fs.createWriteStream(path.join(outdir || process.cwd(), backupId));
-
-            console.log('Downloading', backupId);
-
-            saveBackup(backupId, outstream, iteratorDone);
-        }, exit);
-    });
-}
-
 function downloadBackup(id, outdir, options, callback) {
     callback = callback || exit;
 
-    if (id.startsWith('backup_')) return downloadBoxBackup(id, outdir, options);
-
     var outstream = outdir === '-' ? process.stdout : fs.createWriteStream(path.join(outdir || process.cwd(), id));
 
-    saveBackup(id, outstream, exit);
+    helper.saveBackupStream(id, outstream, exit);
 }
 
 function restore(options) {
