@@ -255,9 +255,22 @@ describe('Backup', function () {
     });
 });
 
+describe('list apps', function () {
+    it('succeeds', function () {
+        var out = cli('list');
+        expect(out.stdout).to.contain(app.id);
+    });
+});
+
+describe('app logs', function () {
+    it('succeeds', function () {
+        var out = cli('logs --app ' + app.id);
+        expect(out.stdout).to.contain('listening on');
+    });
+});
+
 describe('Logout', function () {
     it('can logout', function () {
-        console.log('Uninstalling app, this can take a while');
         var out = cli('logout');
         expect(out.stdout).to.contain('Logged out');
     });
