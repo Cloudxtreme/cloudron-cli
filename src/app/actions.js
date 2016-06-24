@@ -127,21 +127,6 @@ function getApp(appId, callback) {
     }
 }
 
-function getBackup(appId, latest, callback) {
-    assert(typeof appId === 'string');
-    assert(typeof latest === 'boolean');
-    assert(typeof callback === 'function');
-
-    helper.superagentEnd(function () { return superagent.get(helper.createUrl('/api/v1/apps/' + appId + '/backups')).query({ access_token: config.token() }); }, function (error, result) {
-        if (error) return callback(error);
-        if (result.statusCode === 503) exit('The Cloudron is currently updating, please retry in a bit.');
-        if (result.statusCode === 404) return callback(util.format('App %s not found.', appId.bold));
-        if (result.statusCode !== 200) return callback(util.format('Failed to get app.'.red, result.statusCode, result.text));
-
-        callback(null, result.body);
-    });
-}
-
 function getAppNew(callback) {
     var manifestFilePath = helper.locateManifest();
 
