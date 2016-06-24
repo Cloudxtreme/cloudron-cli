@@ -49,7 +49,6 @@ exports = module.exports = {
     init: init,
     restore: restore,
     clone: clone,
-    createUrl: createUrl,
     backup: createBackup,
     downloadBackup: downloadBackup,
     listBackups: listBackups
@@ -61,28 +60,18 @@ function showDeveloperModeNotice() {
     console.error('CLI mode is disabled. Enable it at %s.'.red, 'https://' + config.apiEndpoint() + '/#/settings');
 }
 
-function createUrl(api) {
-    return 'https://' + config.apiEndpoint() + api;
-}
-
 function ensureLoggedIn() {
     if (!config.has('cloudron', 'token')) exit(util.format('Not setup yet. Please use the ' + 'login'.yellow.bold + ' command first.'));
     else console.error('Using cloudron', config.cloudron().yellow.bold);
-}
-
-// takes a function returning a superagent request instance and will reauthenticate in case the token is invalid
-function superagentEnd(requestFactory, callback) {
-    requestFactory().end(function (error, result) {
-        if (!error && result.statusCode === 401) return authenticate({ error: true }, superagentEnd.bind(null, requestFactory, callback));
-        callback(error, result);
-    });
 }
 
 function selectAvailableApp(appId, callback) {
     assert(typeof appId === 'string');
     assert(typeof callback === 'function');
 
-    superagentEnd(function () { return superagent.get(createUrl('/api/v1/apps')).query({ access_token: config.token() }); }, function (error, result) {
+    helper.superagentEnd(function () {
+        return superagent.get(helper.createUrl('/api/v1/apps')).query({ access_token: config.token() });
+    }, function (error, result) {
         if (error) return callback(error);
         if (result.statusCode !== 200) return callback(util.format('Failed to list apps. %s - %s'.red, result.statusCode, result.text));
 
@@ -132,7 +121,9 @@ function getApp(appId, callback) {
             callback(null, result, manifestFilePath);
         });
     } else {
-        superagentEnd(function () { return superagent.get(createUrl('/api/v1/apps/' + appId)).query({ access_token: config.token() }); }, function (error, result) {
+        helper.superagentEnd(function () {
+            return superagent.get(helper.createUrl('/api/v1/apps/' + appId)).query({ access_token: config.token() });
+        }, function (error, result) {
             if (error) return callback(error);
             if (result.statusCode === 503) exit('The Cloudron is currently updating, please retry in a bit.');
             if (result.statusCode === 404) return callback(util.format('App %s not found.', appId.bold));
@@ -148,7 +139,7 @@ function getBackup(appId, latest, callback) {
     assert(typeof latest === 'boolean');
     assert(typeof callback === 'function');
 
-    superagentEnd(function () { return superagent.get(createUrl('/api/v1/apps/' + appId + '/backups')).query({ access_token: config.token() }); }, function (error, result) {
+    helper.superagentEnd(function () { return superagent.get(helper.createUrl('/api/v1/apps/' + appId + '/backups')).query({ access_token: config.token() }); }, function (error, result) {
         if (error) return callback(error);
         if (result.statusCode === 503) exit('The Cloudron is currently updating, please retry in a bit.');
         if (result.statusCode === 404) return callback(util.format('App %s not found.', appId.bold));
@@ -177,7 +168,7 @@ function authenticate(options, callback) {
 
     config.unset('token');
 
-    superagent.post(createUrl('/api/v1/developer/login')).send({
+    superagent.post(helper.createUrl('/api/v1/developer/login')).send({
         username: username,
         password: password
     }).end(function (error, result) {
@@ -203,9 +194,9 @@ function stopApp(app, callback) {
     assert(typeof app === 'object');
     assert(typeof callback === 'function');
 
-    superagentEnd(function () {
+    helper.superagentEnd(function () {
         return superagent
-        .post(createUrl('/api/v1/apps/' + app.id + '/stop'))
+        .post(helper.createUrl('/api/v1/apps/' + app.id + '/stop'))
         .query({ access_token: config.token() })
         .send({});
     }, function (error, result) {
@@ -213,7 +204,7 @@ function stopApp(app, callback) {
         if (result.statusCode !== 202) return exit(util.format('Failed to stop app.'.red, result.statusCode, result.text));
 
         function waitForFinish(appId) {
-            superagentEnd(function () { return superagent.get(createUrl('/api/v1/apps/' + appId)).query({ access_token: config.token() }); }, function (error, result) {
+            helper.superagentEnd(function () { return superagent.get(helper.createUrl('/api/v1/apps/' + appId)).query({ access_token: config.token() }); }, function (error, result) {
                 if (error) exit(error);
                 if (result.body.runState === 'stopped') return callback(null);
 
@@ -232,9 +223,9 @@ function startApp(app, callback) {
     assert(typeof app === 'object');
     assert(typeof callback === 'function');
 
-    superagentEnd(function () {
+    helper.superagentEnd(function () {
         return superagent
-        .post(createUrl('/api/v1/apps/' + app.id + '/start'))
+        .post(helper.createUrl('/api/v1/apps/' + app.id + '/start'))
         .query({ access_token: config.token() })
         .send({});
     }, function (error, result) {
@@ -242,7 +233,7 @@ function startApp(app, callback) {
         if (result.statusCode !== 202) return exit(util.format('Failed to start app.'.red, result.statusCode, result.text));
 
         function waitForFinish(appId) {
-            superagentEnd(function () { return superagent.get(createUrl('/api/v1/apps/' + appId)).query({ access_token: config.token() }); }, function (error, result) {
+            helper.superagentEnd(function () { return superagent.get(helper.createUrl('/api/v1/apps/' + appId)).query({ access_token: config.token() }); }, function (error, result) {
                 if (error) exit(error);
                 if (result.body.runState === 'running') return callback(null);
 
@@ -304,7 +295,9 @@ function open() {
 function list() {
     ensureLoggedIn();
 
-    superagentEnd(function () { return superagent.get(createUrl('/api/v1/apps')).query({ access_token: config.token() }); }, function (error, result) {
+    helper.superagentEnd(function () {
+        return superagent.get(helper.createUrl('/api/v1/apps')).query({ access_token: config.token() });
+    }, function (error, result) {
         if (error) exit(error);
         if (result.statusCode !== 200) return exit(util.format('Failed to list apps. %s - %s'.red, result.statusCode, result.text));
 
@@ -330,8 +323,8 @@ function list() {
 
 // Once we have group support also fetch groups here
 function getUsersAndGroups(callback) {
-    superagentEnd(function () {
-        return superagent.get(createUrl('/api/v1/users')).query({ access_token: config.token() });
+    helper.superagentEnd(function () {
+        return superagent.get(helper.createUrl('/api/v1/users')).query({ access_token: config.token() });
     }, function (error, result) {
         if (error) exit(error);
         if (result.statusCode !== 200) exit(util.format('Failed to get app.'.red, result.statusCode, result.text));
@@ -344,8 +337,8 @@ function waitForHealthy(appId, callback) {
     process.stdout.write('\n => ' + 'Wait for health check'.cyan);
 
     function checkStatus() {
-        superagentEnd(function () {
-            return superagent.get(createUrl('/api/v1/apps/' + appId)).query({ access_token: config.token() });
+        helper.superagentEnd(function () {
+            return superagent.get(helper.createUrl('/api/v1/apps/' + appId)).query({ access_token: config.token() });
         }, function (error, result) {
             if (error) return callback(error);
             if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get app.'.red, result.statusCode, result.text)));
@@ -366,8 +359,8 @@ function waitForFinishInstallation(appId, waitForHealthcheck, callback) {
     var currentProgress = '';
 
     function checkStatus() {
-        superagentEnd(function () {
-            return superagent.get(createUrl('/api/v1/apps/' + appId)).query({ access_token: config.token() });
+        helper.superagentEnd(function () {
+            return superagent.get(helper.createUrl('/api/v1/apps/' + appId)).query({ access_token: config.token() });
         }, function (error, result) {
             if (error) return callback(error);
             if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get app.'.red, result.statusCode, result.text)));
@@ -410,8 +403,8 @@ function waitForBackupCompletion(callback) {
     process.stdout.write('Waiting for box backup to finish...');
 
     function checkStatus() {
-        superagentEnd(function () {
-            return superagent.get(createUrl('/api/v1/cloudron/progress'));
+        helper.superagentEnd(function () {
+            return superagent.get(helper.createUrl('/api/v1/cloudron/progress'));
         }, function (error, result) {
             if (error) return callback(error);
             if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get backup progress.'.red, result.statusCode, result.text)));
@@ -517,16 +510,16 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck, ins
 
         var url, message;
         if (!app) {
-            url = createUrl('/api/v1/apps/install');
+            url = helper.createUrl('/api/v1/apps/install');
             message = 'installed';
             if (!appStoreId && iconFilename && fs.existsSync(iconFilename)) {
                 data.icon = fs.readFileSync(iconFilename).toString('base64');
             }
         } else if (configure || (location !== app.location)) { // cloudron install --location <newloc>
-            url = createUrl('/api/v1/apps/' + app.id + '/configure');
+            url = helper.createUrl('/api/v1/apps/' + app.id + '/configure');
             message = 'configured';
         } else {
-            url = createUrl('/api/v1/apps/' + app.id + '/update');
+            url = helper.createUrl('/api/v1/apps/' + app.id + '/update');
             message = 'updated';
             if (!appStoreId && iconFilename && fs.existsSync(iconFilename)) {
                 data.icon = fs.readFileSync(iconFilename).toString('base64');
@@ -534,7 +527,7 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck, ins
             if (!app.appStoreId) data.force = true; // this allows installation over errored apps (for cli apps)
         }
 
-        superagentEnd(function () {
+        helper.superagentEnd(function () {
             var req = superagent.post(url).query({ access_token: config.token() });
             return req.send(data);
         }, function (error, result) {
@@ -625,9 +618,9 @@ function uninstall(options) {
 
         console.log('Will uninstall app at location %s', app.location.yellow.bold);
 
-        superagentEnd(function () {
+        helper.superagentEnd(function () {
             return superagent
-            .post(createUrl('/api/v1/apps/' + app.id + '/uninstall'))
+            .post(helper.createUrl('/api/v1/apps/' + app.id + '/uninstall'))
             .query({ access_token: config.token() })
             .send({});
         }, function (error, result) {
@@ -635,7 +628,7 @@ function uninstall(options) {
             if (result.statusCode !== 202) return exit(util.format('Failed to uninstall app.'.red, result.statusCode, result.text));
 
             function waitForFinish(appId) {
-                superagentEnd(function () { return superagent.get(createUrl('/api/v1/apps/' + appId)).query({ access_token: config.token() }); }, function (error, result) {
+                helper.superagentEnd(function () { return superagent.get(helper.createUrl('/api/v1/apps/' + appId)).query({ access_token: config.token() }); }, function (error, result) {
                     if (error) exit(error);
                     if (result.statusCode === 404) {
                         console.log('\n\nApp %s successfully uninstalled.', appId.bold);
@@ -679,7 +672,7 @@ function logs(options) {
         if (!app) exit(NO_APP_FOUND_ERROR_STRING);
 
         if (!options.tail) {
-            superagent.get(createUrl('/api/v1/apps/' + app.id + '/logs'))
+            superagent.get(helper.createUrl('/api/v1/apps/' + app.id + '/logs'))
                 .query({ access_token: config.token(), lines: options.lines || 500 })
                 .buffer(false)
                 .end(function (error, res) {
@@ -695,7 +688,7 @@ function logs(options) {
             return;
         }
 
-        var es = new EventSource(createUrl('/api/v1/apps/' + app.id + '/logstream') + '?lines=10&access_token=' + config.token(),
+        var es = new EventSource(helper.createUrl('/api/v1/apps/' + app.id + '/logstream') + '?lines=10&access_token=' + config.token(),
                                  { rejectUnauthorized: false }); // not sure why this is needed
 
         es.on('message', function (e) { // e { type, data, lastEventId }. lastEventId is the timestamp
@@ -733,7 +726,7 @@ function status(options) {
 function inspect(options) {
     helper.verifyArguments(arguments);
 
-    superagent.get(createUrl('/api/v1/apps')).query({ access_token: config.token() }).end(function (error, result) {
+    superagent.get(helper.createUrl('/api/v1/apps')).query({ access_token: config.token() }).end(function (error, result) {
         if (error) return exit(error);
         if (result.statusCode === 401) return exit('Use ' + 'cloudron login'.yellow + ' first');
         if (result.statusCode !== 200) return exit(util.format('Failed to list apps. %s - %s'.red, result.statusCode, result.text));
@@ -782,9 +775,9 @@ function createBackup(options) {
     if (options.box && options.app) exit('Either specify --app or --box');
 
     if (options.box) {
-        superagentEnd(function () {
+        helper.superagentEnd(function () {
                 return superagent
-                .post(createUrl('/api/v1/backups'))
+                .post(helper.createUrl('/api/v1/backups'))
                 .query({ access_token: config.token() })
                 .send({});
             }, function (error, result) {
@@ -808,9 +801,9 @@ function createBackup(options) {
 
             if (!app) exit(NO_APP_FOUND_ERROR_STRING);
 
-            superagentEnd(function () {
+            helper.superagentEnd(function () {
                 return superagent
-                .post(createUrl('/api/v1/apps/' + app.id + '/backup'))
+                .post(helper.createUrl('/api/v1/apps/' + app.id + '/backup'))
                 .query({ access_token: config.token() })
                 .send({});
             }, function (error, result) {
@@ -832,9 +825,9 @@ function createBackup(options) {
 }
 
 function listBoxBackups() {
-    superagentEnd(function () {
+    helper.superagentEnd(function () {
         return superagent
-        .get(createUrl('/api/v1/backups'))
+        .get(helper.createUrl('/api/v1/backups'))
         .query({ access_token: config.token() });
     }, function (error, result) {
         if (error) exit(error);
@@ -867,9 +860,9 @@ function listBackups(options) {
 
         if (!app) exit(NO_APP_FOUND_ERROR_STRING);
 
-        superagentEnd(function () {
+        helper.superagentEnd(function () {
             return superagent
-                .get(createUrl('/api/v1/apps/' + app.id + '/backups'))
+                .get(helper.createUrl('/api/v1/apps/' + app.id + '/backups'))
                 .query({ access_token: config.token() });
         }, function (error, result) {
             if (error) exit(error);
@@ -892,9 +885,9 @@ function listBackups(options) {
 }
 
 function saveBackup(id, outstream, callback) {
-    superagentEnd(function () {
+    helper.superagentEnd(function () {
         return superagent
-            .post(createUrl('/api/v1/backups/' + id + '/download_url'))
+            .post(helper.createUrl('/api/v1/backups/' + id + '/download_url'))
             .query({ access_token: config.token() });
     }, function (error, result) {
         if (error) callback(error);
@@ -916,9 +909,9 @@ function saveBackup(id, outstream, callback) {
 }
 
 function downloadBoxBackup(id, outdir, options) {
-    superagentEnd(function () {
+    helper.superagentEnd(function () {
         return superagent
-            .get(createUrl('/api/v1/backups'))
+            .get(helper.createUrl('/api/v1/backups'))
             .query({ access_token: config.token() });
     }, function (error, result) {
         if (error) exit(error);
@@ -961,9 +954,9 @@ function restore(options) {
 
         if (!app) exit(NO_APP_FOUND_ERROR_STRING);
 
-        superagentEnd(function () {
+        helper.superagentEnd(function () {
             return superagent
-            .post(createUrl('/api/v1/apps/' + app.id + '/restore'))
+            .post(helper.createUrl('/api/v1/apps/' + app.id + '/restore'))
             .query({ access_token: config.token() })
             .send({ backupId: options.backup || app.lastBackupId });
         }, function (error, result) {
@@ -996,9 +989,9 @@ function clone(options) {
         var location = options.location || readlineSync.question('Location: ', {});
         var portBindings = queryPortBindings(app, app.manifest);
 
-        superagentEnd(function () {
+        helper.superagentEnd(function () {
             return superagent
-            .post(createUrl('/api/v1/apps/' + app.id + '/clone'))
+            .post(helper.createUrl('/api/v1/apps/' + app.id + '/clone'))
             .query({ access_token: config.token() })
             .send({ backupId: options.backup || app.lastBackupId, location: location, portBindings: portBindings });
         }, function (error, result) {
@@ -1204,9 +1197,9 @@ function createOAuthAppCredentials(options) {
 
     var redirectURI = options.redirectUri || readlineSync.question('RedirectURI: ', {});
 
-    superagentEnd(function () {
+    helper.superagentEnd(function () {
         return superagent
-        .post(createUrl('/api/v1/oauth/clients'))
+        .post(helper.createUrl('/api/v1/oauth/clients'))
         .query({ access_token: config.token() })
         .send({ appId: 'localdevelopment', redirectURI: redirectURI, scope: options.scope });
     }, function (error, result) {
