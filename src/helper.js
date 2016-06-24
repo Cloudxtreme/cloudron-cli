@@ -283,8 +283,9 @@ function findSSHKey(key) {
 }
 
 function createUrl(api) {
-    assert.strictEqual(typeof config.apiEndpoint(), 'string');
     assert.strictEqual(typeof api, 'string');
+
+    if (!config.has('cloudron', 'apiEndpoint')) exit(util.format('Not setup yet. Please use the ' + 'login'.yellow.bold + ' command first.'));
 
     return 'https://' + config.apiEndpoint() + api;
 }

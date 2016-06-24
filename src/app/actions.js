@@ -60,11 +60,6 @@ function showDeveloperModeNotice() {
     console.error('CLI mode is disabled. Enable it at %s.'.red, 'https://' + config.apiEndpoint() + '/#/settings');
 }
 
-function ensureLoggedIn() {
-    if (!config.has('cloudron', 'token')) exit(util.format('Not setup yet. Please use the ' + 'login'.yellow.bold + ' command first.'));
-    else console.error('Using cloudron', config.cloudron().yellow.bold);
-}
-
 function selectAvailableApp(appId, callback) {
     assert(typeof appId === 'string');
     assert(typeof callback === 'function');
@@ -104,8 +99,6 @@ function getApp(appId, callback) {
         callback = appId;
         appId = null;
     }
-
-    ensureLoggedIn();
 
     var manifestFilePath = helper.locateManifest();
 
@@ -293,8 +286,6 @@ function open() {
 }
 
 function list() {
-    ensureLoggedIn();
-
     helper.superagentEnd(function () {
         return superagent.get(helper.createUrl('/api/v1/apps')).query({ access_token: config.token() });
     }, function (error, result) {
@@ -1193,8 +1184,6 @@ function pull(remote, local, options) {
 }
 
 function createOAuthAppCredentials(options) {
-    ensureLoggedIn();
-
     var redirectURI = options.redirectUri || readlineSync.question('RedirectURI: ', {});
 
     helper.superagentEnd(function () {
