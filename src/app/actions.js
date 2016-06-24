@@ -748,56 +748,33 @@ function restart(options) {
 function createBackup(options) {
     helper.verifyArguments(arguments);
 
-    if (options.box && options.app) exit('Either specify --app or --box');
+    var appId = options.app;
 
-    if (options.box) {
+    getApp(appId, function (error, app) {
+        if (error) return exit(error);
+
+        if (!app) exit(NO_APP_FOUND_ERROR_STRING);
+
         helper.superagentEnd(function () {
-                return superagent
-                .post(helper.createUrl('/api/v1/backups'))
-                .query({ access_token: config.token() })
-                .send({});
-            }, function (error, result) {
-                if (error) exit(error);
-                if (result.statusCode !== 202) return exit(util.format('Failed to backup box.'.red, result.statusCode, result.text));
+            return superagent
+            .post(helper.createUrl('/api/v1/apps/' + app.id + '/backup'))
+            .query({ access_token: config.token() })
+            .send({});
+        }, function (error, result) {
+            if (error) exit(error);
+            if (result.statusCode !== 202) return exit(util.format('Failed to backup app.'.red, result.statusCode, result.text));
 
-                waitForBackupCompletion(function (error) {
-                    if (error) {
-                        return exit('\n\n%s'.red, error.message);
-                    }
+            // FIXME: this should be waitForHealthCheck but the box code incorrectly modifies the installationState
+            waitForFinishInstallation(app.id, true, function (error) {
+                if (error) {
+                    return exit('\n\nApp backup error: %s'.red, error.message);
+                }
 
-                    console.log('\n\nBox is backed up'.green);
-                    exit();
-                });
-            });
-    } else {
-        var appId = options.app;
-
-        getApp(appId, function (error, app) {
-            if (error) return exit(error);
-
-            if (!app) exit(NO_APP_FOUND_ERROR_STRING);
-
-            helper.superagentEnd(function () {
-                return superagent
-                .post(helper.createUrl('/api/v1/apps/' + app.id + '/backup'))
-                .query({ access_token: config.token() })
-                .send({});
-            }, function (error, result) {
-                if (error) exit(error);
-                if (result.statusCode !== 202) return exit(util.format('Failed to backup app.'.red, result.statusCode, result.text));
-
-                // FIXME: this should be waitForHealthCheck but the box code incorrectly modifies the installationState
-                waitForFinishInstallation(app.id, true, function (error) {
-                    if (error) {
-                        return exit('\n\nApp backup error: %s'.red, error.message);
-                    }
-
-                    console.log('\n\nApp is backed up'.green);
-                    exit();
-                });
+                console.log('\n\nApp is backed up'.green);
+                exit();
             });
         });
-    }
+    });
 }
 
 function listBoxBackups() {

@@ -20,7 +20,6 @@ program.command('completion')
 program.command('backup')
     .description('Create backup')
     .option('--app <id>', 'App id')
-    .option('--box', 'Create whole box backup')
     .action(actions.backup);
 
 program.command('build')
