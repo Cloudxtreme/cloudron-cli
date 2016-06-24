@@ -89,9 +89,8 @@ program.command('list')
     .action(actions.list);
 
 program.command('list-backups')
-    .description('List app or Cloudron backups')
+    .description('List app backups')
     .option('--app <id>', 'App id')
-    .option('--box', 'Display cloudron backups')
     .action(actions.listBackups);
 
 program.command('login [cloudron]')

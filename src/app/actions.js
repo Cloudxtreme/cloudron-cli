@@ -777,35 +777,8 @@ function createBackup(options) {
     });
 }
 
-function listBoxBackups() {
-    helper.superagentEnd(function () {
-        return superagent
-        .get(helper.createUrl('/api/v1/backups'))
-        .query({ access_token: config.token() });
-    }, function (error, result) {
-        if (error) exit(error);
-        if (result.statusCode !== 200) return exit(util.format('Failed to list backups.'.red, result.statusCode, result.text));
-
-        var t = new Table();
-
-        result.body.backups.forEach(function (backup) {
-            t.cell('Id', backup.id);
-            t.cell('Creation Time', backup.creationTime);
-            t.cell('Version', backup.version);
-            // t.cell('Apps', backup.dependsOn.join(' '));
-
-            t.newRow();
-        });
-
-        console.log();
-        console.log(t.toString());
-    });
-}
-
 function listBackups(options) {
     helper.verifyArguments(arguments);
-
-    if (options.box) return listBoxBackups();
 
     var appId = options.app;
     getApp(appId, function (error, app) {
