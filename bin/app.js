@@ -59,10 +59,6 @@ program.command('exec [cmd...]')
     .option('--app <id>', 'App id')
     .action(actions.exec);
 
-program.command('help')
-    .description('Show this help')
-    .action(function () { program.outputHelp(); });
-
 program.command('inspect')
     .description('Inspect a Cloudron returning raw JSON')
     .option('--pretty', 'Pretty print', false)
@@ -172,7 +168,7 @@ program.command('unpublish')
     .option('-f, --force', 'Do not ask anything')
     .action(appstoreActions.unpublish);
 
-if (!process.argv.slice(2).length) {
+if (!process.argv.slice(2).length || process.argv[2] === 'help') {
     program.outputHelp();
 } else { // https://github.com/tj/commander.js/issues/338
     // deal first with global flags!
