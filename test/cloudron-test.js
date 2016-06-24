@@ -233,6 +233,28 @@ describe('Uninstall', function () {
     });
 });
 
+describe('Backup', function () {
+    var backupId;
+
+    it('create succeeds', function () {
+        var out = cli('backup --app ' + app.id);
+        expect(out.stdout).to.contain('App is backed up');
+    });
+
+    it('list succeeds', function () {
+        var out = cli('list-backups --app ' + app.id);
+        expect(out.stdout).to.contain(app.id);
+
+        backupId = out.stdout.split('\n').reverse().filter(function (b) { return b; })[0].split(' ')[0];
+    });
+
+    it('download succeeds', function () {
+        var out = cli('download-backup ' + backupId + ' /tmp/');
+        expect(out.stderr).to.equal('');
+        expect(fs.existsSync('/tmp/' + backupId)).to.be.ok();
+    });
+});
+
 describe('Logout', function () {
     it('can logout', function () {
         console.log('Uninstalling app, this can take a while');
