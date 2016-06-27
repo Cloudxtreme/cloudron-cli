@@ -42,11 +42,14 @@ function create(options, version, callback) {
 
     if (!options.accessKeyId) helper.missing('access-key-id');
     if (!options.secretAccessKey) helper.missing('secret-access-key');
+    if (!options.size) helper.missing('size');
     if (!options.backupKey) helper.missing('backup-key');
     if (!options.backupBucket) helper.missing('backup-bucket');
     if (!options.sshKey) helper.missing('ssh-key');
     if (!options.subnet) helper.missing('subnet');
     if (!options.securityGroup) helper.missing('security-group');
+
+    if (options.size < 40) helper.exit('--size must be at least 40');
 
     var params = {
         region: options.region,
@@ -59,7 +62,8 @@ function create(options, version, callback) {
         sshKey: options.sshKey,
         domain: options.fqdn,
         subnet: options.subnet,
-        securityGroup: options.securityGroup
+        securityGroup: options.securityGroup,
+        size: options.size
     };
 
     ec2tasks.create(params, function (error) {
@@ -75,6 +79,7 @@ function restore(options, backup, callback) {
 
     if (!options.type) helper.missing('type');
     if (!options.region) helper.missing('region');
+    if (!options.size) helper.missing('size');
     if (!options.accessKeyId) helper.missing('access-key-id');
     if (!options.secretAccessKey) helper.missing('secret-access-key');
     if (!options.backupKey) helper.missing('backup-key');
@@ -82,6 +87,8 @@ function restore(options, backup, callback) {
     if (!options.sshKey) helper.missing('ssh-key');
     if (!options.subnet) helper.missing('subnet');
     if (!options.securityGroup) helper.missing('security-group');
+
+    if (options.size < 40) helper.exit('--size must be at least 40');
 
     var params = {
         region: options.region,

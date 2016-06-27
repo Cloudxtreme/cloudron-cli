@@ -53,6 +53,7 @@ function create(options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof options.version, 'string');
     assert.strictEqual(typeof options.type, 'string');
+    assert.strictEqual(typeof options.size, 'number');
     assert.strictEqual(typeof options.sshKey, 'string');
     assert.strictEqual(typeof options.subnet, 'string');
     assert.strictEqual(typeof options.securityGroup, 'string');
@@ -85,7 +86,7 @@ function create(options, callback) {
                     DeviceName: '/dev/xvda',
                     Ebs: {
                         SnapshotId: mainBlockDevice.Ebs.SnapshotId,
-                        VolumeSize: 40,     // FIXME let the user specify this
+                        VolumeSize: options.size,
                         DeleteOnTermination: true,
                         VolumeType: 'gp2'
                     }
