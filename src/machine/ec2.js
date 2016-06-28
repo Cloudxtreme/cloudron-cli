@@ -95,6 +95,7 @@ function restore(options, backup, callback) {
         backupKey: options.backupKey,
         backup: backup,
         type: options.type,
+        size: options.size,
         sshKey: options.sshKey,
         domain: options.fqdn,
         subnet: options.subnet,
