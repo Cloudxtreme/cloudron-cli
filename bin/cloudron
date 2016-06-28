@@ -13,6 +13,8 @@ var DEV = process.env.NODE_ENV === 'dev';
 
 program.version(require('../package.json').version);
 
+program.command('machine', 'Cloudron instance tooling');
+
 program.command('completion')
     .description('Shows completion for you shell')
     .action(completion);
