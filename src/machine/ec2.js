@@ -66,10 +66,7 @@ function create(options, version, callback) {
         size: options.size
     };
 
-    ec2tasks.create(params, function (error) {
-        if (error) return callback(error);
-        callback();
-    });
+    ec2tasks.create(params, callback);
 }
 
 function restore(options, backup, callback) {
@@ -104,14 +101,7 @@ function restore(options, backup, callback) {
         securityGroup: options.securityGroup
     };
 
-    ec2tasks.restore(params, function (error) {
-        if (error) helper.exit(error);
-
-        console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + options.fqdn).bold);
-        console.log('');
-
-        helper.exit();
-    });
+    ec2tasks.restore(params, callback);
 }
 
 function upgrade(updateInfo, options, callback) {
