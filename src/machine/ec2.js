@@ -46,10 +46,10 @@ function create(options, version, callback) {
     if (!options.backupKey) helper.missing('backup-key');
     if (!options.backupBucket) helper.missing('backup-bucket');
     if (!options.sshKey) helper.missing('ssh-key');
-    if (!options.subnet) helper.missing('subnet');
-    if (!options.securityGroup) helper.missing('security-group');
 
     if (options.size < 40) helper.exit('--size must be at least 40');
+
+    if (!options.subnet ^ !options.securityGroup) return helper.exit('either both --subnet and --security-group must be provided OR none');
 
     var params = {
         region: options.region,
@@ -82,10 +82,10 @@ function restore(options, backup, callback) {
     if (!options.backupKey) helper.missing('backup-key');
     if (!options.backupBucket) helper.missing('backup-bucket');
     if (!options.sshKey) helper.missing('ssh-key');
-    if (!options.subnet) helper.missing('subnet');
-    if (!options.securityGroup) helper.missing('security-group');
 
     if (options.size < 40) helper.exit('--size must be at least 40');
+
+    if (!options.subnet ^ !options.securityGroup) return helper.exit('either both --subnet and --security-group must be provided OR none');
 
     var params = {
         region: options.region,

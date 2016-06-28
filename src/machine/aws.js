@@ -7,6 +7,11 @@ var assert = require('assert'),
 
 exports = module.exports = {
     init: init,
+    createVPC: createVPC,
+    getVPCDetails: getVPCDetails,
+    createSubnet: createSubnet,
+    getSubnetDetails: getSubnetDetails,
+    createSecurityGroup: createSecurityGroup,
     create: create,
     terminateInstance: terminateInstance,
     state: state,
@@ -45,6 +50,126 @@ function getImageDetails(imageId, callback) {
         if (error) return callback(error);
 
         callback(null, result.Images[0]);
+    });
+}
+
+function createVPC(callback) {
+    assert.strictEqual(typeof gEC2, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    var params = {
+        CidrBlock: '10.0.0.0/28',
+        InstanceTenancy: 'default'
+    };
+
+    gEC2.createVpc(params, function (error, result) {
+        if (error) return callback(error);
+
+        var params = {
+            Resources: [ result.Vpc.VpcId ],
+            Tags: [{
+                Key: 'Name',
+                Value: 'Cloudron'
+            }]
+        };
+
+        gEC2.createTags(params, function (error) {
+            if (error) return callback(error);
+
+            callback(null, result.Vpc.VpcId);
+        });
+    });
+}
+
+function getVPCDetails(vpcId, callback) {
+    assert.strictEqual(typeof gEC2, 'object');
+    assert.strictEqual(typeof vpcId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var params = {
+        VpcIds: [ vpcId ]
+    };
+
+    gEC2.describeVpcs(params, function (error, result) {
+        if (error) return callback(error);
+
+        callback(null, result.Vpcs[0]);
+    });
+}
+
+function createSubnet(vpcId, callback) {
+    assert.strictEqual(typeof gEC2, 'object');
+    assert.strictEqual(typeof vpcId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var params = {
+        CidrBlock: '10.0.0.0/28',
+        VpcId: vpcId
+    };
+
+    gEC2.createSubnet(params, function (error, result) {
+        if (error) return callback(error);
+
+        var params = {
+            Resources: [ result.Subnet.SubnetId ],
+            Tags: [{
+                Key: 'Name',
+                Value: 'Cloudron'
+            }]
+        };
+
+        gEC2.createTags(params, function (error) {
+            if (error) return callback(error);
+
+            callback(null, result.Subnet.SubnetId);
+        });
+    });
+}
+
+function createSecurityGroup(vpcId, callback) {
+    assert.strictEqual(typeof gEC2, 'object');
+    assert.strictEqual(typeof vpcId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var params = {
+        Description: 'Cloudron',
+        GroupName: 'Cloudron',
+        VpcId: vpcId
+    };
+
+    gEC2.createSecurityGroup(params, function (error, result) {
+        if (error) return callback(error);
+
+        var securityGroupId = result.GroupId;
+
+        var params = {
+            GroupId: securityGroupId,
+            FromPort: 0,
+            ToPort: 65535,
+            IpProtocol: '-1',
+            CidrIp: '0.0.0.0/0'
+        };
+
+        gEC2.authorizeSecurityGroupIngress(params, function (error) {
+            if (error) return callback(error);
+
+            callback(null, securityGroupId);
+        });
+    });
+}
+function getSubnetDetails(subnetId, callback) {
+    assert.strictEqual(typeof gEC2, 'object');
+    assert.strictEqual(typeof subnetId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var params = {
+        SubnetIds: [ subnetId ]
+    };
+
+    gEC2.describeSubnets(params, function (error, result) {
+        if (error) return callback(error);
+
+        callback(null, result.Subnets[0]);
     });
 }
 

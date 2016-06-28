@@ -40,6 +40,92 @@ function checkDNSZone(callback) {
     });
 }
 
+function waitForVPC(vpcId, callback) {
+    assert.strictEqual(typeof vpcId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    process.stdout.write('Waiting for VPC to be available...');
+
+    async.forever(function (callback) {
+        aws.getVPCDetails(vpcId, function (error, result) {
+            if (error) return callback(error);
+            if (result.State === 'available') return callback('done');
+
+            process.stdout.write('.');
+
+            setTimeout(callback, 1000);
+        });
+    }, function (doneOrError) {
+        if (doneOrError !== 'done') return callback(doneOrError);
+
+        process.stdout.write(vpcId + '\n');
+
+        callback();
+    });
+}
+
+function waitForSubnet(subnetId, callback) {
+    assert.strictEqual(typeof subnetId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    process.stdout.write('Waiting for Subnet to be available...');
+
+    async.forever(function (callback) {
+        aws.getSubnetDetails(subnetId, function (error, result) {
+            if (error) return callback(error);
+            if (result.State === 'available') return callback('done');
+
+            process.stdout.write('.');
+
+            setTimeout(callback, 1000);
+        });
+    }, function (doneOrError) {
+        if (doneOrError !== 'done') return callback(doneOrError);
+
+        process.stdout.write(subnetId + '\n');
+
+        callback();
+    });
+}
+
+function createSubnetAndSecurityGroup(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    if (gParams.securityGroup && gParams.subnet) return callback();
+
+    console.log('Creating VPC...');
+
+    aws.createVPC(function (error, vpcId) {
+        if (error) return callback(error);
+
+        waitForVPC(vpcId, function (error) {
+            if (error) return callback(error);
+
+            console.log('Creating Subnet...');
+
+            aws.createSubnet(vpcId, function (error, subnetId) {
+                if (error) return callback(error);
+
+                gParams.subnet = subnetId;
+
+                waitForSubnet(subnetId, function (error) {
+                    if (error) return callback(error);
+
+                    console.log('Creating security group...');
+
+                    aws.createSecurityGroup(vpcId, function (error, securityGroupId) {
+                        if (error) return callback(error);
+
+                        gParams.securityGroup = securityGroupId;
+
+                        callback();
+                    });
+                });
+            });
+        });
+    });
+}
+
 function createServer(callback) {
     assert.strictEqual(typeof callback, 'function');
 
@@ -378,9 +464,7 @@ function create(options, callback) {
     assert.strictEqual(typeof options.type, 'string');
     assert.strictEqual(typeof options.size, 'number');
     assert.strictEqual(typeof options.sshKey, 'string');
-    assert.strictEqual(typeof options.subnet, 'string');
     assert.strictEqual(typeof options.domain, 'string');
-    assert.strictEqual(typeof options.securityGroup, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     console.log('Using version %s', options.version.cyan.bold);
@@ -395,6 +479,7 @@ function create(options, callback) {
 
     var tasks = [
         checkDNSZone,
+        createSubnetAndSecurityGroup,
         createServer,
         waitForServer,
         getIp,
@@ -425,9 +510,7 @@ function restore(options, callback) {
     assert.strictEqual(typeof options.secretAccessKey, 'string');
     assert.strictEqual(typeof options.type, 'string');
     assert.strictEqual(typeof options.sshKey, 'string');
-    assert.strictEqual(typeof options.subnet, 'string');
     assert.strictEqual(typeof options.domain, 'string');
-    assert.strictEqual(typeof options.securityGroup, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     console.log('Restoring %s to backup %s with version %s', options.domain.cyan.bold, options.backup.id.cyan.bold, options.backup.version.cyan.bold);
@@ -446,6 +529,7 @@ function restore(options, callback) {
     var tasks = [
         checkDNSZone,
         getBackupDetails,
+        createSubnetAndSecurityGroup,
         createServer,
         waitForServer,
         getIp,
