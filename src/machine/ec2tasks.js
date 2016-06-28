@@ -336,14 +336,14 @@ function waitForDNS(callback) {
 
     async.forever(function (callback) {
         dns.resolveNs(tld.getDomain(gParams.domain), function (error, nameservers) {
-            if (error) return setTimeout(callback, 2000);
+            if (error) return setTimeout(callback, 5000);
             if (!nameservers) return callback(new Error('Unable to get nameservers'));
 
             async.every(nameservers, isChangeSynced.bind(null, adminFqdn), function (synced) {
                 process.stdout.write('.');
 
                 // try again if not synced
-                setTimeout(function () { callback(synced ? 'done' : null); }, 2000);
+                setTimeout(function () { callback(synced ? 'done' : null); }, 5000);
             });
         });
     }, function (errorOrDone) {
