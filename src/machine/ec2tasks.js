@@ -101,24 +101,30 @@ function createSubnetAndSecurityGroup(callback) {
         waitForVPC(vpcId, function (error) {
             if (error) return callback(error);
 
-            console.log('Creating Subnet...');
+            console.log('Creating internet gateway and setup routes...');
 
-            aws.createSubnet(vpcId, function (error, subnetId) {
+            aws.createInternetGateway(vpcId, function (error) {
                 if (error) return callback(error);
 
-                gParams.subnet = subnetId;
+                console.log('Creating Subnet...');
 
-                waitForSubnet(subnetId, function (error) {
+                aws.createSubnet(vpcId, function (error, subnetId) {
                     if (error) return callback(error);
 
-                    console.log('Creating security group...');
+                    gParams.subnet = subnetId;
 
-                    aws.createSecurityGroup(vpcId, function (error, securityGroupId) {
+                    waitForSubnet(subnetId, function (error) {
                         if (error) return callback(error);
 
-                        gParams.securityGroup = securityGroupId;
+                        console.log('Creating security group...');
 
-                        callback();
+                        aws.createSecurityGroup(vpcId, function (error, securityGroupId) {
+                            if (error) return callback(error);
+
+                            gParams.securityGroup = securityGroupId;
+
+                            callback();
+                        });
                     });
                 });
             });

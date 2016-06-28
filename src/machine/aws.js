@@ -11,6 +11,7 @@ exports = module.exports = {
     getVPCDetails: getVPCDetails,
     createSubnet: createSubnet,
     getSubnetDetails: getSubnetDetails,
+    createInternetGateway: createInternetGateway,
     createSecurityGroup: createSecurityGroup,
     create: create,
     terminateInstance: terminateInstance,
@@ -122,6 +123,51 @@ function createSubnet(vpcId, callback) {
             if (error) return callback(error);
 
             callback(null, result.Subnet.SubnetId);
+        });
+    });
+}
+
+function createInternetGateway(vpcId, callback) {
+    assert.strictEqual(typeof gEC2, 'object');
+    assert.strictEqual(typeof vpcId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    gEC2.createInternetGateway({}, function (error, result) {
+        if (error) return callback(error);
+
+        var gatewayId = result.InternetGateway.InternetGatewayId;
+
+        var params = {
+            InternetGatewayId: gatewayId,
+            VpcId: vpcId
+        };
+
+        gEC2.attachInternetGateway(params, function (error) {
+            if (error) return callback(error);
+
+            var params = {
+                Filters: [{
+                    Name: 'vpc-id',
+                    Values: [ vpcId ]
+                }]
+            };
+
+            gEC2.describeRouteTables(params, function (error, result) {
+                if (error) return callback(error);
+                if (result.RouteTables.length === 0) return callback(new Error('Unable to find routing table for VPC'));
+
+                var params = {
+                    DestinationCidrBlock: '0.0.0.0/0',
+                    RouteTableId: result.RouteTables[0].RouteTableId,
+                    GatewayId: gatewayId,
+                };
+
+                gEC2.createRoute(params, function (error) {
+                    if (error) return callback(error);
+
+                    callback(null, gatewayId);
+                });
+            });
         });
     });
 }
