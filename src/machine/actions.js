@@ -413,7 +413,7 @@ function updateOrUpgrade(fqdn, options) {
             return superagent
                 .get(helper.createUrl('/api/v1/cloudron/config'))
                 .query({ access_token: config.token() });
-        }, function (error, result) {
+        }, options, function (error, result) {
             if (error) helper.exit(error);
             if (result.statusCode !== 200) return helper.exit(util.format('Failed to get Cloudron configuration.'.red, result.statusCode, result.text));
             if (!result.body.update || !result.body.update.box) return helper.exit('No update available.'.red);

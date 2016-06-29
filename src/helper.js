@@ -325,9 +325,14 @@ function authenticate(options, callback) {
 }
 
 // takes a function returning a superagent request instance and will reauthenticate in case the token is invalid
-function superagentEnd(requestFactory, callback) {
+function superagentEnd(requestFactory, options, callback) {
+    if (!callback) {
+        callback = options;
+        options = {};
+    }
+
     requestFactory().end(function (error, result) {
-        if (!error && result.statusCode === 401) return authenticate({}, superagentEnd.bind(null, requestFactory, callback));
+        if (!error && result.statusCode === 401) return authenticate(options, superagentEnd.bind(null, requestFactory, callback));
         callback(error, result);
     });
 }
