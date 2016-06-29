@@ -13,6 +13,7 @@ program.description('Upgrade or updates a Cloudron')
     .arguments('<domain>')
     .option('-u, --username <username>', 'Username')
     .option('-p, --password <password>', 'Password (unsafe)')
+    .option('-y, --yes', 'Skip interactive question')
     .option('--ssh-key <ssh key>', 'SSH key')
     .option('--instance-id <instanceId>', 'EC2 instance id')
     .action(actions.updateOrUpgrade);
