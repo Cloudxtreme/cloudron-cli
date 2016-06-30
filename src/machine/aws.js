@@ -237,17 +237,17 @@ function create(options, callback) {
         if (error) return callback(error);
         if (!result.ami) return callback('This version does not have an EC2 image.');
 
-        var amiId = result.ami.filter(function (a) { return a.region === options.region; })[0];
-        if (!amiId) return callback('This version is not available in region ' + options.region);
+        var ami = result.ami.filter(function (a) { return a.region === options.region; })[0];
+        if (!ami) return callback('This version is not available in region ' + options.region);
 
-        getImageDetails(amiId, function (error, amiDetails) {
+        getImageDetails(ami.id, function (error, amiDetails) {
             if (error) return callback(error);
 
             var mainBlockDevice = amiDetails.BlockDeviceMappings.filter(function (d) { return !!d.Ebs; })[0];
             if (!mainBlockDevice) return callback(new Error('Unable to detect main block device'));
 
             var params = {
-                ImageId: result.ami,
+                ImageId: ami.id,
                 MinCount: 1,
                 MaxCount: 1,
                 InstanceType: options.type,
