@@ -295,8 +295,11 @@ function createUrl(api) {
 function authenticate(options, callback) {
     assert.strictEqual(typeof options, 'object');
 
-    console.log();
-    console.log('Enter credentials for ' + config.cloudron().bold + ':');
+    if (!options.username && !options.password) {
+        console.log();
+        console.log('Enter credentials for ' + config.cloudron().bold + ':');
+    }
+
     var username = options.username || readlineSync.question('Username: ', {});
     var password = options.password || readlineSync.question('Password: ', { noEchoBack: true });
 
@@ -318,7 +321,9 @@ function authenticate(options, callback) {
 
         config.set('token', result.body.token);
 
-        console.log('Login successful.'.green);
+        if (!options.username && !options.password) {
+            console.log('Login successful.'.green);
+        }
 
         if (typeof callback === 'function') callback();
     });

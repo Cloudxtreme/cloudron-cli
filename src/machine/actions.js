@@ -435,6 +435,7 @@ function updateOrUpgrade(fqdn, options) {
 
             if (boxUpdate.upgrade) {
                 console.log('This is an upgrade and will result in a few minutes of downtime!'.red);
+                console.log();
 
                 if (!options.yes) {
                     var answer = readlineSync.question('Perform upgrade now (y/n)? ');

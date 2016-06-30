@@ -437,7 +437,13 @@ function getInstanceResources(callback) {
             gParams.subnet = result.SubnetId;
             gParams.securityGroup = result.SecurityGroups[0].GroupId;
 
-            callback(null);
+            aws.getVolumeDetails(result.BlockDeviceMappings[0].Ebs.VolumeId, function (error, result) {
+                if (error) return callback(error);
+
+                gParams.size = result.Size;
+
+                callback();
+            });
         });
     });
 }
@@ -450,7 +456,7 @@ function getLastBackup(callback) {
 
         gParams.backup = result[0];
 
-        callback(null);
+        callback();
     });
 }
 

@@ -20,7 +20,8 @@ exports = module.exports = {
     checkIfDNSZoneExists: checkIfDNSZoneExists,
     getBackupUrl: getBackupUrl,
     listBackups: listBackups,
-    getInstanceDetails: getInstanceDetails
+    getInstanceDetails: getInstanceDetails,
+    getVolumeDetails: getVolumeDetails
 };
 
 var gEC2 = null;
@@ -432,7 +433,24 @@ function getInstanceDetails(instanceId, callback) {
 
     gEC2.describeInstances(params, function (error, result) {
         if (error) return callback(error);
+        if (result.Reservations.length === 0) return callback('No such EC2 instance. Is your instance id correct?');
 
         callback(null, result.Reservations[0].Instances[0]);
+    });
+}
+
+function getVolumeDetails(volumeId, callback) {
+    assert.strictEqual(typeof gEC2, 'object');
+    assert.strictEqual(typeof volumeId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var params = {
+        VolumeIds: [ volumeId ]
+    };
+
+    gEC2.describeVolumes(params, function (error, result) {
+        if (error) return callback(error);
+
+        callback(null, result.Volumes[0]);
     });
 }
