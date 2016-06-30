@@ -399,9 +399,8 @@ function retireOldCloudron(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     helper.exec('ssh', helper.getSSH(config.apiEndpoint(), gParams.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/retire'), function (error) {
-        if (error) console.error('Retire failed: ', error);
+        if (error) return callback('Retire failed: ' + error);
 
-        // Retire may not be able to respond in time, while the box code is being shut down. So we just print the error an carry on
         callback();
     });
 }
