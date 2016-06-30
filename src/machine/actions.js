@@ -416,7 +416,10 @@ function updateOrUpgrade(fqdn, options) {
         }, options, function (error, result) {
             if (error) helper.exit(error);
             if (result.statusCode !== 200) return helper.exit(util.format('Failed to get Cloudron configuration.'.red, result.statusCode, result.text));
-            if (!result.body.update || !result.body.update.box) return helper.exit('No update available.'.red);
+            if (!result.body.update || !result.body.update.box) {
+                console.log('Already on latest version.'.green);
+                return helper.exit();
+            }
 
             var boxUpdate = result.body.update.box;
 
