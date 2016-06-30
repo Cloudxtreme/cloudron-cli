@@ -224,6 +224,7 @@ function create(options, callback) {
     assert.strictEqual(typeof gEC2, 'object');
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof options.version, 'string');
+    assert.strictEqual(typeof options.region, 'string');
     assert.strictEqual(typeof options.type, 'string');
     assert.strictEqual(typeof options.size, 'number');
     assert.strictEqual(typeof options.sshKey, 'string');
@@ -236,7 +237,10 @@ function create(options, callback) {
         if (error) return callback(error);
         if (!result.ami) return callback('This version does not have an EC2 image.');
 
-        getImageDetails(result.ami, function (error, amiDetails) {
+        var amiId = result.ami.filter(function (a) { return a.region === options.region; })[0];
+        if (!amiId) return callback('This version is not available in region ' + options.region);
+
+        getImageDetails(amiId, function (error, amiDetails) {
             if (error) return callback(error);
 
             var mainBlockDevice = amiDetails.BlockDeviceMappings.filter(function (d) { return !!d.Ebs; })[0];

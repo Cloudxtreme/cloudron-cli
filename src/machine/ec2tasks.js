@@ -143,6 +143,7 @@ function createServer(callback) {
         var params = {
             version: gParams.version,
             type: gParams.type,
+            region: gParams.region,
             sshKey: gParams.sshKey,
             subnet: gParams.subnet,
             securityGroup: gParams.securityGroup,
