@@ -17,7 +17,6 @@ var superagent = require('superagent'),
     EventSource = require('eventsource'),
     manifestFormat = require('cloudron-manifestformat'),
     semver = require('semver'),
-    cloudronActions = require('./actions.js'),
     split = require('split'),
     micromatch = require('micromatch');
 
@@ -374,7 +373,7 @@ function upload(options) {
                 console.log('\nApp can be tested on other cloudrons using the cli tool:\n\t\t%s', ('cloudron install --appstore-id ' + manifest.id + '@' + manifest.version).white);
 
                 if (config.cloudron()) {
-                    var url = cloudronActions.createUrl('/#/appstore/' + manifest.id + '?version=' + manifest.version);
+                    var url = helper.createUrl('/#/appstore/' + manifest.id + '?version=' + manifest.version);
                     console.log('\nDirect link to the app on your Cloudron:\n\t\t%s\n', url.white);
                 }
             });
