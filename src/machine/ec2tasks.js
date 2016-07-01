@@ -255,7 +255,7 @@ function getUserData(callback) {
                     },
                     caas: null,
                     tlsConfig: {
-                        provider: 'letsencrypt-dev',
+                        provider: process.env.CLOUDRON_TLS_PROVIDER || 'letsencrypt-prod',
                     },
                     tlsCert: tlsCert,
                     tlsKey: tlsKey,
