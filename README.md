@@ -62,7 +62,10 @@ Just run the following in your shell
 ```
 This command loads the completions into your current shell. Adding it to your ~/.bashrc or ~/.zshrc will make the completions available everywhere.
 
+
 ## Tests
 
-CLOUDRON=my.cloudron.name USERNAME=username PASSWORD=password mocha tests/
-
+The tests work against a Cloudron directly and can be run with
+```
+CLOUDRON=<domain> USERNAME=<username> PASSWORD=<password> mocha tests/
+```
