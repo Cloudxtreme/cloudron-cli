@@ -352,7 +352,7 @@ function waitForUpdateFinish(callback) {
             if (error) return callback(error);
             if (result.statusCode === 503) return setTimeout(checkStatus, 1000);
             if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get update progress.'.red, result.statusCode, result.text)));
-            if (result.body.update === null || result.body.update.percent >= 100) return callback();
+            if (!result.body.update || result.body.update.percent >= 100) return callback();
 
             process.stdout.write('.');
 
