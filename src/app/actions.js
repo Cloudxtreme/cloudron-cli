@@ -1098,11 +1098,11 @@ function init() {
     var manifestFilePath = helper.locateManifest();
     if (path.dirname(manifestFilePath) === process.cwd()) return exit('CloudronManifest.json already exists in current directory'.red);
 
-    var manifestTemplate = fs.readFileSync(__dirname + '/CloudronManifest.json.ejs', 'utf8');
-    var dockerfileTemplate = fs.readFileSync(__dirname + '/Dockerfile.ejs', 'utf8');
-    var descriptionTemplate = fs.readFileSync(__dirname + '/DESCRIPTION.md.ejs', 'utf8');
-    var dockerignoreTemplate = fs.readFileSync(__dirname + '/dockerignore.ejs', 'utf8');
-    var changelogTemplate = fs.readFileSync(__dirname + '/CHANGELOG.ejs', 'utf8');
+    var manifestTemplate = fs.readFileSync(path.join(__dirname, '../templates/', 'CloudronManifest.json.ejs'), 'utf8');
+    var dockerfileTemplate = fs.readFileSync(path.join(__dirname, '../templates/', 'Dockerfile.ejs'), 'utf8');
+    var descriptionTemplate = fs.readFileSync(path.join(__dirname, '../templates/', 'DESCRIPTION.md.ejs'), 'utf8');
+    var dockerignoreTemplate = fs.readFileSync(path.join(__dirname, '../templates/', 'dockerignore.ejs'), 'utf8');
+    var changelogTemplate = fs.readFileSync(path.join(__dirname, '../templates/', 'CHANGELOG.ejs'), 'utf8');
 
     var data = {
         version: '0.0.1'
