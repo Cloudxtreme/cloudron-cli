@@ -257,13 +257,21 @@ function getSSH(host, sshKey, cmd) {
     cmd = cmd || '';
     cmd = Array.isArray(cmd) ? cmd.join(' ') : cmd;
 
-    // try to detect ssh key
-    sshKey = findSSHKey(sshKey);
-    if (!sshKey) exit('SSH key not found');
+    if (sshKey) {
+        // try to detect ssh key
+        sshKey = findSSHKey(sshKey);
+        if (!sshKey) exit('SSH key not found');
+    }
 
-    var SSH = 'root@%s -tt -p 202 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i %s %s';
+    var SSH = 'root@%s -tt -p 202 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=10';
+    var out = util.format(SSH, host);
 
-    return util.format(SSH, host, sshKey, cmd).split(' ');
+    // only add this if we have an sshKey
+    if (sshKey) out += ' -i ' + sshKey;
+
+    out += ' ' + cmd;
+
+    return out.split(' ');
 }
 
 function findSSHKey(key) {

@@ -320,8 +320,6 @@ function ssh(fqdn, cmds, options) {
     assert(Array.isArray(cmds));
     assert.strictEqual(typeof options, 'object');
 
-    if (!options.sshKey) helper.missing('ssh-key');
-
     helper.detectCloudronApiEndpoint(fqdn, function (error) {
         var ip = null;
 
@@ -333,7 +331,11 @@ function ssh(fqdn, cmds, options) {
             }
         }
 
-        helper.exec('ssh', helper.getSSH(ip || config.apiEndpoint(), options.sshKey, cmds));
+        helper.exec('ssh', helper.getSSH(ip || config.apiEndpoint(), options.sshKey, cmds), function (error) {
+            if (error && error.message.indexOf('ssh exited with code 255') !== -1) helper.exit('try specifying the --ssh-key');
+
+            helper.exit(error);
+        });
     });
 }
 
