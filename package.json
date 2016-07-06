@@ -26,6 +26,7 @@
     "ejs": "^2.3.1",
     "eventsource": "^0.1.6",
     "micromatch": "^2.2.0",
+    "mkdirp": "^0.5.1",
     "native-dns": "^0.7.0",
     "opn": "^1.0.1",
     "progress": "^1.1.8",

@@ -1,6 +1,6 @@
 {
   "name": "cloudron",
-  "version": "0.10.2",
+  "version": "0.12.1",
   "dependencies": {
     "async": {
       "version": "1.5.2",
@@ -345,6 +345,18 @@
               "resolved": "https://registry.npmjs.org/is-primitive/-/is-primitive-2.0.0.tgz"
             }
           }
+        }
+      }
+    },
+    "mkdirp": {
+      "version": "0.5.1",
+      "from": "mkdirp@*",
+      "resolved": "https://registry.npmjs.org/mkdirp/-/mkdirp-0.5.1.tgz",
+      "dependencies": {
+        "minimist": {
+          "version": "0.0.8",
+          "from": "minimist@0.0.8",
+          "resolved": "https://registry.npmjs.org/minimist/-/minimist-0.0.8.tgz"
         }
       }
     },
