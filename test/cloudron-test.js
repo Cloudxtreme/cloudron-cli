@@ -226,13 +226,6 @@ describe('Status', function () {
     });
 });
 
-describe('Uninstall', function () {
-    it('can uninstall', function () {
-        var out = cli('uninstall --app ' + app.id);
-        expect(out.stdout).to.contain('successfully uninstalled');
-    });
-});
-
 describe('Backup', function () {
     var backupId;
 
@@ -266,6 +259,13 @@ describe('app logs', function () {
     it('succeeds', function () {
         var out = cli('logs --app ' + app.id);
         expect(out.stdout).to.contain('listening on');
+    });
+});
+
+describe('Uninstall', function () {
+    it('can uninstall', function () {
+        var out = cli('uninstall --app ' + app.id);
+        expect(out.stdout).to.contain('successfully uninstalled');
     });
 });
 
