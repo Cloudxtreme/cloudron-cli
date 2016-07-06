@@ -36,6 +36,7 @@
     "semver": "^4.3.6",
     "split": "^0.3.3",
     "superagent": "^2.0.0",
+    "superagent-sync": "^0.2.0",
     "supererror": "^0.7.1",
     "tar-fs": "https://registry.npmjs.org/tar-fs/-/tar-fs-1.12.0.tgz",
     "tldjs": "^1.6.2",
