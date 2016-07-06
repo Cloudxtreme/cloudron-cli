@@ -431,7 +431,6 @@ function saveBackupStream(id, outstream, callback) {
             progress.setLength(res.headers['content-length']);
         });
 
-        // var cmd = 'curl -s -L "' + result.body.url + '" | openssl aes-256-cbc -d -pass pass:' + result.body.backupKey;
         var cmd = 'openssl aes-256-cbc -d -pass pass:' + result.body.backupKey;
         var openssl = spawn('sh', [ '-c', cmd ]);
 
