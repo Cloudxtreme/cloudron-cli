@@ -42,7 +42,7 @@ function createUrl(api) {
 // takes a function returning a superagent request instance and will reauthenticate in case the token is invalid
 function superagentEnd(requestFactory, callback) {
     requestFactory().end(function (error, result) {
-        if (error) return callback(error);
+        if (error && !error.response) return callback(error);
         if (result.statusCode === 401) return authenticate({ error: true }, superagentEnd.bind(null, requestFactory, callback));
         if (result.statusCode === 403) return callback(new Error(result.type === 'application/javascript' ? JSON.stringify(result.body) : result.text));
         callback(error, result);
@@ -58,7 +58,7 @@ function authenticate(options, callback) {
     config.unset('appStoreToken');
 
     superagent.get(createUrl('/api/v1/login')).auth(username, password).end(function (error, result) {
-        if (error) exit(error);
+        if (error && !error.response) exit(error);
         if (result.statusCode !== 200) {
             console.log('Login failed.'.red);
             return authenticate({}, callback);
@@ -89,7 +89,7 @@ function info(app) {
         superagentEnd(function () {
             return superagent.get(createUrl('/api/v1/developers/apps/' + appStoreId)).query({ accessToken: config.appStoreToken() });
         }, function (error, result) {
-            if (error) exit(util.format('Failed to list apps: %s', error.message.red));
+            if (error && !error.response) exit(util.format('Failed to list apps: %s', error.message.red));
             if (result.statusCode !== 200) exit(util.format('Failed to list apps: %s message: %s', result.statusCode, result.text));
 
             console.log(result.body);
@@ -107,7 +107,7 @@ function listVersions(options) {
         superagentEnd(function () {
             return superagent.get(createUrl('/api/v1/developers/apps/' + appStoreId + '/versions')).query({ accessToken: config.appStoreToken() });
         }, function (error, result) {
-            if (error) exit(util.format('Failed to list versions: %s', error.message.red));
+            if (error && !error.response) exit(util.format('Failed to list versions: %s', error.message.red));
             if (result.statusCode !== 200) exit(util.format('Failed to list versions: %s message: %s', result.statusCode, result.text));
 
             if (result.body.versions.length === 0) return console.log('No versions found.');
@@ -149,7 +149,7 @@ function addApp(manifest, baseDir, callback) {
         .query({ accessToken: config.appStoreToken() })
         .send({ id: manifest.id });
     }, function (error, result) {
-        if (error) return exit(util.format('Failed to create app: %s', error.message.red));
+        if (error && !error.response) return exit(util.format('Failed to create app: %s', error.message.red));
         if (result.statusCode !== 201 && result.statusCode !== 409) {
             return exit(util.format('Failed to create app: %s message: %s', result.statusCode, result.text));
         }
@@ -218,7 +218,7 @@ function addVersion(manifest, buildId, baseDir, callback) {
         req.attach('manifest', new Buffer(JSON.stringify(manifest)), { filename: 'manifest' });
         return req;
     }, function (error, result) {
-        if (error) return callback(new Error(util.format('Failed to publish version: %s', error.message)));
+        if (error && !error.response) return callback(new Error(util.format('Failed to publish version: %s', error.message)));
         if (result.statusCode === 409) return callback('This version already exists. Use --force to overwrite.');
         if (result.statusCode !== 204) return callback(new Error(util.format('Failed to publish version (statusCode %s): \n%s', result.statusCode, result.body && result.body.message ? result.body.message.red : result.text)));
 
@@ -262,7 +262,7 @@ function updateVersion(manifest, buildId, baseDir, callback) {
         req.attach('manifest', new Buffer(JSON.stringify(manifest)), { filename: 'manifest' });
         return req;
     }, function (error, result) {
-        if (error) return callback(new Error(util.format('Failed to publish version: %s', error.message)));
+        if (error && !error.response) return callback(new Error(util.format('Failed to publish version: %s', error.message)));
         if (result.statusCode !== 204) {
             return callback(new Error(util.format('Failed to publish version (statusCode %s): \n%s', result.statusCode, result.body && result.body.message ? result.body.message.red : result.text)));
         }
@@ -284,7 +284,7 @@ function delVersion(manifest, force) {
     superagentEnd(function () {
         return superagent.del(createUrl('/api/v1/developers/apps/' + manifest.id + '/versions/' + manifest.version)).query({ accessToken: config.appStoreToken() });
     }, function (error, result) {
-        if (error) return exit(util.format('Failed to unpublish version: %s', error.message.red));
+        if (error && !error.response) return exit(util.format('Failed to unpublish version: %s', error.message.red));
         if (result.statusCode !== 204) exit(util.format('Failed to unpublish version (statusCode %s): \n%s', result.statusCode, result.body && result.body.message ? result.body.message.red : result.text));
 
         console.log('version unpublished.'.green);
@@ -304,7 +304,7 @@ function delApp(appId, force) {
     superagentEnd(function () {
         return superagent.del(createUrl('/api/v1/developers/apps/' + appId)).query({ accessToken: config.appStoreToken() });
     }, function (error, result) {
-        if (error) return exit(util.format('Failed to unpublish app: %s', error.message.red));
+        if (error && !error.response) return exit(util.format('Failed to unpublish app: %s', error.message.red));
         if (result.statusCode !== 204) exit(util.format('Failed to unpublish app (statusCode %s): \n%s', result.statusCode, result.body && result.body.message ? result.body.message.red : result.text));
 
         console.log('App unpublished.'.green);
@@ -320,7 +320,7 @@ function submitAppForReview(manifest, callback) {
         .query({ accessToken: config.appStoreToken() })
         .send({ });
     }, function (error, result) {
-        if (error) exit(util.format('Failed to submit app for review: %s', error.message.red));
+        if (error && !error.response) exit(util.format('Failed to submit app for review: %s', error.message.red));
         if (result.statusCode === 404) {
             console.log('No version %s found. Please use %s first.', manifest.version.bold, 'cloudron upload'.cyan);
             exit('Failed to submit app for review.'.red);
@@ -425,7 +425,7 @@ function getBuildInfo(buildId, callback) {
     superagentEnd(function () {
         return superagent.get(createUrl('/api/v1/developers/builds/' + buildId)).query({ accessToken: config.appStoreToken() });
     }, function (error, result) {
-        if (error) return callback(error);
+        if (error && !error.response) return callback(error);
         if (result.statusCode !== 200) return callback(util.format('Failed to get build.'.red, result.statusCode, result.text));
 
         if (result.body.status === 'success') return callback(null, result.body);
@@ -443,7 +443,7 @@ function printBuildLog(buildId, callback) {
     superagentEnd(function () {
         return superagent.get(createUrl('/api/v1/developers/builds/' + buildId + '/log')).query({ accessToken: config.appStoreToken() });
     }, function (error, result) {
-        if (error) return callback(error);
+        if (error && !error.response) return callback(error);
         if (result.statusCode === 420) return callback('No build logs yet. Try again later.');
         if (result.statusCode !== 200) return callback(util.format('Failed to get build log.'.red, result.statusCode, result.text));
 
@@ -606,7 +606,7 @@ function build(options) {
                 .field('appId', manifest.id)
                 .attach('sourceArchive', sourceArchiveFilePath);
         }, function (error, result) {
-            if (error) return exit(util.format('Failed to build app: %s', error.message.red));
+            if (error && !error.response) return exit(util.format('Failed to build app: %s', error.message.red));
             if (result.statusCode === 413) exit('Failed to build app. The app source is too large.\nPlease adjust your .dockerignore file to only include neccessary files.'.red);
             if (result.statusCode !== 201) exit(util.format('Failed to build app (statusCode %s): \n%s', result.statusCode, result.body && result.body.message ? result.body.message.red : result.text));
 
@@ -670,7 +670,7 @@ function listPublishedApps(options) {
         .query({ accessToken: config.appStoreToken() })
         .send({ });
     }, function (error, result) {
-        if (error) return exit(util.format('Failed to get list of published apps: %s', error.message.red));
+        if (error && !error.response) return exit(util.format('Failed to get list of published apps: %s', error.message.red));
         if (result.statusCode !== 200) return exit(util.format('Failed to get list of published apps (statusCode %s): \n%s', result.statusCode, result.body && result.body.message ? result.body.message.red : result.text));
 
         if (result.body.apps.length === 0) return console.log('No apps published.');

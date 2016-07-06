@@ -19,7 +19,7 @@ function init(callback) {
     if (gVersions) return callback();
 
     superagent.get(exports.versionsUrl).end(function (error, result) {
-        if (error) return callback(error);
+        if (error && !error.response) return callback(error);
         if (result.statusCode !== 200) return callback(new Error('Unable to fetch versions file'));
 
         gVersions = result.body;

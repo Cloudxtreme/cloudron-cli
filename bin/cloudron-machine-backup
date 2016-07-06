@@ -21,6 +21,7 @@ program.command('download <domain> [outdir]')
     .option('-u, --username <username>', 'Username')
     .option('-p, --password <password>', 'Password (unsafe)')
     .option('--backup-id <backupId>', 'Backup Id')
+    .option('--decrypt', 'Decrypt backups')
     .action(actions.downloadBackup);
 
 program.command('list <domain>')

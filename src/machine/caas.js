@@ -30,7 +30,7 @@ function waitForCloudronReady(cloudron, callback) {
         process.stdout.write('.');
 
         superagent.get(createUrl('/api/v1/cloudrons/' + cloudron.id)).query({ accessToken: config.appStoreToken() }).end(function (error, result) {
-            if (error) return setTimeout(checkStatus, 2000);
+            if (error && !error.response) return setTimeout(checkStatus, 2000);
             if (result.statusCode !== 200) return callback(new Error('Failed to get Cloudron status. ' + result.statusCode + ' - ' + (result.body ? result.body.message : result.text)));
             if (result.body.box.status !== 'ready') return setTimeout(checkStatus, 2000);
 
@@ -45,7 +45,7 @@ function getCloudronByFQDN(fqdn, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     superagent.get(createUrl('/api/v1/cloudrons')).query({ accessToken: config.appStoreToken() }).end(function (error, result) {
-        if (error) return callback(new Error(util.format('Failed to list cloudrons: %s', error.message)));
+        if (error && !error.response) return callback(new Error(util.format('Failed to list cloudrons: %s', error.message)));
         if (result.statusCode !== 200) return callback(new Error(util.format('Failed to list cloudrons: %s message: %s', result.statusCode, result.text)));
 
         var cloudron = result.body.boxes.filter(function (b) { return b.domain === fqdn; })[0];
@@ -71,7 +71,7 @@ function create(options, version, callback) {
             size: options.type,
             version: version
         }).end(function (error, result) {
-            if (error) return callback(error);
+            if (error && !error.response) return callback(error);
             if (result.statusCode !== 201) return callback(new Error('Failed to create Cloudron: ' + (result.body ? result.body.message : result.text)));
 
             waitForCloudronReady(result.body.box, callback);
@@ -93,7 +93,7 @@ function restore(options, backup, callback) {
             console.log('Restore Cloudron...');
 
             superagent.post(createUrl(util.format('/api/v1/cloudrons/%s/restore/%s', cloudron.id, backup.id))).query({ accessToken: config.appStoreToken() }).end(function (error, result) {
-                if (error) return callback(error);
+                if (error && !error.response)return callback(error);
                 if (result.statusCode !== 202) return callback(new Error(util.format('Failed to restore cloudron: %s message: %s', result.statusCode, result.text)));
 
                 waitForCloudronReady(cloudron, callback);
@@ -123,7 +123,7 @@ function migrate(options, backup, callback) {
                 region: options.region,
                 restoreKey: backup.id
             }).query({ accessToken: config.appStoreToken() }).end(function (error, result) {
-                if (error) return callback(error);
+                if (error && !error.response) return callback(error);
                 if (result.statusCode !== 202) return callback(new Error(util.format('Failed to migrate cloudron: %s message: %s', result.statusCode, result.text)));
 
                 waitForCloudronReady(cloudron, callback);
@@ -143,7 +143,7 @@ function loginAppstore(callback) {
         var password = readlineSync.question('Password: ', { noEchoBack: true });
 
         superagent.get(createUrl('/api/v1/login')).auth(username, password).end(function (error, result) {
-            if (error) return callback(error);
+            if (error && !error.response) return callback(error);
             if (result.statusCode !== 200) {
                 console.log('Login failed.'.red);
                 return relogin();
@@ -161,7 +161,7 @@ function loginAppstore(callback) {
     if (config.appStoreToken()) {
         // verify the token
         superagent.get(createUrl('/api/v1/profile')).query({ accessToken: config.appStoreToken() }).end(function (error, result) {
-            if (error) return callback(error);
+            if (error && !error.response) return callback(error);
             if (result.statusCode !== 200) return relogin();
 
             callback(null);
@@ -183,7 +183,7 @@ function getBackupListing(fqdn, options, callback) {
             if (error) return callback(error);
 
             superagent.get(createUrl(util.format('/api/v1/cloudrons/%s/backups', cloudron.id))).query({ accessToken: config.appStoreToken() }).end(function (error, result) {
-                if (error) return callback(error);
+                if (error && !error.response) return callback(error);
                 if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get backups: %s message: %s', result.statusCode, result.text)));
 
                 // Keep the objects in sync

@@ -412,7 +412,7 @@ function getInstanceResources(callback) {
     helper.superagentEnd(function () {
         return superagent.get(helper.createUrl('/api/v1/settings/backup_config')).query({ access_token: config.token() });
     }, function (error, result) {
-        if (error) return callback(error);
+        if (error && !error.response) return callback(error);
 
         gParams.backupKey = result.body.key;
         gParams.backupBucket = result.body.bucket;

@@ -66,7 +66,7 @@ function selectAvailableApp(appId, callback) {
     helper.superagentEnd(function () {
         return superagent.get(helper.createUrl('/api/v1/apps')).query({ access_token: config.token() });
     }, function (error, result) {
-        if (error) return callback(error);
+        if (error && !error.response) return callback(error);
         if (result.statusCode !== 200) return callback(util.format('Failed to list apps. %s - %s'.red, result.statusCode, result.text));
 
         var availableApps = result.body.apps.filter(function (app) {
@@ -116,7 +116,7 @@ function getApp(appId, callback) {
         helper.superagentEnd(function () {
             return superagent.get(helper.createUrl('/api/v1/apps/' + appId)).query({ access_token: config.token() });
         }, function (error, result) {
-            if (error) return callback(error);
+            if (error && !error.response) return callback(error);
             if (result.statusCode === 503) exit('The Cloudron is currently updating, please retry in a bit.');
             if (result.statusCode === 404) return callback(util.format('App %s not found.', appId.bold));
             if (result.statusCode !== 200) return callback(util.format('Failed to get app.'.red, result.statusCode, result.text));
@@ -149,7 +149,7 @@ function authenticate(options, callback) {
         username: username,
         password: password
     }).end(function (error, result) {
-        if (error) exit(error);
+        if (error && !error.response) exit(error);
         if (result.statusCode === 412) {
             showDeveloperModeNotice();
             return authenticate({}, callback);
@@ -177,12 +177,12 @@ function stopApp(app, callback) {
         .query({ access_token: config.token() })
         .send({});
     }, function (error, result) {
-        if (error) exit(error);
+        if (error && !error.response) exit(error);
         if (result.statusCode !== 202) return exit(util.format('Failed to stop app.'.red, result.statusCode, result.text));
 
         function waitForFinish(appId) {
             helper.superagentEnd(function () { return superagent.get(helper.createUrl('/api/v1/apps/' + appId)).query({ access_token: config.token() }); }, function (error, result) {
-                if (error) exit(error);
+                if (error && !error.response) exit(error);
                 if (result.body.runState === 'stopped') return callback(null);
 
                 process.stdout.write('.');
@@ -206,12 +206,12 @@ function startApp(app, callback) {
         .query({ access_token: config.token() })
         .send({});
     }, function (error, result) {
-        if (error) exit(error);
+        if (error && !error.response) exit(error);
         if (result.statusCode !== 202) return exit(util.format('Failed to start app.'.red, result.statusCode, result.text));
 
         function waitForFinish(appId) {
             helper.superagentEnd(function () { return superagent.get(helper.createUrl('/api/v1/apps/' + appId)).query({ access_token: config.token() }); }, function (error, result) {
-                if (error) exit(error);
+                if (error && !error.response) exit(error);
                 if (result.body.runState === 'running') return callback(null);
 
                 process.stdout.write('.');
@@ -273,7 +273,7 @@ function list() {
     helper.superagentEnd(function () {
         return superagent.get(helper.createUrl('/api/v1/apps')).query({ access_token: config.token() });
     }, function (error, result) {
-        if (error) exit(error);
+        if (error && !error.response) exit(error);
         if (result.statusCode !== 200) return exit(util.format('Failed to list apps. %s - %s'.red, result.statusCode, result.text));
 
         if (result.body.apps.length === 0) return exit('No apps installed.');
@@ -301,7 +301,7 @@ function getUsersAndGroups(callback) {
     helper.superagentEnd(function () {
         return superagent.get(helper.createUrl('/api/v1/users')).query({ access_token: config.token() });
     }, function (error, result) {
-        if (error) exit(error);
+        if (error && !error.response) exit(error);
         if (result.statusCode !== 200) exit(util.format('Failed to get app.'.red, result.statusCode, result.text));
 
         callback(null, { users: result.body.users, groups: [] });
@@ -315,7 +315,7 @@ function waitForHealthy(appId, callback) {
         helper.superagentEnd(function () {
             return superagent.get(helper.createUrl('/api/v1/apps/' + appId)).query({ access_token: config.token() });
         }, function (error, result) {
-            if (error) return callback(error);
+            if (error && !error.response) return callback(error);
             if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get app.'.red, result.statusCode, result.text)));
 
             // do not check installation state here. it can be pending_backup etc (this is a bug in box code)
@@ -337,7 +337,7 @@ function waitForFinishInstallation(appId, waitForHealthcheck, callback) {
         helper.superagentEnd(function () {
             return superagent.get(helper.createUrl('/api/v1/apps/' + appId)).query({ access_token: config.token() });
         }, function (error, result) {
-            if (error) return callback(error);
+            if (error && !error.response) return callback(error);
             if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get app.'.red, result.statusCode, result.text)));
 
             // track healthy state after installation
@@ -381,7 +381,7 @@ function waitForBackupCompletion(callback) {
         helper.superagentEnd(function () {
             return superagent.get(helper.createUrl('/api/v1/cloudron/progress'));
         }, function (error, result) {
-            if (error) return callback(error);
+            if (error && !error.response) return callback(error);
             if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get backup progress.'.red, result.statusCode, result.text)));
 
             if (result.body.backup.percent >= 100) {
@@ -506,7 +506,7 @@ function installer(app, configure, manifest, appStoreId, waitForHealthcheck, ins
             var req = superagent.post(url).query({ access_token: config.token() });
             return req.send(data);
         }, function (error, result) {
-            if (error) exit(error);
+            if (error && !error.response) exit(error);
             if (result.statusCode === 404) exit(util.format('Failed to install app. No such app in the appstore.'.red));
             if (result.statusCode === 409) exit(util.format('Failed to install app. The location %s is already used.'.red, location.bold));
             if (result.statusCode === 403) exit(util.format('Failed to install app. Admin privileges are required.'.red));
@@ -539,7 +539,7 @@ function installFromStore(options) {
     // the cloudron ignores the manifest when appStoreId is set
     var url = config.appStoreOrigin() + '/api/v1/apps/' + parts[0] + (parts[1] ? '/versions/' + parts[1] : '');
     superagent.get(url).end(function (error, result) {
-        if (error) return exit(util.format('Failed to get app info from store: %s', error.message));
+        if (error && !error.response) return exit(util.format('Failed to get app info from store: %s', error.message));
         if (result.statusCode !== 200) return exit(util.format('Failed to get app info from store.'.red, result.statusCode, result.text));
 
         installer(null, !!options.configure, result.body.manifest, appstoreId, !!options.wait, options.location, false /* force */);
@@ -599,12 +599,12 @@ function uninstall(options) {
             .query({ access_token: config.token() })
             .send({});
         }, function (error, result) {
-            if (error) exit(error);
+            if (error && !error.response) exit(error);
             if (result.statusCode !== 202) return exit(util.format('Failed to uninstall app.'.red, result.statusCode, result.text));
 
             function waitForFinish(appId) {
                 helper.superagentEnd(function () { return superagent.get(helper.createUrl('/api/v1/apps/' + appId)).query({ access_token: config.token() }); }, function (error, result) {
-                    if (error) exit(error);
+                    if (error && !error.response) exit(error);
                     if (result.statusCode === 404) {
                         console.log('\n\nApp %s successfully uninstalled.', appId.bold);
                         exit();
@@ -651,7 +651,7 @@ function logs(options) {
                 .query({ access_token: config.token(), lines: options.lines || 500 })
                 .buffer(false)
                 .end(function (error, res) {
-                    if (error) return exit(error);
+                    if (error && !error.response) return exit(error);
 
                     res.setEncoding('utf8');
                     res.pipe(split(JSON.parse))
@@ -702,7 +702,7 @@ function inspect(options) {
     helper.verifyArguments(arguments);
 
     superagent.get(helper.createUrl('/api/v1/apps')).query({ access_token: config.token() }).end(function (error, result) {
-        if (error) return exit(error);
+        if (error && !error.response) return exit(error);
         if (result.statusCode === 401) return exit('Use ' + 'cloudron login'.yellow + ' first');
         if (result.statusCode !== 200) return exit(util.format('Failed to list apps. %s - %s'.red, result.statusCode, result.text));
 
@@ -760,7 +760,7 @@ function createBackup(options) {
             .query({ access_token: config.token() })
             .send({});
         }, function (error, result) {
-            if (error) exit(error);
+            if (error && !error.response) exit(error);
             if (result.statusCode !== 202) return exit(util.format('Failed to backup app.'.red, result.statusCode, result.text));
 
             // FIXME: this should be waitForHealthCheck but the box code incorrectly modifies the installationState
@@ -790,7 +790,7 @@ function listBackups(options) {
                 .get(helper.createUrl('/api/v1/apps/' + app.id + '/backups'))
                 .query({ access_token: config.token() });
         }, function (error, result) {
-            if (error) exit(error);
+            if (error && !error.response) exit(error);
             if (result.statusCode !== 200) return exit(util.format('Failed to list backups.'.red, result.statusCode, result.text));
 
             var t = new Table();
@@ -814,7 +814,7 @@ function downloadBackup(id, outdir, options, callback) {
 
     var outstream = outdir === '-' ? process.stdout : fs.createWriteStream(path.join(outdir || process.cwd(), id));
 
-    helper.saveBackupStream(id, outstream, exit);
+    helper.saveBackupStream(id, outstream, true, exit);
 }
 
 function restore(options) {
@@ -832,7 +832,7 @@ function restore(options) {
             .query({ access_token: config.token() })
             .send({ backupId: options.backup || app.lastBackupId });
         }, function (error, result) {
-            if (error) exit(error);
+            if (error && !error.response) exit(error);
             if (result.statusCode !== 202) return exit(util.format('Failed to restore app.'.red, result.statusCode, result.text));
 
             // FIXME: this should be waitForHealthCheck but the box code incorrectly modifies the installationState
@@ -867,7 +867,7 @@ function clone(options) {
             .query({ access_token: config.token() })
             .send({ backupId: options.backup || app.lastBackupId, location: location, portBindings: portBindings });
         }, function (error, result) {
-            if (error) exit(error);
+            if (error && !error.response) exit(error);
             if (result.statusCode !== 201) return exit(util.format('Failed to clone app.'.red, result.statusCode, result.text));
 
             // FIXME: this should be waitForHealthCheck but the box code incorrectly modifies the installationState
@@ -1073,7 +1073,7 @@ function createOAuthAppCredentials(options) {
         .query({ access_token: config.token() })
         .send({ appId: 'localdevelopment', redirectURI: redirectURI, scope: options.scope });
     }, function (error, result) {
-        if (error) exit(error);
+        if (error && !error.response) exit(error);
         if (result.statusCode === 400) return exit(result.body.message.red);
         if (result.statusCode !== 201) return exit(util.format('Failed to create oauth app credentials.'.red, result.statusCode, result.text));
 

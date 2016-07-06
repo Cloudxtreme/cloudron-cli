@@ -319,7 +319,7 @@ function authenticate(options, callback) {
         username: username,
         password: password
     }).end(function (error, result) {
-        if (error) exit(error);
+        if (error && !error.response) exit(error);
         if (result.statusCode === 412) {
             showDeveloperModeNotice();
             return authenticate({}, callback);
@@ -359,7 +359,7 @@ function waitForBackupFinish(callback) {
 
     (function checkStatus() {
         superagent.get(createUrl('/api/v1/cloudron/progress')).end(function (error, result) {
-            if (error) return callback(error);
+            if (error && !error.response) return callback(error);
             if (result.statusCode !== 200) return callback(new Error(util.format('Failed to get backup progress.'.red, result.statusCode, result.text)));
 
             if (result.body.backup === null || result.body.backup.percent >= 100) {
@@ -384,7 +384,7 @@ function getCloudronBackupList(callback) {
     superagentEnd(function () {
         return superagent.get(createUrl('/api/v1/backups')).query({ access_token: config.token() });
     }, function (error, result) {
-        if (error) return callback(error);
+        if (error && !error.response) return callback(error);
         if (result.statusCode !== 200) return callback(util.format('Failed to list backups.'.red, result.statusCode, result.text));
 
         callback(null, result.body.backups);
@@ -408,7 +408,7 @@ function createCloudronBackup(callback) {
     });
 }
 
-function saveBackupStream(id, outstream, callback) {
+function saveBackupStream(id, outstream, decrypt, callback) {
     superagentEnd(function () {
         return superagent
             .post(createUrl('/api/v1/backups/' + id + '/download_url'))
@@ -431,19 +431,27 @@ function saveBackupStream(id, outstream, callback) {
             progress.setLength(res.headers['content-length']);
         });
 
-        var cmd = 'openssl aes-256-cbc -d -pass pass:' + result.body.backupKey;
-        var openssl = spawn('sh', [ '-c', cmd ]);
+        if (decrypt) {
+            var cmd = 'openssl aes-256-cbc -d -pass pass:' + result.body.backupKey;
+            var openssl = spawn('sh', [ '-c', cmd ]);
 
-        req.pipe(progress).pipe(openssl.stdin);
+            req.pipe(progress).pipe(openssl.stdin);
+
+            openssl.stdout.pipe(outstream);
+            openssl.stderr.pipe(process.stderr);
+
+            openssl.on('close', function (code, signal) {
+                callback(code ? 'Error downloading backup' : null);
+            });
+        } else {
+            req.pipe(progress).pipe(outstream);
+            req.on('end', function () {
+                callback(null);
+            });
+        }
 
         outstream.on('error', function (e) {
             callback('Error saving backup: ' + e.message);
-        });
-        openssl.stdout.pipe(outstream);
-        openssl.stderr.pipe(process.stderr);
-
-        openssl.on('close', function (code, signal) {
-            callback(code ? 'Error downloading backup' : null);
         });
     });
 }
