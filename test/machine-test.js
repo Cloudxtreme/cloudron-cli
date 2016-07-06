@@ -50,21 +50,21 @@ after(function (done) {
 
 describe('Backup', function () {
     it('can create with rest route', function (done) {
-        var out = cli(util.format('backup create %s --username %s --password %s', cloudron, username, password));
+        var out = cli(util.format('machine backup create %s --username %s --password %s', cloudron, username, password));
         expect(out.stdout.indexOf('Backup successful')).to.not.be(-1);
         done();
     });
 
     if (sshKey) {
         it('can create using ssh', function (done) {
-            var out = cli(util.format('backup create %s --ssh-key %s', cloudron, sshKey));
+            var out = cli(util.format('machine backup create %s --ssh-key %s', cloudron, sshKey));
             expect(out.stdout.indexOf('Backup successful')).to.not.be(-1);
             done();
         });
     }
 
     it('can list', function (done) {
-        var out = cli(util.format('backup list %s --username %s --password %s', cloudron, username, password));
+        var out = cli(util.format('machine backup list %s --username %s --password %s', cloudron, username, password));
 
         var backupCount = out.stdout.split('\n').filter(function(l) { return l.match(/^backup_/); }).length;
         expect(backupCount).to.be.greaterThan(sshKey ? 1 : 0);
@@ -75,14 +75,14 @@ describe('Backup', function () {
 
 describe('Eventlog', function () {
     it('succeeds with rest route', function (done) {
-        var out = cli(util.format('eventlog %s --username %s --password %s', cloudron, username, password));
+        var out = cli(util.format('machine eventlog %s --username %s --password %s', cloudron, username, password));
         expect(out.stdout.indexOf('creationTime')).to.not.be(-1);
         done();
     });
 
     if (sshKey) {
         it('succeeds with ssh', function (done) {
-            var out = cli(util.format('eventlog %s --ssh-key %s', cloudron, sshKey));
+            var out = cli(util.format('machine eventlog %s --ssh-key %s', cloudron, sshKey));
             expect(out.stdout.indexOf('creationTime')).to.not.be(-1);
             done();
         });
@@ -103,7 +103,7 @@ describe('Eventlog', function () {
 if (sshKey) {
     describe('ssh', function () {
         it('succeeds', function (done) {
-            var out = cli(util.format('ssh %s "echo foobar" --ssh-key %s', cloudron, sshKey));
+            var out = cli(util.format('machine ssh %s "echo foobar" --ssh-key %s', cloudron, sshKey));
             expect(out.stdout.indexOf('foobar')).to.not.be(-1);
             done();
         });
