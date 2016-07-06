@@ -6,6 +6,8 @@ var assert = require('assert'),
     config = require('./config.js'),
     fs = require('fs'),
     path = require('path'),
+    ProgressBar = require('progress'),
+    ProgressStream = require('progress-stream'),
     os = require('os'),
     readlineSync = require('readline-sync'),
     safe = require('safetydance'),
@@ -415,16 +417,33 @@ function saveBackupStream(id, outstream, callback) {
         if (error) callback(error);
         if (result.statusCode !== 200) return callback(util.format('Failed to download backup.'.red, result.statusCode, result.text));
 
-        var cmd = 'curl -s -L "' + result.body.url + '" | openssl aes-256-cbc -d -pass pass:' + result.body.backupKey;
-        var curl = spawn('sh', [ '-c', cmd ]);
+        var progress = new ProgressStream({ time: 250 });
+
+        var req = superagent.get(result.body.url);
+        req.on('response', function (res) {
+            var bar = new ProgressBar('[:bar] :percent: :etas', {
+                complete: '=',
+                incomplete: ' ',
+                width: 100,
+                total: parseInt(res.headers['content-length'])
+            });
+            progress.on('progress', function (p) { bar.update(p.percentage / 100); /* bar.tick(p.transferred - bar.curr); */ });
+            progress.setLength(res.headers['content-length']);
+        });
+
+        // var cmd = 'curl -s -L "' + result.body.url + '" | openssl aes-256-cbc -d -pass pass:' + result.body.backupKey;
+        var cmd = 'openssl aes-256-cbc -d -pass pass:' + result.body.backupKey;
+        var openssl = spawn('sh', [ '-c', cmd ]);
+
+        req.pipe(progress).pipe(openssl.stdin);
 
         outstream.on('error', function (e) {
             callback('Error saving backup: ' + e.message);
         });
-        curl.stdout.pipe(outstream);
-        curl.stderr.pipe(process.stderr);
+        openssl.stdout.pipe(outstream);
+        openssl.stderr.pipe(process.stderr);
 
-        curl.on('close', function (code, signal) {
+        openssl.on('close', function (code, signal) {
             callback(code ? 'Error downloading backup' : null);
         });
     });

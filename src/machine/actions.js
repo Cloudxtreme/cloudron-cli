@@ -7,6 +7,7 @@ var assert = require('assert'),
     ec2 = require('./ec2.js'),
     fs = require('fs'),
     helper = require('../helper.js'),
+    mkdirp = require('mkdirp'),
     path = require('path'),
     readlineSync = require('readline-sync'),
     superagent = require('superagent'),
@@ -238,10 +239,17 @@ function downloadBackup(cloudron, outdir, options) {
                 }
             }
 
+            // ensure output directory
+            if (outdir) mkdirp.sync(outdir);
+
+            console.log();
+            console.log('Downloading backups:');
+            console.log();
+
             async.eachSeries([ options.backupId ].concat(dependsOn), function (backupId, iteratorDone) {
                 var outstream = fs.createWriteStream(path.join(outdir || process.cwd(), backupId));
 
-                console.log('Downloading', backupId);
+                console.log(backupId);
 
                 helper.saveBackupStream(backupId, outstream, iteratorDone);
             }, helper.exit);
