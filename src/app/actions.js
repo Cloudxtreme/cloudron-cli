@@ -3,7 +3,6 @@
 'use strict';
 
 var assert = require('assert'),
-    async = require('async'),
     config = require('../config.js'),
     ejs = require('ejs'),
     EventSource = require('eventsource'),
