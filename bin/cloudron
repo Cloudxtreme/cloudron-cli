@@ -10,8 +10,13 @@ var program = require('commander'),
 // Allow self signed certs!
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 var DEV = process.env.NODE_ENV === 'dev';
+var version = require('../package.json').version;
 
-program.version(require('../package.json').version);
+// check if cli tool is up-to-date
+var res = require('superagent-sync').get('https://registry.npmjs.org/cloudron').end();
+if (res.statusCode === 200 && res.body['dist-tags'].latest !== version) console.log('New cloudron tool version available. Please install the latest.'.yellow.bold);
+
+program.version(version);
 
 program.command('machine', 'Cloudron instance tooling');
 
