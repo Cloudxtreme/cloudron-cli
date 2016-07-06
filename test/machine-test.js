@@ -17,7 +17,7 @@ var username = process.env.USERNAME;
 var password = process.env.PASSWORD;
 var sshKey = process.env.SSH_KEY;
 
-var CLI = path.resolve(__dirname + '/../bin/machine.js');
+var CLI = path.resolve(__dirname + '/../bin/cloudron');
 
 function cli(args, options) {
     // https://github.com/nodejs/node-v0.x-archive/issues/9265
@@ -25,7 +25,7 @@ function cli(args, options) {
     args = util.isArray(args) ? args : args.match(/[^\s"]+|"([^"]+)"/g);
     args = args.map(function (e) { return e[0] === '"' ? e.slice(1, -1) : e; }); // remove the quotes
 
-    console.log('cloudron ' + args.join(' '));
+    console.log('cloudron machine ' + args.join(' '));
 
     try {
         var cp = child_process.spawnSync(CLI, args, { stdio: [ options.stdin || 'pipe', options.stdout || 'pipe', 'pipe' ], encoding: options.encoding || 'utf8' });

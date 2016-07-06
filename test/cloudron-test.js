@@ -22,7 +22,7 @@ var password = process.env.PASSWORD;
 var applocation = 'loctest';
 var app;
 
-var CLI = path.resolve(__dirname + '/../bin/app.js');
+var CLI = path.resolve(__dirname + '/../bin/cloudron');
 
 function md5(file) {
     var data = fs.readFileSync(file);
