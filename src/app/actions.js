@@ -426,7 +426,8 @@ function installer(app, options) {
         appStoreId = options.appStoreId,
         waitForHealthcheck = options.wait,
         installLocation = options.location,
-        force = options.force;
+        force = options.force,
+        manifestFilePath = options.manifestFilePath;
 
     assert.strictEqual(typeof configure, 'boolean');
     assert(manifest && typeof manifest === 'object');
@@ -434,6 +435,7 @@ function installer(app, options) {
     assert.strictEqual(typeof waitForHealthcheck, 'boolean');
     assert(!installLocation || typeof installLocation === 'string');
     assert.strictEqual(typeof force, 'boolean');
+    assert(!manifestFilePath || typeof manifestFilePath === 'string');
 
     getUsersAndGroups(function (error, result) {
         if (error) exit(error);
@@ -487,9 +489,10 @@ function installer(app, options) {
 
         var iconFilename = manifest.icon;
 
-        // FIXME: icon file must be read wrt manifest file base dir
         if (iconFilename && iconFilename.slice(0, 7) === 'file://') {
             iconFilename = iconFilename.slice(7);
+            // resolve filename wrt manifest
+            if (manifestFilePath) iconFilename = path.resolve(path.dirname(manifestFilePath), iconFilename);
         }
 
         var url, message;
@@ -597,6 +600,7 @@ function install(options) {
             var installOptions = {
                 configure: !!options.configure,
                 manifest: manifest,
+                manifestFilePath: manifestFilePath,
                 appStoreId: null,
                 wait: !!options.wait,
                 location: options.location,
