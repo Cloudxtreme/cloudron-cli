@@ -417,8 +417,17 @@ function queryPortBindings(app, manifest) {
 
 // if app is falsy, we install a new app
 // if configure is truthy we will prompt for all settings
-function installer(app, configure, manifest, appStoreId, waitForHealthcheck, installLocation, force) {
+function installer(app, options) {
     assert.strictEqual(typeof app, 'object');
+    assert.strictEqual(typeof options, 'object');
+
+    var configure = options.configure,
+        manifest = options.manifest,
+        appStoreId = options.appStoreId,
+        waitForHealthcheck = options.wait,
+        installLocation = options.location,
+        force = options.force;
+
     assert.strictEqual(typeof configure, 'boolean');
     assert(manifest && typeof manifest === 'object');
     assert(!appStoreId || typeof appStoreId === 'string');
@@ -542,7 +551,15 @@ function installFromStore(options) {
         if (error && !error.response) return exit(util.format('Failed to get app info from store: %s', error.message));
         if (result.statusCode !== 200) return exit(util.format('Failed to get app info from store.'.red, result.statusCode, result.text));
 
-        installer(null, !!options.configure, result.body.manifest, appstoreId, !!options.wait, options.location, false /* force */);
+        var installOptions = {
+            configure: !!options.configure,
+            manifest: result.body.manifest,
+            appStoreId: appstoreId, // note case change!
+            wait: !!options.wait,
+            location: options.location,
+            force: false
+        };
+        installer(null, installOptions);
     });
 }
 
@@ -577,7 +594,15 @@ function install(options) {
 
             manifest.dockerImage = image;
 
-            installer(app, !!options.configure, manifest, null /* appStoreId */, !!options.wait, options.location, !!options.force);
+            var installOptions = {
+                configure: !!options.configure,
+                manifest: manifest,
+                appStoreId: null,
+                wait: !!options.wait,
+                location: options.location,
+                force: !!options.force
+            };
+            installer(app, installOptions);
         });
     });
 }
