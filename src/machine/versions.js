@@ -37,7 +37,14 @@ function resolve(version, callback) {
 
         var sortedVersions = Object.keys(gVersions).sort(semver.compare);
 
-        if (version === 'latest') version = sortedVersions[sortedVersions.length-1];
+        if (version === 'latest') {
+            // ignore prereleases
+            var i = sortedVersions.length;
+            do {
+                version = sortedVersions[--i];
+            } while (version.indexOf('-pre') !== -1);
+        }
+
         if (!gVersions[version]) return callback(new Error('Unknown version'));
 
         callback(null, version);
