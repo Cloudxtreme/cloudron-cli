@@ -347,7 +347,9 @@ function superagentEnd(requestFactory, options, callback) {
     }
 
     requestFactory().end(function (error, result) {
-        if (!error && result.statusCode === 401) return authenticate(options, superagentEnd.bind(null, requestFactory, callback));
+        if (error && !error.response) return callback(error);
+        if (result.statusCode === 401) return authenticate(options, superagentEnd.bind(null, requestFactory, callback));
+
         callback(error, result);
     });
 }
