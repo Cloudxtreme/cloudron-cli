@@ -1,8 +1,10 @@
 # The Cloudron CLI tool
 
 The [Cloudron](https://cloudron.io) CLI tool allows you to install, configure and test apps on your Cloudron.
-It is also used to submit your app to the Cloudron Store. The subcommand `machine` provides Cloudron instance maintenance tooling.
+It is also used to submit your app to the Cloudron Store. The `machine` subcommand can be used for
+various maintenance tasks on a selfhosted Cloudron.
 
+Read the [http://cloudron.io/documentation.html](Cloudron.io documentation) for in-depth information.
 
 ## Installation
 
@@ -21,7 +23,6 @@ You should now be able to run the `cloudron help` command in a shell.
 
 ## Subcommands
 ```
-machine                               Cloudron instance tooling
 completion                            Shows completion for you shell
 backup [options]                      Create backup
 build [options]                       Build an app
@@ -37,6 +38,7 @@ list-backups [options]                List app backups
 login [options] [cloudron]            Login to cloudron
 logout                                Logout off cloudron
 logs [options]                        Application logs
+machine                               Cloudron instance tooling
 open                                  Open the app in the Browser
 published [options]                   List published apps
 pull [options] <remote> <local>       pull remote file/dir. Use trailing slash to indicate remote directory.
@@ -65,7 +67,8 @@ This command loads the completions into your current shell. Adding it to your ~/
 
 ## Tests
 
-The tests work against a Cloudron directly and can be run with
+The tests can run against a Cloudron as follows:
 ```
 CLOUDRON=<domain> USERNAME=<username> PASSWORD=<password> mocha tests/
 ```
+
