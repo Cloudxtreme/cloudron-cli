@@ -4,7 +4,7 @@ The [Cloudron](https://cloudron.io) CLI tool allows you to install, configure an
 It is also used to submit your app to the Cloudron Store. The `machine` subcommand can be used for
 various maintenance tasks on a selfhosted Cloudron.
 
-Read the [http://cloudron.io/documentation.html](Cloudron.io documentation) for in-depth information.
+Read the Cloudron.io [documentation](https://cloudron.io/documentation.html) for in-depth information.
 
 ## Installation
 
