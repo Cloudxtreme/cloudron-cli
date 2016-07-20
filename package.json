@@ -1,0 +1,32 @@
+{
+  "name": "cloudron-cli",
+  "version": "0.1.0",
+  "description": "Cloudron CLI",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "cloudron": "./main.js"
+  },
+  "author": "Cloudron Developers <support@cloudron.io>",
+  "dependencies": {
+    "cloudron-manifestformat": "^1.3.0",
+    "colors": "^1.0.3",
+    "commander": "^2.7.1",
+    "easy-table": "^0.3.0",
+    "ejs": "^2.3.1",
+    "eventsource": "^0.1.6",
+    "opn": "^1.0.1",
+    "readline-sync": "^0.7.6",
+    "safetydance": "0.0.15",
+    "semver": "^4.3.6",
+    "split": "^0.3.3",
+    "superagent": "^0.21.0",
+    "tar-fs": "^1.5.0",
+    "underscore": "^1.8.2"
+  },
+  "engines": {
+    "node": ">= 0.12.0"
+  }
+}
