@@ -318,8 +318,6 @@ function logs(fqdn, options) {
         }
 
         helper.exec('ssh', helper.getSSH(ip || config.apiEndpoint(), options.sshKey, 'journalctl -fa'), function (error) {
-            if (error && error.message.indexOf('ssh exited with code 255') !== -1) helper.exit('try specifying the --ssh-key');
-
             helper.exit(error);
         });
     });
@@ -342,8 +340,6 @@ function ssh(fqdn, cmds, options) {
         }
 
         helper.exec('ssh', helper.getSSH(ip || config.apiEndpoint(), options.sshKey, cmds), function (error) {
-            if (error && error.message.indexOf('ssh exited with code 255') !== -1) helper.exit('try specifying the --ssh-key');
-
             helper.exit(error);
         });
     });
