@@ -74,7 +74,7 @@ function create(provider, options) {
             if (error) helper.exit(error);
 
             console.log('');
-            console.log('Done.'.green, 'You can now setup your Cloudron at ', String('https://my.' + options.fqdn + '/setup.html').bold);
+            console.log('Done.'.green, 'You can now setup your Cloudron at ', String('https://my.' + options.fqdn).bold);
             console.log('');
 
             helper.exit();
