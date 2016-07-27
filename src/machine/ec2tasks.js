@@ -359,11 +359,11 @@ function waitForDNS(callback) {
 function waitForStatus(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    process.stdout.write('Waiting for Cloudron become alive...');
+    process.stdout.write('Waiting for Cloudron to be ready...');
 
     async.forever(function (callback) {
-        superagent.get('https://my.' + gParams.domain + '/api/v1/cloudron/status').end(function (error, result) {
-            if (!error && result.statusCode === 200) return callback('done');
+        superagent.get('https://my.' + gParams.domain + '/api/v1/cloudron/status').redirects(0).timeout(10000).end(function (error, result) {
+            if (!error && result.statusCode === 200 && result.body.provider === 'ec2') return callback('done');
 
             process.stdout.write('.');
 
