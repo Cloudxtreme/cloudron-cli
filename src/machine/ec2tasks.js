@@ -18,7 +18,8 @@ var assert = require('assert'),
 exports = module.exports = {
     create: create,
     restore: restore,
-    upgrade: upgrade
+    upgrade: upgrade,
+    migrate: migrate
 };
 
 // gParams holds input values
@@ -413,6 +414,7 @@ function getInstanceResources(callback) {
         return superagent.get(helper.createUrl('/api/v1/settings/backup_config')).query({ access_token: config.token() });
     }, function (error, result) {
         if (error && !error.response) return callback(error);
+        if (result.statusCode !== 200) return callback(new Error('Failed to get instance details.'));
 
         gParams.backupKey = result.body.key;
         gParams.backupBucket = result.body.bucket;
@@ -445,6 +447,21 @@ function getInstanceResources(callback) {
                 callback();
             });
         });
+    });
+}
+
+function getInstanceVersion(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    helper.superagentEnd(function () {
+        return superagent.get(helper.createUrl('/api/v1/cloudron/config')).query({ access_token: config.token() });
+    }, function (error, result) {
+        if (error && !error.response) return callback(error);
+        if (result.statusCode !== 200) return callback(new Error('Failed to get instance details. ' + result.statusCode));
+
+        gParams.version = result.body.version;
+
+        callback();
     });
 }
 
@@ -599,4 +616,53 @@ function upgrade(options, callback) {
 
         callback();
     });
+}
+
+function migrate(options, callback) {
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof options.fqdn, 'string');
+    assert.strictEqual(typeof options.newFqdn, 'string');
+    assert.strictEqual(typeof options.sshKeyFile, 'string');
+    assert.strictEqual(typeof options.accessKeyId, 'string');
+    assert.strictEqual(typeof options.secretAccessKey, 'string');
+    assert.strictEqual(typeof options.instanceId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    console.log('Migrating %s...', options.fqdn.cyan.bold);
+    if (options.fqdn !== options.newFqdn) console.log('  New Domain: %s', options.newFqdn.yellow);
+    if (options.size) console.log('  New Volume Size: %s', String(options.size + 'GB').yellow);
+    if (options.type) console.log('  New Instance Type: %s', options.type.yellow);
+
+    gParams = {
+        domain: options.fqdn,
+        sshKeyFile: options.sshKeyFile,
+        accessKeyId: options.accessKeyId,
+        secretAccessKey: options.secretAccessKey,
+        instanceId: options.instanceId
+    };
+
+    var tasks = [
+        getInstanceVersion,
+        getInstanceResources,
+        helper.createCloudronBackup,
+        getLastBackup,
+        getBackupDetails,
+        function overwriteCloudronDetails(callback) {
+            if (options.size) gParams.size = options.size;
+            if (options.type) gParams.type = options.type;
+
+            gParams.domain = options.newFqdn;
+
+            callback(null);
+        },
+        retireOldCloudron,
+        createServer,
+        waitForServer,
+        getIp,
+        waitForDNS,
+        waitForStatus,
+        aws.terminateInstance.bind(null, gParams.instanceId)
+    ];
+
+    async.series(tasks, callback);
 }
