@@ -132,7 +132,7 @@ function migrate(provider, options) {
             if (error) helper.exit(error);
 
             console.log('');
-            console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + options.newFqdn).bold);
+            console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + (options.newFqdn || options.fqdn)).bold);
             console.log('');
         });
     });

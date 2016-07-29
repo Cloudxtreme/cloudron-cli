@@ -129,6 +129,8 @@ function migrate(options, callback) {
     assert.strictEqual(typeof options.fqdn, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    if (options.region) helper.exit('Moving to another EC2 region is not yet supported');
+
     if (!options.sshKeyFile) helper.missing('ssh-key-file');
     if (!options.accessKeyId) helper.missing('access-key-id');
     if (!options.secretAccessKey) helper.missing('secret-access-key');

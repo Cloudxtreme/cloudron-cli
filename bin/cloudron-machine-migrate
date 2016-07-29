@@ -11,10 +11,11 @@ program.version(require('../package.json').version);
 
 program.description('Migrates a Cloudron using a specific provider [caas,ec2]')
     .arguments('<provider>')
-    .option('--type <type>', 'Instance type')
     .option('--ssh-key-file <ssh key file>', 'SSH key filepath')
     .option('--fqdn <domain>', 'Current domain')
     .option('--new-fqdn <new domain>', 'New domain')
+    .option('--type <type>', 'Instance type')
+    .option('--region <region>', 'Instance region')
     .option('--size <size>', 'Disk size in GB', parseInt)
     .option('--access-key-id <accessKeyId>', 'AWS accessKeyId')
     .option('--secret-access-key <secretAccessKey>', 'AWS secretAccessKey')
