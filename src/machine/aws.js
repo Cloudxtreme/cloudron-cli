@@ -426,18 +426,23 @@ function listBackups(bucket, prefix, callback) {
     });
 }
 
-function getInstanceDetails(instanceId, callback) {
+function getInstanceDetails(ip, callback) {
     assert.strictEqual(typeof gEC2, 'object');
-    assert.strictEqual(typeof instanceId, 'string');
+    assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     var params = {
-        InstanceIds: [ instanceId ]
+        Filters: [
+            {
+                Name: 'network-interface.addresses.association.public-ip',
+                Values: [ ip ]
+            }
+        ]
     };
 
     gEC2.describeInstances(params, function (error, result) {
         if (error) return callback(error);
-        if (result.Reservations.length === 0) return callback('No such EC2 instance. Is your instance id correct?');
+        if (result.Reservations.length === 0) return callback('No such EC2 instance found for this domain');
 
         callback(null, result.Reservations[0].Instances[0]);
     });

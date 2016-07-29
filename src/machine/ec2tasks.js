@@ -408,7 +408,6 @@ function retireOldCloudron(callback) {
 
 function getInstanceResources(callback) {
     assert.strictEqual(typeof callback, 'function');
-    assert.strictEqual(typeof gParams.instanceId, 'string');
 
     helper.superagentEnd(function () {
         return superagent.get(helper.createUrl('/api/v1/settings/backup_config')).query({ access_token: config.token() });
@@ -430,21 +429,28 @@ function getInstanceResources(callback) {
             secretAccessKey: gParams.secretAccessKey
         });
 
-        aws.getInstanceDetails(gParams.instanceId, function (error, result) {
+        // do not use gParams.domain as we need the webadmin origin
+        dns.resolve4(config.apiEndpoint(), function (error, addresses) {
             if (error) return callback(error);
-            if (result.State.Name === 'terminated') return callback('Instance is terminated. Maybe wrong instance-id provided?');
+            if (!addresses || addresses.length === 0) return callback('Unable to detect Cloudron IP address');
 
-            gParams.sshKey = result.KeyName;
-            gParams.type = result.InstanceType;
-            gParams.subnet = result.SubnetId;
-            gParams.securityGroup = result.SecurityGroups[0].GroupId;
-
-            aws.getVolumeDetails(result.BlockDeviceMappings[0].Ebs.VolumeId, function (error, result) {
+            aws.getInstanceDetails(addresses[0], function (error, result) {
                 if (error) return callback(error);
+                if (result.State.Name === 'terminated') return callback('Instance is terminated. Maybe wrong instance-id provided?');
 
-                gParams.size = result.Size;
+                gParams.instanceId = result.InstanceId;
+                gParams.sshKey = result.KeyName;
+                gParams.type = result.InstanceType;
+                gParams.subnet = result.SubnetId;
+                gParams.securityGroup = result.SecurityGroups[0].GroupId;
 
-                callback();
+                aws.getVolumeDetails(result.BlockDeviceMappings[0].Ebs.VolumeId, function (error, result) {
+                    if (error) return callback(error);
+
+                    gParams.size = result.Size;
+
+                    callback();
+                });
             });
         });
     });
@@ -584,7 +590,6 @@ function upgrade(options, callback) {
     assert.strictEqual(typeof options.version, 'string');
     assert.strictEqual(typeof options.domain, 'string');
     assert.strictEqual(typeof options.sshKeyFile, 'string');
-    assert.strictEqual(typeof options.instanceId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     console.log('Upgrading %s to version %s...', options.domain.cyan.bold, options.version.cyan.bold);
@@ -624,7 +629,6 @@ function migrate(options, callback) {
     assert.strictEqual(typeof options.sshKeyFile, 'string');
     assert.strictEqual(typeof options.accessKeyId, 'string');
     assert.strictEqual(typeof options.secretAccessKey, 'string');
-    assert.strictEqual(typeof options.instanceId, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     console.log('Migrating %s...', options.fqdn.cyan.bold);
@@ -636,8 +640,7 @@ function migrate(options, callback) {
         domain: options.fqdn,
         sshKeyFile: options.sshKeyFile,
         accessKeyId: options.accessKeyId,
-        secretAccessKey: options.secretAccessKey,
-        instanceId: options.instanceId
+        secretAccessKey: options.secretAccessKey
     };
 
     var tasks = [

@@ -15,7 +15,6 @@ program.description('Upgrade or updates a Cloudron')
     .option('-p, --password <password>', 'Password (unsafe)')
     .option('-y, --yes', 'Skip interactive question')
     .option('--ssh-key <ssh key>', 'SSH key')
-    .option('--instance-id <instanceId>', 'EC2 instance id')
     .action(actions.updateOrUpgrade);
 
 if (!process.argv.slice(2).length) {

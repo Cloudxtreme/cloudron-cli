@@ -111,14 +111,10 @@ function upgrade(updateInfo, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    // TODO autodetect that
-    if (!options.instanceId) helper.missing('instance-id');
-
     var params = {
         version: updateInfo.version,
         domain: options.domain,
-        sshKeyFile: options.sshKeyFile,
-        instanceId: options.instanceId
+        sshKeyFile: options.sshKeyFile
     };
 
     ec2tasks.upgrade(params, callback);
@@ -136,7 +132,7 @@ function migrate(options, callback) {
     if (!options.secretAccessKey) helper.missing('secret-access-key');
 
     // TODO autodetect that
-    if (!options.instanceId) helper.missing('instance-id');
+    // if (!options.instanceId) helper.missing('instance-id');
 
     if (options.size < 40) helper.exit('--size must be at least 40');
 
@@ -145,7 +141,6 @@ function migrate(options, callback) {
         sshKeyFile: options.sshKeyFile,
         accessKeyId: options.accessKeyId,
         secretAccessKey: options.secretAccessKey,
-        instanceId: options.instanceId,
         newFqdn: options.newFqdn || null,
         type: options.type || null,
         size: options.size || null
