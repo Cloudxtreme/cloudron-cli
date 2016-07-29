@@ -10,7 +10,6 @@ var program = require('commander'),
 // Allow self signed certs!
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-var DEV = process.env.NODE_ENV === 'dev';
 var version = require('../package.json').version;
 
 // completion is useful in shell configs, so don't block here
@@ -38,13 +37,6 @@ program.command('build')
     .option('--no-cache', 'Do not use cache')
     .option('--raw', 'Raw output build log')
     .action(appstoreActions.build);
-
-if (DEV) {
-    program.command('buildlog')
-        .description('Build logs')
-        .option('-f, --tail', 'Tail')
-        .action(appstoreActions.buildLogs);
-}
 
 program.command('clone')
     .option('--app <id>', 'App id')
