@@ -11,7 +11,7 @@ program.version(require('../package.json').version);
 
 program.description('Migrates a Cloudron using a specific provider [caas,ec2]')
     .arguments('<provider>')
-    .option('--ssh-key-file <ssh key file>', 'SSH key filepath')
+    .option('--ssh-key <ssh key>', 'SSH key')
     .option('--fqdn <domain>', 'Current domain')
     .option('--new-fqdn <new domain>', 'New domain')
     .option('--type <type>', 'Instance type')

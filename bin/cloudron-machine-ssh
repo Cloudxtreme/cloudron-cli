@@ -11,7 +11,7 @@ program.version(require('../package.json').version);
 
 program.description('Get remote SSH connection')
     .arguments('<domain> [cmds...]')
-    .option('--ssh-key <ssh key>', 'SSH key filepath')
+    .option('--ssh-key <ssh key>', 'SSH key')
     .action(actions.ssh);
 
 if (!process.argv.slice(2).length) {

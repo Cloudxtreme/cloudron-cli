@@ -111,10 +111,15 @@ function upgrade(updateInfo, options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof callback, 'function');
 
+    if (!options.sshKey) helper.missing('ssh-key');
+
+    options.sshKey = helper.findSSHKey(options.sshKey);
+    if (!options.sshKey) helper.exit('Unable to find SSH key');
+
     var params = {
         version: updateInfo.version,
         domain: options.domain,
-        sshKeyFile: options.sshKeyFile
+        sshKey: options.sshKey
     };
 
     ec2tasks.upgrade(params, callback);
@@ -127,15 +132,18 @@ function migrate(options, callback) {
 
     if (options.region) helper.exit('Moving to another EC2 region is not yet supported');
 
-    if (!options.sshKeyFile) helper.missing('ssh-key-file');
+    if (!options.sshKey) helper.missing('ssh-key');
     if (!options.accessKeyId) helper.missing('access-key-id');
     if (!options.secretAccessKey) helper.missing('secret-access-key');
 
     if (options.size < 40) helper.exit('--size must be at least 40');
 
+    options.sshKey = helper.findSSHKey(options.sshKey);
+    if (!options.sshKey) helper.exit('Unable to find SSH key');
+
     var params = {
         fqdn: options.fqdn,
-        sshKeyFile: options.sshKeyFile,
+        sshKeyFile: options.sshKey,
         accessKeyId: options.accessKeyId,
         secretAccessKey: options.secretAccessKey,
         newFqdn: options.newFqdn || null,
