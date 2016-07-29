@@ -664,7 +664,9 @@ function migrate(options, callback) {
         getIp,
         waitForDNS,
         waitForStatus,
-        aws.terminateInstance.bind(null, gParams.instanceId)
+        function (callback) {
+            aws.terminateInstance(gParams.instanceId, callback);
+        }
     ];
 
     async.series(tasks, callback);
