@@ -436,7 +436,7 @@ function getInstanceResources(callback) {
 
             aws.getInstanceDetails(addresses[0], function (error, result) {
                 if (error) return callback(error);
-                if (result.State.Name === 'terminated') return callback('Instance is terminated. Maybe wrong instance-id provided?');
+                if (result.State.Name === 'terminated') return callback('Instance is terminated. You may have to use the restore subcommand.');
 
                 gParams.instanceId = result.InstanceId;
                 gParams.sshKey = result.KeyName;

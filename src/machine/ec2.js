@@ -131,9 +131,6 @@ function migrate(options, callback) {
     if (!options.accessKeyId) helper.missing('access-key-id');
     if (!options.secretAccessKey) helper.missing('secret-access-key');
 
-    // TODO autodetect that
-    // if (!options.instanceId) helper.missing('instance-id');
-
     if (options.size < 40) helper.exit('--size must be at least 40');
 
     var params = {

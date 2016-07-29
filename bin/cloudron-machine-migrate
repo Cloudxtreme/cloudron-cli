@@ -19,7 +19,6 @@ program.description('Migrates a Cloudron using a specific provider [caas,ec2]')
     .option('--size <size>', 'Disk size in GB', parseInt)
     .option('--access-key-id <accessKeyId>', 'AWS accessKeyId')
     .option('--secret-access-key <secretAccessKey>', 'AWS secretAccessKey')
-    .option('--instance-id <instanceId>', 'EC2 instance id')
     .action(actions.migrate);
 
 if (!process.argv.slice(2).length) {
