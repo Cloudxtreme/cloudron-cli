@@ -120,8 +120,6 @@ function migrate(provider, options) {
 
     if (!options.fqdn) helper.missing('fqdn');
     if (!options.sshKeyFile) helper.missing('ssh-key-file');
-    // TODO verify the sshKeyFile path
-
     if (!options.newFqdn) options.newFqdn = options.fqdn;
 
     helper.detectCloudronApiEndpoint(options.fqdn, function (error) {
