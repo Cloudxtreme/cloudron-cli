@@ -119,45 +119,22 @@ function migrate(provider, options) {
     assert.strictEqual(typeof options, 'object');
 
     if (!options.fqdn) helper.missing('fqdn');
-    if (!options.sshKeyFile) helper.missing('ssh-key-file');
-    if (!options.newFqdn) options.newFqdn = options.fqdn;
+
+    var api;
+    if (provider === 'ec2') api = ec2;
+    else if (provider === 'caas') api = caas;
+    else helper.exit('<provider> must be either "caas" or "ec2"');
 
     helper.detectCloudronApiEndpoint(options.fqdn, function (error) {
         if (error) helper.exit(error);
 
-        if (provider === 'caas') {
-            helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup'), function (error) {
-                if (error) helper.exit(error);
+        api.migrate(options, function (error) {
+            if (error) helper.exit(error);
 
-                helper.waitForBackupFinish(function (error) {
-                    if (error) helper.exit(error);
-
-                    caas.getBackupListing(options.fqdn, {}, function (error, result) {
-                        if (error) helper.exit(error);
-                        if (result.length === 0) helper.exit('Missing backup, this should not happen!');
-
-                        // TODO harmonize provider.migrate() move above into the migrate call
-                        caas.migrate(options, result[0], function (error) {
-                            if (error) helper.exit(error);
-
-                            console.log('');
-                            console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + options.newFqdn).bold);
-                            console.log('');
-                        });
-                    });
-                });
-            });
-        } else if (provider === 'ec2') {
-            ec2.migrate(options, function (error) {
-                if (error) helper.exit(error);
-
-                console.log('');
-                console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + options.newFqdn).bold);
-                console.log('');
-            });
-        } else {
-            helper.exit('<provider> must be either "caas" or "ec2"');
-        }
+            console.log('');
+            console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + options.newFqdn).bold);
+            console.log('');
+        });
     });
 }
 

@@ -621,7 +621,6 @@ function upgrade(options, callback) {
 function migrate(options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof options.fqdn, 'string');
-    assert.strictEqual(typeof options.newFqdn, 'string');
     assert.strictEqual(typeof options.sshKeyFile, 'string');
     assert.strictEqual(typeof options.accessKeyId, 'string');
     assert.strictEqual(typeof options.secretAccessKey, 'string');
@@ -629,7 +628,7 @@ function migrate(options, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     console.log('Migrating %s...', options.fqdn.cyan.bold);
-    if (options.fqdn !== options.newFqdn) console.log('  New Domain: %s', options.newFqdn.yellow);
+    if (options.newFqdn) console.log('  New Domain: %s', options.newFqdn.yellow);
     if (options.size) console.log('  New Volume Size: %s', String(options.size + 'GB').yellow);
     if (options.type) console.log('  New Instance Type: %s', options.type.yellow);
 
@@ -650,8 +649,7 @@ function migrate(options, callback) {
         function overwriteCloudronDetails(callback) {
             if (options.size) gParams.size = options.size;
             if (options.type) gParams.type = options.type;
-
-            gParams.domain = options.newFqdn;
+            if (options.newFqdn) gParams.domain = options.newFqdn;
 
             callback(null);
         },

@@ -2,6 +2,7 @@
 
 var assert = require('assert'),
     config = require('../config.js'),
+    helper = require('../helper.js'),
     readlineSync = require('readline-sync'),
     superagent = require('superagent'),
     util = require('util');
@@ -102,31 +103,48 @@ function restore(options, backup, callback) {
     });
 }
 
-function migrate(options, backup, callback) {
+function migrate(options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof options.fqdn, 'string');
-    assert.strictEqual(typeof options.newFqdn, 'string');
-    assert.strictEqual(typeof backup, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    loginAppstore(function (error) {
-        if (error) return callback(error);
+    helper.authenticate(options, function (error) {
+        if (error) helper.exit(error);
 
-        getCloudronByFQDN(options.fqdn, function (error, cloudron) {
-            if (error) return callback(error);
+        helper.createCloudronBackup(function (error) {
+            if (error) helper.exit(error);
 
-            console.log('Migrate Cloudron...');
+            getBackupListing(options.fqdn, {}, function (error, result) {
+                if (error) helper.exit(error);
+                if (result.length === 0) helper.exit('Missing backup, this should not happen!');
 
-            superagent.post(createUrl(util.format('/api/v1/admin/%s/migrate', cloudron.id))).send({
-                domain: options.newFqdn,
-                size: options.type,
-                region: options.region,
-                restoreKey: backup.id
-            }).query({ accessToken: config.appStoreToken() }).end(function (error, result) {
-                if (error && !error.response) return callback(error);
-                if (result.statusCode !== 202) return callback(new Error(util.format('Failed to migrate cloudron: %s message: %s', result.statusCode, result.text)));
+                var backup = result[0];
 
-                waitForCloudronReady(cloudron, callback);
+                loginAppstore(function (error) {
+                    if (error) return callback(error);
+
+                    getCloudronByFQDN(options.fqdn, function (error, cloudron) {
+                        if (error) return callback(error);
+
+                        console.log('Migrate Cloudron...');
+
+                        var data = {
+                            restoreKey: backup.id
+                        };
+
+                        // these are optional
+                        if (options.newFqdn) data.domain = options.newFqdn;
+                        if (options.size) data.size = options.size;
+                        if (options.region) data.region = options.region;
+
+                        superagent.post(createUrl(util.format('/api/v1/admin/%s/migrate', cloudron.id))).send(data).query({ accessToken: config.appStoreToken() }).end(function (error, result) {
+                            if (error && !error.response) return callback(error);
+                            if (result.statusCode !== 202) return callback(new Error(util.format('Failed to migrate cloudron: %s message: %s', result.statusCode, result.text)));
+
+                            waitForCloudronReady(cloudron, callback);
+                        });
+                    });
+                });
             });
         });
     });

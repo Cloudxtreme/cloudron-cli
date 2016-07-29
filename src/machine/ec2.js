@@ -127,9 +127,9 @@ function upgrade(updateInfo, options, callback) {
 function migrate(options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof options.fqdn, 'string');
-    assert.strictEqual(typeof options.newFqdn, 'string');
     assert.strictEqual(typeof callback, 'function');
 
+    if (!options.sshKeyFile) helper.missing('ssh-key-file');
     if (!options.accessKeyId) helper.missing('access-key-id');
     if (!options.secretAccessKey) helper.missing('secret-access-key');
 
@@ -140,11 +140,11 @@ function migrate(options, callback) {
 
     var params = {
         fqdn: options.fqdn,
-        newFqdn: options.newFqdn,
         sshKeyFile: options.sshKeyFile,
         accessKeyId: options.accessKeyId,
         secretAccessKey: options.secretAccessKey,
         instanceId: options.instanceId,
+        newFqdn: options.newFqdn || null,
         type: options.type || null,
         size: options.size || null
     };
