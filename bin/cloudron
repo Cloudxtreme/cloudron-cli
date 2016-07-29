@@ -9,12 +9,16 @@ var program = require('commander'),
 
 // Allow self signed certs!
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 var DEV = process.env.NODE_ENV === 'dev';
 var version = require('../package.json').version;
 
-// check if cli tool is up-to-date
-var res = require('superagent-sync').get('https://registry.npmjs.org/cloudron').retry(0).end();
-if (res.statusCode === 200 && res.body['dist-tags'].latest !== version) console.log('New cloudron tool version available. Please update with: %s'.yellow.bold, 'npm update -g cloudron'.white);
+// completion is useful in shell configs, so don't block here
+if (process.argv[2] !== 'completion') {
+    // check if cli tool is up-to-date
+    var res = require('superagent-sync').get('https://registry.npmjs.org/cloudron').retry(0).end();
+    if (res.statusCode === 200 && res.body['dist-tags'].latest !== version) console.log('New cloudron tool version available. Please update with: %s'.yellow.bold, 'npm update -g cloudron'.white);
+}
 
 program.version(version);
 
