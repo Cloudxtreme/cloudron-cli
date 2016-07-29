@@ -9,6 +9,7 @@ exports = module.exports = {
     create: create,
     restore: restore,
     upgrade: upgrade,
+    migrate: migrate,
     getBackupListing: getBackupListing
 };
 
@@ -120,4 +121,14 @@ function upgrade(updateInfo, options, callback) {
     };
 
     ec2tasks.upgrade(params, callback);
+}
+
+function migrate(options, backup, callback) {
+    assert.strictEqual(typeof options, 'object');
+    assert.strictEqual(typeof options.fqdn, 'string');
+    assert.strictEqual(typeof options.newFqdn, 'string');
+    assert.strictEqual(typeof backup, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    console.log('Not implemented');
 }

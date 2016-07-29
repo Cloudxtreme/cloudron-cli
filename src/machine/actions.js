@@ -118,46 +118,43 @@ function migrate(provider, options) {
     assert.strictEqual(typeof provider, 'string');
     assert.strictEqual(typeof options, 'object');
 
-    if (!options.fqdnFrom) helper.missing('fqdn-from');
-    if (!options.fqdnTo) helper.missing('fqdn-to');
+    var api;
+    if (provider === 'ec2') api = ec2;
+    else if (provider === 'caas') api = caas;
+    else helper.exit('<provider> must be either "caas" or "ec2"');
+
+    if (!options.fqdn) helper.missing('fqdn');
     if (!options.type) helper.missing('type');
     if (!options.region) helper.missing('region');
+    if (!options.sshKeyFile) helper.missing('ssh-key-file');
+    // TODO verify the sshKeyFile path
 
-    if (provider === 'caas') {
-        if (!options.sshKeyFile) helper.missing('ssh-key-file');
+    if (!options.newFqdn) options.newFqdn = options.fqdn;
 
-        // TODO verify the sshKeyFile path
+    helper.detectCloudronApiEndpoint(options.fqdn, function (error) {
+        if (error) helper.exit(error);
 
-        // TODO my god this is ugly
-        helper.detectCloudronApiEndpoint(options.fqdnFrom, function (error) {
+        helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup'), function (error) {
             if (error) helper.exit(error);
 
-            helper.exec('ssh', helper.getSSH(config.apiEndpoint(), options.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/backup'), function (error) {
+            helper.waitForBackupFinish(function (error) {
                 if (error) helper.exit(error);
 
-                helper.waitForBackupFinish(function (error) {
+                api.getBackupListing(options.fqdn, {}, function (error, result) {
                     if (error) helper.exit(error);
+                    if (result.length === 0) helper.exit('Missing backup, this should not happen!');
 
-                    caas.getBackupListing(options.fqdnFrom, {}, function (error, result) {
+                    api.migrate(options, result[0], function (error) {
                         if (error) helper.exit(error);
-                        if (result.length === 0) helper.exit('Missing backup, this should not happen!');
 
-                        caas.migrate(options, result[0], function (error) {
-                            if (error) helper.exit(error);
-
-                            console.log('');
-                            console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + options.fqdnTo).bold);
-                            console.log('');
-                        });
+                        console.log('');
+                        console.log('Done.'.green, 'You can now use your Cloudron at ', String('https://my.' + options.newFqdn).bold);
+                        console.log('');
                     });
                 });
             });
         });
-    } else if (provider === 'ec2') {
-        helper.exit('not implemented');
-    } else {
-        helper.exit('--provider must be either "caas" or "ec2"');
-    }
+    });
 }
 
 function listBackups(cloudron, options) {

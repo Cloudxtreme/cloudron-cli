@@ -104,21 +104,21 @@ function restore(options, backup, callback) {
 
 function migrate(options, backup, callback) {
     assert.strictEqual(typeof options, 'object');
-    assert.strictEqual(typeof options.fqdnFrom, 'string');
-    assert.strictEqual(typeof options.fqdnTo, 'string');
+    assert.strictEqual(typeof options.fqdn, 'string');
+    assert.strictEqual(typeof options.newFqdn, 'string');
     assert.strictEqual(typeof backup, 'object');
     assert.strictEqual(typeof callback, 'function');
 
     loginAppstore(function (error) {
         if (error) return callback(error);
 
-        getCloudronByFQDN(options.fqdnFrom, function (error, cloudron) {
+        getCloudronByFQDN(options.fqdn, function (error, cloudron) {
             if (error) return callback(error);
 
             console.log('Migrate Cloudron...');
 
             superagent.post(createUrl(util.format('/api/v1/admin/%s/migrate', cloudron.id))).send({
-                domain: options.fqdnTo,
+                domain: options.newFqdn,
                 size: options.type,
                 region: options.region,
                 restoreKey: backup.id
