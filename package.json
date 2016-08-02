@@ -43,7 +43,7 @@
     "underscore": "^1.8.2"
   },
   "engines": {
-    "node": ">= 0.12.0"
+    "node": ">= 4.x.x"
   },
   "devDependencies": {
     "expect.js": "^0.3.1",
