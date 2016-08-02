@@ -43,12 +43,12 @@ function create(options, version, callback) {
 
     if (!options.accessKeyId) helper.missing('access-key-id');
     if (!options.secretAccessKey) helper.missing('secret-access-key');
-    if (!options.size) helper.missing('size');
+    if (!options.diskSize) helper.missing('disk-size');
     if (!options.backupKey) helper.missing('backup-key');
     if (!options.backupBucket) helper.missing('backup-bucket');
     if (!options.sshKey) helper.missing('ssh-key');
 
-    if (options.size < 40) helper.exit('--size must be at least 40');
+    if (options.diskSize < 30) helper.exit('--disk-size must be at least 30');
 
     if (!options.subnet ^ !options.securityGroup) return helper.exit('either both --subnet and --security-group must be provided OR none');
 
@@ -64,7 +64,7 @@ function create(options, version, callback) {
         domain: options.fqdn,
         subnet: options.subnet,
         securityGroup: options.securityGroup,
-        size: options.size
+        size: options.diskSize
     };
 
     ec2tasks.create(params, callback);
@@ -77,14 +77,14 @@ function restore(options, backup, callback) {
 
     if (!options.type) helper.missing('type');
     if (!options.region) helper.missing('region');
-    if (!options.size) helper.missing('size');
+    if (!options.diskSize) helper.missing('disk-size');
     if (!options.accessKeyId) helper.missing('access-key-id');
     if (!options.secretAccessKey) helper.missing('secret-access-key');
     if (!options.backupKey) helper.missing('backup-key');
     if (!options.backupBucket) helper.missing('backup-bucket');
     if (!options.sshKey) helper.missing('ssh-key');
 
-    if (options.size < 40) helper.exit('--size must be at least 40');
+    if (options.diskSize < 30) helper.exit('--disk-size must be at least 30');
 
     if (!options.subnet ^ !options.securityGroup) return helper.exit('either both --subnet and --security-group must be provided OR none');
 
@@ -96,7 +96,7 @@ function restore(options, backup, callback) {
         backupKey: options.backupKey,
         backup: backup,
         type: options.type,
-        size: options.size,
+        size: options.diskSize,
         sshKey: options.sshKey,
         domain: options.fqdn,
         subnet: options.subnet,
@@ -136,7 +136,7 @@ function migrate(options, callback) {
     if (!options.accessKeyId) helper.missing('access-key-id');
     if (!options.secretAccessKey) helper.missing('secret-access-key');
 
-    if (options.size < 40) helper.exit('--size must be at least 40');
+    if (options.diskSize && options.diskSize < 30) helper.exit('--disk-size must be at least 30');
 
     options.sshKey = helper.findSSHKey(options.sshKey);
     if (!options.sshKey) helper.exit('Unable to find SSH key');
@@ -148,7 +148,7 @@ function migrate(options, callback) {
         secretAccessKey: options.secretAccessKey,
         newFqdn: options.newFqdn || null,
         type: options.type || null,
-        size: options.size || null
+        size: options.diskSize || null
     };
 
     ec2tasks.migrate(params, callback);

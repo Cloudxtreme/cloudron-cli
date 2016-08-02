@@ -16,7 +16,7 @@ program.description('Migrates a Cloudron using a specific provider [caas,ec2]')
     .option('--new-fqdn <new domain>', 'New domain')
     .option('--type <type>', 'Instance type')
     .option('--region <region>', 'Instance region')
-    .option('--size <size>', 'Disk size in GB', parseInt)
+    .option('--disk-size <size>', 'Disk size in GB', parseInt)
     .option('--access-key-id <accessKeyId>', 'AWS accessKeyId')
     .option('--secret-access-key <secretAccessKey>', 'AWS secretAccessKey')
     .action(actions.migrate);
