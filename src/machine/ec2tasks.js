@@ -286,7 +286,7 @@ function getUserData(callback) {
                         accessKeyId: gParams.accessKeyId,
                         secretAccessKey: gParams.secretAccessKey
                     },
-                    updateConfig: { prerelease: true }
+                    updateConfig: { prerelease: false }
                 }
             };
 
