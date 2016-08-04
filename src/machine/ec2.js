@@ -2,6 +2,7 @@
 
 var assert = require('assert'),
     aws = require('./aws.js'),
+    hat = require('hat'),
     helper = require('../helper.js'),
     ec2tasks = require('./ec2tasks.js');
 
@@ -44,13 +45,21 @@ function create(options, version, callback) {
     if (!options.accessKeyId) helper.missing('access-key-id');
     if (!options.secretAccessKey) helper.missing('secret-access-key');
     if (!options.diskSize) helper.missing('disk-size');
-    if (!options.backupKey) helper.missing('backup-key');
     if (!options.backupBucket) helper.missing('backup-bucket');
     if (!options.sshKey) helper.missing('ssh-key');
 
     if (options.diskSize < 30) helper.exit('--disk-size must be at least 30');
 
     if (!options.subnet ^ !options.securityGroup) return helper.exit('either both --subnet and --security-group must be provided OR none');
+
+    if (!options.backupKey) {
+        console.log();
+        console.log('No backup key specified.');
+        options.backupKey = hat(256);
+        console.log('Generated backup key: ', options.backupKey.bold.cyan);
+        console.log('Remember to keep the backup key in a safe location. You will need it to restore your Cloudron!'.yellow);
+        console.log();
+    }
 
     var params = {
         region: options.region,
