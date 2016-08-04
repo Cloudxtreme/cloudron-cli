@@ -18,6 +18,7 @@ exports = module.exports = {
     state: state,
     publicIP: publicIP,
     checkIfDNSZoneExists: checkIfDNSZoneExists,
+    checkS3BucketAccess: checkS3BucketAccess,
     getBackupUrl: getBackupUrl,
     listBackups: listBackups,
     getInstanceDetails: getInstanceDetails,
@@ -366,6 +367,43 @@ function checkIfDNSZoneExists(domain, callback) {
         debug('requested zone found: %s', exists ? 'yes' : 'no');
 
         callback(exists ? null : new Error('Please create a hosted zone on Route53 for this domain first.'));
+    });
+}
+
+function checkS3BucketAccess(bucket, callback) {
+    assert.strictEqual(typeof gS3, 'object');
+    assert.strictEqual(typeof bucket, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var TEST_OBJECT_KEY = 'cloudron-test-object';
+
+    var params = {
+        Bucket: bucket,
+        Key: TEST_OBJECT_KEY,
+        Body: 'testcontent'
+    };
+
+    gS3.putObject(params, function (error) {
+        if (error) return callback(error);
+
+        var params = {
+            Bucket: bucket,
+        };
+
+        gS3.listObjects(params, function (error) {
+            if (error) return callback(error);
+
+            var params = {
+                Bucket: bucket,
+                Key: TEST_OBJECT_KEY
+            };
+
+            gS3.deleteObject(params, function (error) {
+                if (error) return callback(error);
+
+                callback(null);
+            });
+        });
     });
 }
 

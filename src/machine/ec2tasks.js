@@ -41,6 +41,18 @@ function checkDNSZone(callback) {
     });
 }
 
+function checkS3BucketAccess(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    console.log('Checking S3 bucket access...');
+
+    aws.checkS3BucketAccess(gParams.backupBucket, function (error) {
+        if (error) return callback(error);
+
+        callback();
+    });
+}
+
 function waitForVPC(vpcId, callback) {
     assert.strictEqual(typeof vpcId, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -514,6 +526,7 @@ function create(options, callback) {
 
     var tasks = [
         checkDNSZone,
+        checkS3BucketAccess,
         createSubnetAndSecurityGroup,
         createServer,
         waitForServer,
