@@ -298,7 +298,7 @@ function getUserData(callback) {
                         accessKeyId: gParams.accessKeyId,
                         secretAccessKey: gParams.secretAccessKey
                     },
-                    updateConfig: { prerelease: false }
+                    updateConfig: { prerelease: process.env.CLOUDRON_PRERELEASE ? true : false }
                 }
             };
 
