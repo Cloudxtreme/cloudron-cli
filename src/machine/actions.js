@@ -4,6 +4,7 @@ var assert = require('assert'),
     async = require('async'),
     caas = require('./caas.js'),
     config = require('../config.js'),
+    digitalocean = require('./digitalocean.js'),
     ec2 = require('./ec2.js'),
     fs = require('fs'),
     helper = require('../helper.js'),
@@ -68,7 +69,8 @@ function create(provider, options) {
         var func;
         if (provider === 'ec2') func = ec2.create;
         else if (provider === 'caas') func = caas.create;
-        else helper.exit('<provider> must be either "caas" or "ec2"');
+        else if (provider === 'digitalocean') func = digitalocean.create;
+        else helper.exit('<provider> must be "caas", "ec2" or "digitalocean"');
 
         func(options, result, function (error) {
             if (error) helper.exit(error);
