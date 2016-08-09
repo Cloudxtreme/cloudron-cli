@@ -9,7 +9,7 @@ var program = require('commander'),
 
 program.version(require('../package.json').version);
 
-program.description('Creates a Cloudron using a specific provider [caas,ec2]')
+program.description('Creates a Cloudron using a specific provider [caas,ec2,digitalocean]')
     .arguments('<provider>')
     .option('-u, --username <username>', 'Username')
     .option('-p, --password <password>', 'Password (unsafe)')
@@ -25,6 +25,7 @@ program.description('Creates a Cloudron using a specific provider [caas,ec2]')
     .option('--secret-access-key <secretAccessKey>', 'AWS secretAccessKey')
     .option('--backup-key <backup-key>', 'Backup key for encrypting backups')
     .option('--backup-bucket <backupBucket>', 'S3 backupBucket')
+    .option('--token <token>', 'Provider token')
     .action(actions.create);
 
 if (!process.argv.slice(2).length) {

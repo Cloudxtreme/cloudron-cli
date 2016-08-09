@@ -4,7 +4,9 @@ var assert = require('assert'),
     async = require('async'),
     aws = require('./aws.js'),
     hat = require('hat'),
-    helper = require('../helper.js');
+    helper = require('../helper.js'),
+    superagent = require('superagent'),
+    util = require('util');
 
 exports = module.exports = {
     create: create,
@@ -42,6 +44,90 @@ function checkS3BucketAccess(params, callback) {
     });
 }
 
+function createServer(params, callback) {
+    assert.strictEqual(typeof params, 'object');
+    assert.strictEqual(typeof params.domain, 'string');
+    assert.strictEqual(typeof params.region, 'string');
+    assert.strictEqual(typeof params.type, 'string');
+    assert.strictEqual(typeof params.sshKey, 'string');
+    assert.strictEqual(typeof params.token, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    process.stdout.write('Creating server...');
+
+    var data = {
+        name: params.domain,
+        region: params.region,
+        size: params.type,
+        image: 'ubuntu-16-04-x64',
+        ssh_keys: [ params.sshKey ],
+        backups: false,
+
+    };
+
+    superagent.post('https://api.digitalocean.com/v2/droplets').send(data).set('Authorization', 'Bearer ' + params.token).end(function (error, result) {
+        if (error) return callback(error.message);
+        if (result.statusCode !== 202) return callback(util.format('Droplet creation failed. %s %j', result.statusCode, result.body));
+
+        params.instanceId = result.body.droplet.id;
+        params.createAction = result.body.links.actions[0];
+
+        console.log(params.instanceId);
+
+        callback();
+    });
+}
+
+function waitForServer(params, callback) {
+    assert.strictEqual(typeof params, 'object');
+    assert.strictEqual(typeof params.token, 'string');
+    assert.strictEqual(typeof params.createAction, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    process.stdout.write('Waiting for server to come up...');
+
+    async.forever(function (callback) {
+        superagent.get(params.createAction.href).set('Authorization', 'Bearer ' + params.token).end(function (error, result) {
+            if (error) return callback();
+            if (result.statusCode !== 200) return callback(util.format('Waiting for droplet failed. %s %j', result.statusCode, result.body));
+
+            if (result.body.action.status !== 'completed') {
+                process.stdout.write('.');
+                setTimeout(callback, 5000);
+                return;
+            }
+
+            callback('done');
+        });
+    }, function (errorOrDone) {
+        if (errorOrDone !== 'done') return callback(errorOrDone);
+
+        process.stdout.write('\n');
+
+        callback();
+    });
+}
+
+function getIp(params, callback) {
+    assert.strictEqual(typeof params, 'object');
+    assert.strictEqual(typeof params.token, 'string');
+    assert.strictEqual(typeof params.instanceId, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    process.stdout.write('Getting public IP...');
+
+    superagent.get('https://api.digitalocean.com/v2/droplets/' + params.instanceId).set('Authorization', 'Bearer ' + params.token).end(function (error, result) {
+        if (error) return callback(error.message);
+        if (result.statusCode !== 200) return callback(util.format('Droplet details failed. %s %j', result.statusCode, result.body));
+
+        params.publicIP = result.body.droplet.networks.v4.ip_address;
+
+        console.log(params.publicIP);
+
+        callback();
+    });
+}
+
 function getBackupListing(cloudron, options, callback) {
     assert.strictEqual(typeof cloudron, 'string');
     assert.strictEqual(typeof options, 'object');
@@ -64,6 +150,7 @@ function create(options, version, callback) {
     if (!options.secretAccessKey) helper.missing('secret-access-key');
     if (!options.diskSize) helper.missing('disk-size');
     if (!options.backupBucket) helper.missing('backup-bucket');
+    if (!options.token) helper.missing('token');
     if (!options.sshKey) helper.missing('ssh-key');
 
     if (!options.backupKey) {
@@ -98,11 +185,11 @@ function create(options, version, callback) {
     var tasks = [
         checkDNSZone.bind(null, params),
         checkS3BucketAccess.bind(null, params),
-        createServer,
-        waitForServer,
-        getIp,
-        waitForDNS,
-        waitForStatus
+        createServer.bind(null, params),
+        waitForServer.bind(null, params),
+        getIp.bind(null, params),
+        // waitForDNS.bind(null, params),
+        // waitForStatus.bind(null, params)
     ];
 
     async.series(tasks, function (error) {
