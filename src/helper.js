@@ -4,6 +4,7 @@
 
 var assert = require('assert'),
     config = require('./config.js'),
+    execFile = require('child_process').execFile,
     fs = require('fs'),
     path = require('path'),
     ProgressBar = require('progress'),
@@ -46,7 +47,9 @@ exports = module.exports = {
     getCloudronBackupList: getCloudronBackupList,
     createCloudronBackup: createCloudronBackup,
 
-    saveBackupStream: saveBackupStream
+    saveBackupStream: saveBackupStream,
+
+    createCertificate: createCertificate
 };
 
 function exit(error) {
@@ -455,5 +458,27 @@ function saveBackupStream(id, outstream, decrypt, callback) {
         outstream.on('error', function (e) {
             callback('Error saving backup: ' + e.message);
         });
+    });
+}
+
+function createCertificate(domain, callback) {
+    assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var outdir = path.join(os.tmpdir(), domain); // certs are generated here
+
+    var args = [
+        'DE', 'Berlin', 'Berlin', 'Cloudron UG', 'Cloudron', domain, 'cert@cloudron.io', outdir
+    ];
+
+    var certificateGenerationScript = path.join(__dirname, '../scripts/generate_certificate.sh');
+
+    execFile(certificateGenerationScript, args, {}, function (error, stdout, stderr) {
+        if (error) return callback(error);
+
+        var key = safe.fs.readFileSync(path.join(outdir, 'host.key'), 'utf8');
+        var cert = safe.fs.readFileSync(path.join(outdir, 'host.cert'), 'utf8');
+
+        callback(null, key, cert);
     });
 }

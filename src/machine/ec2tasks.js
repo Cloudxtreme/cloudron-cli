@@ -6,11 +6,7 @@ var assert = require('assert'),
     config = require('../config.js'),
     debug = require('debug')('tasks'),
     dns = require('native-dns'),
-    execFile = require('child_process').execFile,
     helper = require('../helper.js'),
-    os = require('os'),
-    path = require('path'),
-    safe = require('safetydance'),
     superagent = require('superagent'),
     tld = require('tldjs'),
     versions = require('./versions.js');
@@ -214,41 +210,13 @@ function getIp(callback) {
     });
 }
 
-function createCertificate(domain, callback) {
-    assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    debug('createCertificate: %s', domain);
-
-    var outdir = path.join(os.tmpdir(), domain); // certs are generated here
-
-    var args = [
-        'US', 'California', 'San Francisco', 'Cloudron Company', 'Cloudron', domain, 'cert@cloudron.io', outdir
-    ];
-
-    var certificateGenerationScript = path.join(__dirname, '../../scripts/generate_certificate.sh');
-
-    execFile(certificateGenerationScript, args, {}, function (error, stdout, stderr) {
-        if (error) return callback(error);
-
-        debug('createCertificate: %s success.', domain);
-        debug('stdout: %s', stdout.toString('utf8'));
-        debug('stderr: %s', stderr.toString('utf8'));
-
-        var key = safe.fs.readFileSync(path.join(outdir, 'host.key'), 'utf8');
-        var cert = safe.fs.readFileSync(path.join(outdir, 'host.cert'), 'utf8');
-
-        callback(null, key, cert);
-    });
-}
-
 function getUserData(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     versions.details(gParams.version, function (error, result) {
         if (error) return callback(error);
 
-        createCertificate(gParams.domain,  function (error, tlsKey, tlsCert) {
+        helper.createCertificate(gParams.domain,  function (error, tlsKey, tlsCert) {
             if (error) return callback(error);
 
             var data = {

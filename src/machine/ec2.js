@@ -62,7 +62,7 @@ function create(options, version, callback) {
     }
 
     var params = {
-        region: options.region,
+        region: options.awsRegion || options.region,
         accessKeyId: options.accessKeyId,
         secretAccessKey: options.secretAccessKey,
         backupKey: options.backupKey,
