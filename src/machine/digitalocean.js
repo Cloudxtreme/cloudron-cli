@@ -4,7 +4,8 @@ var assert = require('assert'),
     async = require('async'),
     aws = require('./aws.js'),
     config = require('../config.js'),
-    dns = require('native-dns'),
+    nativeDNS = require('native-dns'),
+    dns = require('dns'),
     hat = require('hat'),
     helper = require('../helper.js'),
     path = require('path'),
@@ -295,12 +296,15 @@ function isChangeSynced(fqdn, publicIP, nameserver, callback) {
         if (error || !nsIps || nsIps.length === 0) return callback(false);
 
         async.every(nsIps, function (nsIp, iteratorCallback) {
-            var req = dns.Request({
-                question: dns.Question({ name: fqdn, type: 'A' }),
+            var req = nativeDNS.Request({
+                question: nativeDNS.Question({ name: fqdn, type: 'A' }),
                 server: { address: nsIp },
                 timeout: 5000
             });
 
+            req.on('end', function () {});
+            req.on('error', function () { iteratorCallback(false); });
+            req.on('cancelled', function () { iteratorCallback(false); });
             req.on('timeout', function () { return iteratorCallback(false); });
 
             req.on('message', function (error, message) {
@@ -327,7 +331,9 @@ function waitForDNS(params, callback) {
     process.stdout.write('Waiting for DNS...');
 
     async.forever(function (callback) {
-        dns.resolveNs(tld.getDomain(params.domain), function (error, nameservers) {
+        var topLevelDomain = tld.getDomain(params.domain);
+
+        dns.resolveNs(topLevelDomain, function (error, nameservers) {
             if (error) return setTimeout(callback, 5000);
             if (!nameservers) return callback(new Error('Unable to get nameservers'));
 
