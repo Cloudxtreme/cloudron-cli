@@ -267,15 +267,13 @@ function initBaseSystem(params, callback) {
 
         // TODO fetch from the version
         var initScript = path.join(__dirname, '../../../box/baseimage/initializeBaseUbuntuImage.sh');
-        var infraVersion = path.join(__dirname, '../../../box/src/infra_version.js');
         var sshKeyFile = helper.findSSHKey(params.sshKey);
 
         // TODO set revision
         async.series([
             exec.bind(null, 'scp -P 22 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i ' + sshKeyFile + ' ' + initScript + ' root@' + params.publicIP + ':.'),
-            exec.bind(null, 'scp -P 22 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i ' + sshKeyFile + ' ' + infraVersion + ' root@' + params.publicIP + ':.'),
             exec.bind(null, 'ssh root@' + params.publicIP + ' -tt -p 22 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i ' + sshKeyFile + ' curl ' + result.sourceTarballUrl + ' -o /tmp/box.tar.gz'),
-            exec.bind(null, 'ssh root@' + params.publicIP + ' -tt -p 22 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i ' + sshKeyFile + ' /bin/bash /root/initializeBaseUbuntuImage.sh 1337'),
+            exec.bind(null, 'ssh root@' + params.publicIP + ' -tt -p 22 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i ' + sshKeyFile + ' /bin/bash /root/initializeBaseUbuntuImage.sh 1337 digitalocean'),
             exec.bind(null, 'ssh root@' + params.publicIP + ' -tt -p 202 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i ' + sshKeyFile + ' systemctl reboot'),
         ], function (error) {
             if (error) return callback('Initializing base image failed. ' + error);
