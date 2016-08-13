@@ -128,7 +128,7 @@ function upgrade(updateInfo, options, callback) {
     var params = {
         version: updateInfo.version,
         domain: options.domain,
-        sshKey: options.sshKey
+        sshKeyFile: options.sshKey
     };
 
     ec2tasks.upgrade(params, callback);
