@@ -682,5 +682,15 @@ function migrate(options, callback) {
         }
     ];
 
-    async.series(tasks, callback);
+    async.series(tasks, function (error) {
+        if (error) return callback(error);
+
+        console.log('');
+        console.log('Cloudron created with:');
+        console.log('  ID:        %s', gInstanceId.cyan);
+        console.log('  Public IP: %s', gPublicIP.cyan);
+        console.log('');
+
+        callback();
+    });
 }
