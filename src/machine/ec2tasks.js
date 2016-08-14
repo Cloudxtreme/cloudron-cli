@@ -411,7 +411,7 @@ function getBackupDetails(callback) {
 function retireOldCloudron(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    helper.exec('ssh', helper.getSSH(config.apiEndpoint(), gParams.sshKeyFile, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/retire'), function (error) {
+    helper.exec('ssh', helper.getSSH(config.apiEndpoint(), gParams.sshKey, ' curl --fail -X POST http://127.0.0.1:3001/api/v1/retire'), function (error) {
         if (error) return callback('Retire failed: ' + error);
 
         callback();
@@ -602,7 +602,7 @@ function upgrade(options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof options.version, 'string');
     assert.strictEqual(typeof options.domain, 'string');
-    assert.strictEqual(typeof options.sshKeyFile, 'string');
+    assert.strictEqual(typeof options.sshKey, 'string');
     assert.strictEqual(typeof callback, 'function');
 
     console.log('Upgrading %s to version %s...', options.domain.cyan.bold, options.version.cyan.bold);
@@ -641,7 +641,7 @@ function upgrade(options, callback) {
 function migrate(options, callback) {
     assert.strictEqual(typeof options, 'object');
     assert.strictEqual(typeof options.fqdn, 'string');
-    assert.strictEqual(typeof options.sshKeyFile, 'string');
+    assert.strictEqual(typeof options.sshKey, 'string');
     assert.strictEqual(typeof options.accessKeyId, 'string');
     assert.strictEqual(typeof options.secretAccessKey, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -653,7 +653,7 @@ function migrate(options, callback) {
 
     gParams = {
         domain: options.fqdn,
-        sshKeyFile: options.sshKeyFile,
+        sshKey: options.sshKey,
         accessKeyId: options.accessKeyId,
         secretAccessKey: options.secretAccessKey
     };

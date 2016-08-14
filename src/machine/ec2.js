@@ -152,7 +152,7 @@ function migrate(options, callback) {
 
     var params = {
         fqdn: options.fqdn,
-        sshKeyFile: options.sshKey,
+        sshKey: options.sshKey,
         accessKeyId: options.accessKeyId,
         secretAccessKey: options.secretAccessKey,
         newFqdn: options.newFqdn || null,
