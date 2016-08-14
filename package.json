@@ -33,7 +33,7 @@
     "progress": "^1.1.8",
     "progress-stream": "^1.2.0",
     "readline-sync": "^0.7.6",
-    "safetydance": "http://registry.npmjs.org/safetydance/-/safetydance-0.0.15.tgz",
+    "safetydance": "^0.1.1",
     "semver": "^4.3.6",
     "split": "^0.3.3",
     "superagent": "^2.0.0",
