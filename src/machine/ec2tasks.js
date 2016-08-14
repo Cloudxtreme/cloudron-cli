@@ -53,6 +53,25 @@ function checkS3BucketAccess(callback) {
     });
 }
 
+function detectSSHKeyName(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    process.stdout.write('Detecting SSH key name on AWS...');
+
+    var fingerprint = helper.getSSHFingerprint(gParams.sshKey);
+    if (!fingerprint) return callback('Unable to get fingerprint from ssh key');
+
+    aws.findSshKeyName(fingerprint, function (error, keyName) {
+        if (error) return callback(error);
+
+        gParams.sshKeyName = keyName;
+
+        process.stdout.write(keyName + '\n');
+
+        callback();
+    });
+}
+
 function waitForVPC(vpcId, callback) {
     assert.strictEqual(typeof vpcId, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -157,7 +176,7 @@ function createServer(callback) {
             version: gParams.version,
             type: gParams.type,
             region: gParams.region,
-            sshKey: gParams.sshKey,
+            sshKeyName: gParams.sshKeyName,
             subnet: gParams.subnet,
             securityGroup: gParams.securityGroup,
             userData: userData,
@@ -527,6 +546,7 @@ function create(options, callback) {
     var tasks = [
         checkDNSZone,
         checkS3BucketAccess,
+        detectSSHKeyName,
         createSubnetAndSecurityGroup,
         createServer,
         waitForServer,

@@ -22,7 +22,8 @@ exports = module.exports = {
     getBackupUrl: getBackupUrl,
     listBackups: listBackups,
     getInstanceDetails: getInstanceDetails,
-    getVolumeDetails: getVolumeDetails
+    getVolumeDetails: getVolumeDetails,
+    findSshKeyName: findSshKeyName
 };
 
 var gEC2 = null;
@@ -228,7 +229,7 @@ function create(options, callback) {
     assert.strictEqual(typeof options.region, 'string');
     assert.strictEqual(typeof options.type, 'string');
     assert.strictEqual(typeof options.size, 'number');
-    assert.strictEqual(typeof options.sshKey, 'string');
+    assert.strictEqual(typeof options.sshKeyName, 'string');
     assert.strictEqual(typeof options.subnet, 'string');
     assert.strictEqual(typeof options.securityGroup, 'string');
     assert.strictEqual(typeof options.userData, 'object');
@@ -252,7 +253,7 @@ function create(options, callback) {
                 MinCount: 1,
                 MaxCount: 1,
                 InstanceType: options.type,
-                KeyName: options.sshKey,
+                KeyName: options.sshKeyName,
                 NetworkInterfaces: [{
                     SubnetId: options.subnet,
                     AssociatePublicIpAddress: true,
@@ -499,5 +500,25 @@ function getVolumeDetails(volumeId, callback) {
         if (error) return callback(error);
 
         callback(null, result.Volumes[0]);
+    });
+}
+
+function findSshKeyName(fingerprint, callback) {
+    assert.strictEqual(typeof gEC2, 'object');
+    assert.strictEqual(typeof fingerprint, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    var params = {
+        Filters: [{
+            Name: 'fingerprint',
+            Values: [ fingerprint ]
+        }]
+    };
+
+    gEC2.describeKeyPairs(params, function (error, result) {
+        if (error) return callback(error);
+        if (result.KeyPairs.length === 0) return callback('No such SSH key matching the fingerprint on AWS');
+
+        callback(null, result.KeyPairs[0].KeyName);
     });
 }

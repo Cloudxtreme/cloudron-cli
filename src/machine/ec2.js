@@ -52,6 +52,9 @@ function create(options, version, callback) {
 
     if (!options.subnet ^ !options.securityGroup) return helper.exit('either both --subnet and --security-group must be provided OR none');
 
+    options.sshKey = helper.findSSHKey(options.sshKey);
+    if (!options.sshKey) helper.exit('Unable to find SSH key');
+
     if (!options.backupKey) {
         console.log();
         console.log('No backup key specified.');
