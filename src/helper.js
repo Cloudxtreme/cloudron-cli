@@ -36,6 +36,7 @@ exports = module.exports = {
     exec: exec,
     getSSH: getSSH,
     findSSHKey: findSSHKey,
+    getSSHFingerprint: getSSHFingerprint,
 
     createUrl: createUrl,
     authenticate: authenticate,
@@ -292,6 +293,23 @@ function findSSHKey(key) {
     if (fs.existsSync(test)) return test;
 
     return null;
+}
+
+function getSSHFingerprint(keyFilePath) {
+    assert.strictEqual(typeof keyFilePath, 'string');
+
+    // !! only supports the aws fingerprint as is !!
+    // http://blog.jbrowne.com/?p=23#comment-817
+    var cmd = 'openssl pkey -in ' + keyFilePath + ' -pubout -outform DER | openssl md5 -c';
+    var out = safe.child_process.execSync(cmd);
+
+    if (!out) return null;
+
+    // extract colon separated fingerprint from stdoutput
+    out = out.toString('utf-8');
+    out = out.slice('(stdin)= '.length).slice(0, -1);
+
+    return out;
 }
 
 function createUrl(api) {
