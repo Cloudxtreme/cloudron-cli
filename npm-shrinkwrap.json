@@ -1,6 +1,6 @@
 {
   "name": "cloudron",
-  "version": "0.14.5",
+  "version": "0.14.6",
   "dependencies": {
     "async": {
       "version": "1.5.2",
